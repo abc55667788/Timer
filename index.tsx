@@ -918,7 +918,12 @@ function EmeraldTimer() {
             <div className="w-10 h-10 bg-emerald-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-emerald-200/50">
               <Clock size={24} />
             </div>
-            <h1 className="text-xl font-black text-emerald-800 tracking-tight">Emerald Timer</h1>
+            <div className="flex items-center gap-3">
+              <h1 className="text-xl font-black text-emerald-800 tracking-tight">Emerald Timer</h1>
+              {import.meta.env.DEV && (
+                <button onClick={() => { localStorage.removeItem('emerald-logs'); window.location.reload(); }} className="px-2 py-1 text-xs bg-emerald-50 text-emerald-700 rounded-full border border-emerald-100 hover:bg-emerald-100 transition-all">Seed demo</button>
+              )}
+            </div>
           </div>
           <button onClick={() => setIsMiniMode(true)} className="p-2.5 bg-white rounded-2xl border border-emerald-100 hover:bg-emerald-50 text-emerald-600 flex items-center gap-2 text-sm font-bold shadow-sm transition-all active:scale-95">
             <Minimize2 size={16} /> <span>Mini Mode</span>
