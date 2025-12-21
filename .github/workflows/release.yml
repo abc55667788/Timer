@@ -41,6 +41,7 @@ jobs:
       - name: Build (Vite + electron-builder)
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           npm run build --if-present
 
