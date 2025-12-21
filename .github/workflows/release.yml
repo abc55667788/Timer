@@ -31,14 +31,15 @@ jobs:
           WIN_CERT_BASE64: ${{ secrets.WIN_CERT_BASE64 }}
         if: env.WIN_CERT_BASE64 != ''
         run: |
-          [IO.File]::WriteAllBytes("$env:TEMP\\win_cert.p12", [Convert]::FromBase64String("$env:WIN_CERT_BASE64"))
-          Write-Host "Wrote cert to $env:TEMP\\win_cert.p12"
+          $certPath = Join-Path $env:TEMP "win_cert.p12"
+          [IO.File]::WriteAllBytes($certPath, [Convert]::FromBase64String($env:WIN_CERT_BASE64))
+          Write-Host "Wrote cert to $certPath"
+          echo "CSC_LINK=file://$certPath" >> $env:GITHUB_ENV
+          echo "CSC_KEY_PASSWORD=${{ secrets.WIN_CERT_PASSWORD }}" >> $env:GITHUB_ENV
         shell: powershell
 
       - name: Build (Vite + electron-builder)
         env:
-          CSC_LINK: ${{ format('file://{0}\\win_cert.p12', runner.temp) }}
-          CSC_KEY_PASSWORD: ${{ secrets.WIN_CERT_PASSWORD }}
           CSC_IDENTITY_AUTO_DISCOVERY: 'false'
         run: |
           npm run build --if-present
