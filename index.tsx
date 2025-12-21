@@ -295,7 +295,52 @@ function EmeraldTimer() {
   const [logs, setLogs] = useState<LogEntry[]>(() => {
     const saved = localStorage.getItem('emerald-logs');
     const parsed = saved ? JSON.parse(saved) : [];
-    return parsed.filter((l: LogEntry) => !l.isLive);
+    const existing = parsed.filter((l: LogEntry) => !l.isLive);
+    
+    if (existing.length === 0) {
+      // Generate Demo Data
+      const demoLogs: LogEntry[] = [];
+      const now = new Date();
+      const categories: Category[] = ['Work', 'Study', 'Read', 'Exercise', 'Rest', 'Eat', 'Entertainment'];
+      const demoImages = [
+        'https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=800&q=80',
+        'https://images.unsplash.com/photo-1484417894907-623942c8ee29?w=800&q=80',
+        'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=800&q=80',
+        'https://images.unsplash.com/photo-1517842645767-c639042777db?w=800&q=80',
+        'https://images.unsplash.com/photo-1552664730-d307ca884978?w=800&q=80'
+      ];
+
+      for (let i = 0; i < 30; i++) {
+        const date = new Date();
+        date.setDate(now.getDate() - i);
+        
+        // 3-5 entries per day
+        const entriesCount = 3 + Math.floor(Math.random() * 3);
+        let currentHour = 8;
+
+        for (let j = 0; j < entriesCount; j++) {
+          const category = categories[Math.floor(Math.random() * categories.length)];
+          const durationMinutes = 30 + Math.floor(Math.random() * 90);
+          const start = new Date(date);
+          start.setHours(currentHour, Math.floor(Math.random() * 60), 0);
+          const end = new Date(start.getTime() + durationMinutes * 60000);
+          
+          demoLogs.push({
+            id: `demo-${i}-${j}`,
+            category,
+            description: `Demo session: ${category} focus`,
+            startTime: start.getTime(),
+            endTime: end.getTime(),
+            duration: durationMinutes * 60,
+            images: Math.random() > 0.5 ? [demoImages[Math.floor(Math.random() * demoImages.length)]] : []
+          });
+          
+          currentHour += Math.floor(durationMinutes / 60) + 1;
+        }
+      }
+      return demoLogs;
+    }
+    return existing;
   });
 
   const [showTransitionModal, setShowTransitionModal] = useState(false);
