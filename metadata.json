@@ -1,0 +1,7 @@
+{
+  "description": "Emerald Timer - A clean, elegant Pomodoro and time-tracking app with detailed logging and visual analytics.",
+  "requestFramePermissions": [
+    "camera"
+  ],
+  "name": "Timer"
+}
