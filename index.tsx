@@ -298,7 +298,7 @@ function EmeraldTimer() {
     const existing = parsed.filter((l: LogEntry) => !l.isLive);
     
     if (existing.length === 0) {
-      // Generate Demo Data
+      // Generate full-year Demo Data (every day, 08:00 - 22:00 filled with sessions and short breaks)
       const demoLogs: LogEntry[] = [];
       const now = new Date();
       const categories: Category[] = ['Work', 'Study', 'Read', 'Exercise', 'Rest', 'Eat', 'Entertainment'];
@@ -310,34 +310,51 @@ function EmeraldTimer() {
         'https://images.unsplash.com/photo-1552664730-d307ca884978?w=800&q=80'
       ];
 
-      for (let i = 0; i < 30; i++) {
-        const date = new Date();
-        date.setDate(now.getDate() - i);
-        
-        // 3-5 entries per day
-        const entriesCount = 3 + Math.floor(Math.random() * 3);
-        let currentHour = 8;
+      const DAYS = 365; // full year
 
-        for (let j = 0; j < entriesCount; j++) {
+      for (let i = 0; i < DAYS; i++) {
+        const date = new Date(now);
+        date.setDate(now.getDate() - i);
+        date.setHours(0, 0, 0, 0);
+
+        let sessionStart = new Date(date);
+        sessionStart.setHours(8, 0, 0, 0); // 08:00
+        const dayEnd = new Date(date);
+        dayEnd.setHours(22, 0, 0, 0); // 22:00
+
+        let j = 0;
+        while (sessionStart.getTime() < dayEnd.getTime()) {
+          // session length between 25 and 90 minutes
+          const durationMinutes = 25 + Math.floor(Math.random() * 66);
+          const sessionEnd = new Date(sessionStart.getTime() + durationMinutes * 60000);
+          if (sessionEnd.getTime() > dayEnd.getTime()) {
+            // truncate the last session to dayEnd
+            sessionEnd.setTime(dayEnd.getTime());
+          }
+
           const category = categories[Math.floor(Math.random() * categories.length)];
-          const durationMinutes = 30 + Math.floor(Math.random() * 90);
-          const start = new Date(date);
-          start.setHours(currentHour, Math.floor(Math.random() * 60), 0);
-          const end = new Date(start.getTime() + durationMinutes * 60000);
-          
+          const images = Math.random() > 0.7 ? [demoImages[Math.floor(Math.random() * demoImages.length)]] : [];
+
           demoLogs.push({
             id: `demo-${i}-${j}`,
             category,
-            description: `Demo session: ${category} focus`,
-            startTime: start.getTime(),
-            endTime: end.getTime(),
-            duration: durationMinutes * 60,
-            images: Math.random() > 0.5 ? [demoImages[Math.floor(Math.random() * demoImages.length)]] : []
+            description: `${category} - Demo session ${j + 1}`,
+            startTime: sessionStart.getTime(),
+            endTime: sessionEnd.getTime(),
+            duration: Math.floor((sessionEnd.getTime() - sessionStart.getTime()) / 1000),
+            images
           });
-          
-          currentHour += Math.floor(durationMinutes / 60) + 1;
+
+          // small break between 5 and 20 minutes
+          const breakMinutes = 5 + Math.floor(Math.random() * 16);
+          sessionStart = new Date(sessionEnd.getTime() + breakMinutes * 60000);
+          j++;
+
+          // safety cap to avoid infinite loops
+          if (j > 30) break;
         }
       }
+
       return demoLogs;
     }
     return existing;
@@ -766,6 +783,30 @@ function EmeraldTimer() {
     }));
   }, [logs, selectedStatsDate]);
 
+  const yearMonthStats = useMemo(() => {
+    const date = new Date(selectedStatsDate);
+    const year = date.getFullYear();
+    const months = [...Array(12)].map((_, m) => {
+      const monthStart = new Date(year, m, 1);
+      const monthEnd = new Date(year, m + 1, 0, 23, 59, 59, 999);
+      const logsInMonth = logs.filter(l => new Date(l.startTime) >= monthStart && new Date(l.startTime) <= monthEnd);
+      const totals: Record<string, number> = {};
+      let sampleImage: string | null = null;
+      logsInMonth.forEach(l => {
+        totals[l.category] = (totals[l.category] || 0) + l.duration;
+        if (!sampleImage && l.images && l.images.length > 0) sampleImage = l.images[0];
+      });
+      const categories = Object.entries(totals).map(([name, value]) => ({ name, minutes: Math.round(value / 60) })).sort((a,b)=>b.minutes-a.minutes);
+      return {
+        month: m,
+        categories,
+        totalMinutes: Math.round(Object.values(totals).reduce((a,b)=>a+b,0)/60) || 0,
+        sampleImage
+      };
+    });
+    return months;
+  }, [logs, selectedStatsDate]);
+
   const calendarGridData = useMemo(() => {
     const date = new Date(selectedStatsDate);
     const year = date.getFullYear();
@@ -1076,12 +1117,12 @@ function EmeraldTimer() {
                                     </div>
                                   );
                                 })}
-                                <div className="relative z-10 space-y-6 mt-4">
+                                <div className="relative z-10 space-y-2 mt-2">
                                   {timelineRange.tracks.map((track, trackIdx) => (
-                                    <div key={trackIdx} className="h-8 relative">
+                                    <div key={trackIdx} className="h-6 relative">
                                       {track.map(log => (
-                                        <div key={log.id} onClick={() => {setViewingLog(log); setIsEditMode(false);}} className="absolute top-0 bottom-0 rounded-2xl cursor-pointer transition-all hover:brightness-110 hover:shadow-xl hover:shadow-emerald-900/10 hover:z-50 border border-white/40 shadow-sm group/log z-10 overflow-visible" style={{ left: `${((log.startTime - timelineRange.start) / 60000) * 1.5 * timelineZoom + 40}px`, width: `${Math.max((log.duration / 60) * 1.5 * timelineZoom, 6)}px`, backgroundColor: getCategoryColor(log.category) }}>
-                                          <div className="absolute hidden group-hover/log:flex flex-col items-center bg-emerald-900 text-white p-3 rounded-[1.5rem] text-[10px] top-full mt-4 left-1/2 -translate-x-1/2 z-[100] shadow-2xl whitespace-nowrap animate-in fade-in zoom-in-95">
+                                        <div key={log.id} onClick={() => {setViewingLog(log); setIsEditMode(false);}} className="absolute top-0 bottom-0 rounded-xl cursor-pointer transition-all hover:brightness-110 hover:shadow-lg hover:z-50 border border-white/30 shadow-sm group/log z-10 overflow-visible" style={{ left: `${((log.startTime - timelineRange.start) / 60000) * 1.5 * timelineZoom + 40}px`, width: `${Math.max((log.duration / 60) * 1.2 * timelineZoom, 6)}px`, backgroundColor: getCategoryColor(log.category) }}>
+                                          <div className="absolute hidden group-hover/log:flex flex-col items-center bg-emerald-900 text-white p-2 rounded-[1rem] text-[10px] top-full mt-2 left-1/2 -translate-x-1/2 z-[100] shadow-2xl whitespace-nowrap animate-in fade-in zoom-in-95">
                                             <div className="font-black uppercase tracking-widest mb-1">{log.category}</div>
                                             <div className="opacity-60 font-mono">{formatClock(log.startTime, timelineZoom)} - {log.endTime ? formatClock(log.endTime, timelineZoom) : 'NOW'}</div>
                                           </div>
@@ -1105,22 +1146,24 @@ function EmeraldTimer() {
                               <p className="text-[10px] font-bold mt-4 opacity-50 relative z-10">{selectedDayLogs.length} distinct sessions recorded</p>
                             </div>
                             
-                            <div className="md:col-span-2 flex gap-4 overflow-x-auto pb-4 scrollbar-none snap-x">
+                            <div className="md:col-span-2 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 pb-4">
                               {statsData.length > 0 ? statsData.map((item, idx) => (
-                                <div key={item.name} className="bg-white p-6 rounded-[2.5rem] border border-emerald-50 shadow-sm flex-shrink-0 min-w-[180px] snap-start hover:shadow-lg transition-shadow" style={{ animationDelay: `${idx * 50}ms` }}>
-                                  <div className="flex items-center gap-3 mb-4">
-                                    <div className="w-10 h-10 rounded-2xl flex items-center justify-center shadow-inner" style={{ backgroundColor: `${getCategoryColor(item.name as Category)}15`, color: getCategoryColor(item.name as Category) }}>
-                                      {React.createElement(DEFAULT_CATEGORY_DATA[item.name as Category].icon, { size: 20 })}
+                                <div key={item.name} className="bg-white p-4 rounded-xl border border-emerald-50 shadow-sm hover:shadow-md transition-shadow" style={{ animationDelay: `${idx * 30}ms` }}>
+                                  <div className="flex items-center justify-between gap-3 mb-2">
+                                    <div className="flex items-center gap-2">
+                                      <div className="w-8 h-8 rounded-lg flex items-center justify-center text-sm" style={{ backgroundColor: `${getCategoryColor(item.name as Category)}15`, color: getCategoryColor(item.name as Category) }}>
+                                        {React.createElement(DEFAULT_CATEGORY_DATA[item.name as Category].icon, { size: 16 })}
+                                      </div>
+                                      <span className="text-[11px] font-black uppercase text-emerald-400 tracking-widest">{item.name}</span>
                                     </div>
-                                    <span className="text-[10px] font-black uppercase text-emerald-300 tracking-widest">{item.name}</span>
+                                    <div className="text-sm font-black text-emerald-900">{item.value}m</div>
                                   </div>
-                                  <div className="text-2xl font-black text-emerald-950 tracking-tight">{item.value}m</div>
-                                  <div className="w-full h-1 bg-emerald-50 rounded-full mt-4 overflow-hidden">
-                                     <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${(item.value / statsData.reduce((a,b)=>a+b.value,0))*100}%`, backgroundColor: getCategoryColor(item.name as Category) }} />
+                                  <div className="w-full h-2 bg-emerald-50 rounded-full mt-2 overflow-hidden">
+                                     <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${(item.value / Math.max(1, statsData.reduce((a,b)=>a+b.value,0)))*100}%`, backgroundColor: getCategoryColor(item.name as Category) }} />
                                   </div>
                                 </div>
                               )) : (
-                                <div className="flex-1 flex items-center justify-center bg-emerald-50/50 rounded-[2.5rem] border border-dashed border-emerald-100 text-[10px] font-black uppercase text-emerald-300 tracking-[0.3em]">
+                                <div className="flex-1 flex items-center justify-center bg-emerald-50/50 rounded-xl border border-dashed border-emerald-100 text-[10px] font-black uppercase text-emerald-300 tracking-[0.3em]">
                                   No Category Data
                                 </div>
                               )}
@@ -1282,7 +1325,36 @@ function EmeraldTimer() {
                       </div>
                     )}
 
-                    {!(statsView === 'day' || ((statsView === 'month' || statsView === 'week') && viewMode === 'grid')) && (
+                    {statsView === 'year' ? (
+                      <div className="pb-20 animate-in fade-in slide-in-from-bottom-4">
+                        <div className="bg-white rounded-[2.5rem] p-6 shadow-sm border border-emerald-50 overflow-hidden">
+                          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                            {yearMonthStats.map((m, idx) => (
+                              <div key={idx} className="bg-white p-3 rounded-[1.25rem] border border-emerald-50 shadow-sm flex flex-col">
+                                <div className="flex items-center justify-between mb-2">
+                                  <div className="text-sm font-black">{new Date(new Date(selectedStatsDate).getFullYear(), m.month).toLocaleString(undefined, { month: 'short' })}</div>
+                                  <div className="text-xs text-emerald-400">{m.totalMinutes}m</div>
+                                </div>
+                                <div className="flex-1 flex items-center gap-3">
+                                  <div className="flex-1 space-y-1">
+                                    {m.categories.slice(0,4).map(cat => (
+                                      <div key={cat.name} className="flex items-center gap-2">
+                                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: getCategoryColor(cat.name as Category) }} />
+                                        <div className="text-[11px] font-black truncate">{cat.name}</div>
+                                        <div className="ml-auto text-xs text-emerald-400">{cat.minutes}m</div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                  <div className="w-20 h-14 bg-emerald-50 rounded-lg overflow-hidden border border-emerald-100 flex items-center justify-center">
+                                    {m.sampleImage ? <img src={m.sampleImage} className="w-full h-full object-cover"/> : <div className="text-[10px] text-emerald-300">No Image</div>}
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 pb-20 animate-in zoom-in-95 duration-500">
                          <div className="bg-white p-8 rounded-[3.5rem] border border-emerald-50 h-[400px] shadow-sm flex flex-col relative overflow-hidden group">
                            <div className="absolute top-0 right-0 p-12 -mr-16 -mt-16 bg-emerald-50 rounded-full opacity-30 group-hover:scale-110 transition-transform duration-700"/>
