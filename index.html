@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Emerald Timer</title>
+    <link rel="icon" href="/logo.png" type="image/png">
     <meta name="theme-color" content="#059669">
     <link rel="manifest" href="manifest.json">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -22,19 +23,50 @@
       .font-mono {
         font-family: 'JetBrains+Mono', monospace;
       }
-      /* Custom scrollbar */
+      /* Custom scrollbar - subtle autohide */
       ::-webkit-scrollbar {
-        width: 8px;
+        width: 0px;
+        height: 0px;
+        background: transparent;
       }
       ::-webkit-scrollbar-track {
-        background: #f0f9f0;
+        background: transparent !important;
       }
       ::-webkit-scrollbar-thumb {
-        background: #d1e8d1;
+        background: transparent !important;
         border-radius: 10px;
       }
+
+      /* Transitions only work on specific properties, background-color is fine */
+      /* We use width/height to hide/show, but Chrome doesn't animate those well on scrollbars */
+      
+      :not(.scrollbar-none).is-scrolling::-webkit-scrollbar,
+      :not(.scrollbar-none):hover::-webkit-scrollbar {
+        width: 5px;
+        height: 5px;
+      }
+
+      :not(.scrollbar-none).is-scrolling::-webkit-scrollbar-thumb,
+      :not(.scrollbar-none):hover::-webkit-scrollbar-thumb {
+        background: rgba(16, 185, 129, 0.2) !important;
+      }
+
       ::-webkit-scrollbar-thumb:hover {
-        background: #b2d8b2;
+        background: rgba(16, 185, 129, 0.4) !important;
+      }
+
+      /* Strictly hide for scrollbar-none */
+      .scrollbar-none::-webkit-scrollbar,
+      .scrollbar-none::-webkit-scrollbar-thumb,
+      .scrollbar-none::-webkit-scrollbar-track {
+        display: none !important;
+        width: 0 !important;
+        height: 0 !important;
+        opacity: 0 !important;
+      }
+      .scrollbar-none {
+        -ms-overflow-style: none !important;
+        scrollbar-width: none !important;
       }
     </style>
 </head>
