@@ -11,6 +11,7 @@ function createWindow() {
     minWidth: 1000,
     minHeight: 700,
     title: "Emerald Timer",
+    icon: path.join(__dirname, 'public/logo.png'),
     frame: false, // Hide native title bar
     transparent: true, // Allow rounded corners for the whole window if needed
     webPreferences: {
