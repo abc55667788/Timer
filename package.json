@@ -1,9 +1,12 @@
 {
   "name": "emerald-timer",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Visual Time Tracker & Life Journal",
   "main": "main.js",
-  "author": "Emerald Team",
+  "author": {
+    "name": "Emerald Team",
+    "email": "emerald@example.com"
+  },
   "dependencies": {
     "@google/genai": "^1.34.0",
     "lucide-react": "^0.436.0",
