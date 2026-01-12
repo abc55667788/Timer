@@ -14,7 +14,8 @@
   "scripts": {
     "start": "electron .",
     "dev": "vite",
-    "build": "vite build && electron-builder --win"
+    "build": "vite build && electron-builder --win",
+    "build:linux-arm": "vite build && electron-builder --linux --arm64"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.1",
@@ -32,9 +33,17 @@
     },
     "win": {
       "target": [
-        "nsis"
+        "nsis",
+        "portable"
       ],
       "icon": "https://cdn-icons-png.flaticon.com/512/3569/3569974.png"
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "category": "Utility"
     },
     "nsis": {
       "oneClick": false,

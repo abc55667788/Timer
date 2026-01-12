@@ -35,4 +35,4 @@ export const DEFAULT_CATEGORY_DATA: Record<Category, { icon: any; color: string 
 
 export const CATEGORIES = Object.keys(DEFAULT_CATEGORY_DATA) as Category[];
 
-export const APP_LOGO = '/logo.png';
+export const APP_LOGO = 'logo.png';

@@ -151,7 +151,7 @@ function EmeraldTimer() {
 
   // Exit mini mode when opening modals or editing, and restore it when done
   useEffect(() => {
-    const isAnyModalOpen = !!(showSetupModal || showLoggingModal || showManualModal || showConfirmModal || viewingLog);
+    const isAnyModalOpen = !!(showSetupModal || showLoggingModal || showManualModal || showConfirmModal || showLogContinuationPrompt || viewingLog);
     if (isMiniMode && isAnyModalOpen) {
       setWasMiniModeBeforeModal(true);
       setIsMiniMode(false);
@@ -159,7 +159,7 @@ function EmeraldTimer() {
       setIsMiniMode(true);
       setWasMiniModeBeforeModal(false);
     }
-  }, [showSetupModal, showLoggingModal, showManualModal, showConfirmModal, viewingLog, isMiniMode, wasMiniModeBeforeModal]);
+  }, [showSetupModal, showLoggingModal, showManualModal, showConfirmModal, showLogContinuationPrompt, viewingLog, isMiniMode, wasMiniModeBeforeModal]);
 
   // Zoom configuration
   const ZOOM_STEP = 0.05;
@@ -172,6 +172,9 @@ function EmeraldTimer() {
   const [filterCategory, setFilterCategory] = useState<Category | 'All'>('All');
   const [filterStartDate, setFilterStartDate] = useState('');
   const [filterEndDate, setFilterEndDate] = useState('');
+
+  // When a modal is forced open from mini mode, hide the shell so only the prompt is visible
+  const hideShellForMiniPrompt = wasMiniModeBeforeModal && showLogContinuationPrompt;
 
   const [tempWorkMin, setTempWorkMin] = useState('25');
   const [tempRestMin, setTempRestMin] = useState('5');
@@ -1427,7 +1430,7 @@ function EmeraldTimer() {
         }
       `}</style>
       {/* Custom Title Bar for Normal Mode */}
-      {!isMiniMode && !wasMiniModeBeforeModal && (
+      {!hideShellForMiniPrompt && !isMiniMode && !wasMiniModeBeforeModal && (
         <div className="w-full h-10 flex items-center justify-between px-4 bg-white/50 backdrop-blur-sm border-b border-emerald-50 flex-shrink-0 select-none" style={{ WebkitAppRegion: 'drag' } as any}>
           <div className="flex items-center gap-2">
             <div className="w-5 h-5 bg-white rounded-lg flex items-center justify-center shadow-sm overflow-hidden">
@@ -1464,6 +1467,7 @@ function EmeraldTimer() {
       {showLogContinuationPrompt && (
         <div className={`fixed inset-0 ${(wasMiniModeBeforeModal || isMiniMode) ? 'bg-transparent' : 'bg-emerald-900/60 backdrop-blur-xl'} flex items-center justify-center p-6 z-[180] animate-in fade-in duration-300`}>
           <div className="bg-white rounded-[2rem] p-7 max-w-sm w-full shadow-2xl relative space-y-5 ring-1 ring-emerald-100/50">
+            <button onClick={handleCancelLogChoice} className="absolute top-4 right-4 p-2 bg-emerald-50 rounded-full text-emerald-300 hover:text-emerald-600 transition-all active:scale-90 z-50"><X size={18} /></button>
             <div className="flex flex-col items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 shadow-sm">
                 <FileText size={20} />
@@ -1489,12 +1493,6 @@ function EmeraldTimer() {
               >
                 {startNewButtonLabel}
               </button>
-              <button 
-                onClick={handleCancelLogChoice} 
-                className="w-full py-3.5 bg-emerald-50 text-emerald-500 text-[11px] font-black uppercase tracking-[0.2em] rounded-2xl border border-emerald-100 transition-all hover:bg-emerald-100 active:scale-[0.97]"
-              >
-                Back to options
-              </button>
             </div>
             <div className="mt-2 text-[10px] font-bold text-emerald-400/80 text-center px-4 leading-normal italic">
               {continuationNote}
@@ -1519,16 +1517,21 @@ function EmeraldTimer() {
         </header>
       )}
 
-      {isMiniMode && (
+      {!hideShellForMiniPrompt && isMiniMode && (
         <div className="w-full h-full bg-white flex flex-col z-40 overflow-hidden select-none rounded-[2rem] border border-emerald-100 shadow-2xl" style={{ WebkitAppRegion: 'drag' } as any}>
-          <div className="flex-1 flex items-center px-5" style={{ WebkitAppRegion: 'no-drag' } as any}>
+          <div className="flex-1 flex items-center px-5">
             <div className="flex items-center justify-between w-full">
               <div className="flex flex-col">
                 <div className="flex items-center gap-2">
                   <span className={`text-[9px] font-black uppercase tracking-widest ${phase === 'work' ? 'text-emerald-600' : 'text-emerald-500'}`}>
                     {currentTask.category}
                   </span>
-                  <button onClick={() => setIsMiniMode(false)} className="p-1.5 hover:bg-emerald-100 rounded-full text-emerald-800 transition-all duration-300 ease-in-out active:scale-90" title="Maximize">
+                  <button 
+                    style={{ WebkitAppRegion: 'no-drag' } as any}
+                    onClick={() => setIsMiniMode(false)} 
+                    className="p-1.5 hover:bg-emerald-100 rounded-full text-emerald-800 transition-all duration-300 ease-in-out active:scale-90" 
+                    title="Maximize"
+                  >
                     <Maximize2 size={16} />
                   </button>
                 </div>
@@ -1537,7 +1540,7 @@ function EmeraldTimer() {
                   {isOvertime && <span className="text-[10px] text-orange-500 font-bold">+{formatTime(overtimeSeconds)}</span>}
                 </div>
               </div>
-              <div className="flex gap-1.5">
+              <div className="flex gap-1.5" style={{ WebkitAppRegion: 'no-drag' } as any}>
                  <button onClick={() => setShowLoggingModal(true)} className="p-2 rounded-xl bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-all duration-300 ease-in-out active:scale-90"><Edit3 size={14}/></button>
                  {isCurrentlyRecording && (
                    <button onClick={handleStopClick} className="p-2 rounded-xl bg-white text-red-500 border border-red-50 hover:bg-red-50 hover:text-red-600 transition-all duration-300 ease-in-out active:scale-90"><Square size={14}/></button>
@@ -1564,7 +1567,7 @@ function EmeraldTimer() {
         </div>
       )}
 
-      {!isMiniMode && !wasMiniModeBeforeModal && (
+      {!hideShellForMiniPrompt && !isMiniMode && !wasMiniModeBeforeModal && (
         <main className="w-full max-w-6xl bg-white rounded-t-[3rem] shadow-2xl border border-emerald-50 overflow-hidden flex flex-col flex-1 mx-4">
           <nav className="flex border-b border-emerald-50 bg-emerald-50/20 px-6 flex-shrink-0">
             {[
@@ -2434,6 +2437,7 @@ function EmeraldTimer() {
       {phasePrompt && (
         <div className={`fixed inset-0 ${(wasMiniModeBeforeModal || isMiniMode) ? 'bg-transparent' : 'bg-emerald-900/60 backdrop-blur-xl'} flex items-center justify-center p-6 z-[175] animate-in fade-in duration-300`}>
           <div className="bg-white rounded-[2rem] p-7 max-w-sm w-full shadow-2xl relative space-y-5 ring-1 ring-emerald-100/50">
+            <button onClick={() => setPhasePrompt(null)} className="absolute top-4 right-4 p-2 bg-emerald-50 rounded-full text-emerald-300 hover:text-emerald-600 transition-all active:scale-90 z-50"><X size={18} /></button>
             <div className="flex flex-col items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 shadow-sm">
                 <Clock size={20} />
@@ -2566,7 +2570,7 @@ function EmeraldTimer() {
         <div className={`fixed inset-0 ${(wasMiniModeBeforeModal || isMiniMode) ? 'bg-transparent' : 'bg-emerald-900/60 backdrop-blur-xl'} flex items-center justify-center p-6 z-[170] animate-in fade-in duration-300`}>
           <div className="bg-white rounded-[2rem] p-7 max-w-sm w-full shadow-2xl relative ring-1 ring-emerald-100/50" style={{ WebkitAppRegion: 'drag' } as any}>
              <div style={{ WebkitAppRegion: 'no-drag' } as any} className="scrollbar-none overflow-y-auto max-h-[80vh]">
-               <button onClick={closeSettingsWithoutSaving} className="absolute top-0 right-0 p-2 bg-emerald-50 rounded-full text-emerald-300 hover:text-emerald-600 transition-all active:scale-90 z-50" style={{ WebkitAppRegion: 'no-drag' } as any}><X size={18} /></button>
+               <button onClick={closeSettingsWithoutSaving} className="absolute top-4 right-4 p-2 bg-emerald-50 rounded-full text-emerald-300 hover:text-emerald-600 transition-all active:scale-90 z-50" style={{ WebkitAppRegion: 'no-drag' } as any}><X size={18} /></button>
                <h2 className="text-xl font-black text-emerald-950 mb-7 tracking-tight flex items-center gap-3"><Settings size={22} className="text-emerald-500" /> Preferences</h2>
                <div className="space-y-6">
                   <section>
@@ -2768,7 +2772,7 @@ function EmeraldTimer() {
             <div style={{ WebkitAppRegion: 'no-drag' } as any} className="scrollbar-none overflow-y-auto max-h-[85vh]">
               <button 
                 onClick={() => setShowInspirationModal(false)} 
-                className="absolute top-0 right-0 p-2 bg-emerald-50 rounded-full text-emerald-300 hover:text-emerald-600 transition-all active:scale-90 z-50"
+                className="absolute top-4 right-4 p-2 bg-emerald-50 rounded-full text-emerald-300 hover:text-emerald-600 transition-all active:scale-90 z-50"
               ><X size={18} /></button>
               
               <div className="flex items-center gap-4 mb-8">
@@ -2878,15 +2882,15 @@ function EmeraldTimer() {
 
       {showConfirmModal && (
         <div className={`fixed inset-0 ${(wasMiniModeBeforeModal || isMiniMode) ? 'bg-transparent' : 'bg-emerald-900/70 backdrop-blur-xl'} flex items-center justify-center p-6 z-[180] animate-in fade-in duration-300`}>
-          <div className="bg-white rounded-[2rem] p-8 max-w-sm w-full text-center shadow-2xl ring-1 ring-emerald-100/50" style={{ WebkitAppRegion: 'drag' } as any}>
+          <div className="bg-white rounded-[2rem] p-8 max-w-sm w-full text-center shadow-2xl ring-1 ring-emerald-100/50 relative" style={{ WebkitAppRegion: 'drag' } as any}>
             <div style={{ WebkitAppRegion: 'no-drag' } as any}>
+              <button onClick={() => setShowConfirmModal(null)} className="absolute top-4 right-4 p-2 bg-emerald-50 rounded-full text-emerald-300 hover:text-emerald-600 transition-all active:scale-90 z-50"><X size={18} /></button>
               <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6 bg-red-50 text-red-500 shadow-inner`}><AlertCircle size={32} /></div>
               <h2 className="text-xl font-black mb-1 text-emerald-950 tracking-tight">End Session?</h2>
               <p className="text-[10px] text-emerald-400 font-black uppercase tracking-[0.3em] mb-7">Save or discard your progress</p>
               <div className="flex flex-col gap-3">
                 <button onClick={() => confirmAction(true)} className="w-full py-3.5 rounded-2xl font-black uppercase tracking-[0.2em] transition-all shadow-lg bg-emerald-600 text-white active:scale-[0.97] text-xs">Save Activity</button>
-                <button onClick={() => confirmAction(false)} className="w-full py-3.5 bg-white text-red-500 border-2 border-red-50 rounded-2xl font-black uppercase tracking-[0.2em] active:scale-[0.97] text-xs">Discard</button>
-                <button onClick={() => setShowConfirmModal(null)} className="py-2 text-emerald-300 font-black text-[9px] uppercase tracking-[0.4em] mt-1 hover:text-emerald-500 transition-colors">Go Back</button>
+                <button onClick={() => confirmAction(false)} className="w-full py-3.5 bg-white text-red-500 border-2 border-red-50 rounded-2xl font-black uppercase tracking-[0.2em] active:scale-[0.97] text-xs hover:bg-red-50 transition-colors">Discard</button>
               </div>
               <p className="text-[9px] text-emerald-400/60 font-medium px-4 mt-6">Work time under 1 minute will be automatically discarded.</p>
             </div>

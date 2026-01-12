@@ -13,7 +13,7 @@ function createWindow() {
     title: "Emerald Timer",
     icon: path.join(__dirname, 'public/logo.png'),
     frame: false, // Hide native title bar
-    transparent: true, // Allow rounded corners for the whole window if needed
+    transparent: false, // Solid window
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -21,7 +21,7 @@ function createWindow() {
       preload: path.join(__dirname, 'preload.js')
     },
     autoHideMenuBar: true,
-    backgroundColor: '#00000000' // Transparent background to allow CSS rounded corners
+    backgroundColor: '#f0f9f0' // Match app background color
   });
 
   // In production, load the built index.html from the dist folder
