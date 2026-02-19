@@ -1,61 +1,104 @@
-# Emerald Timer 💎
+# Emerald Timer 💎 | 翡翠计时器
 
-Visual Time Tracker & Life Journal. A beautiful, frameless Electron app for focus and reflection.
+> **视觉化时间追踪与生命日记** - 为专注而生，为思考而留。
+> 可视化时间追踪、ADHD 友好的灵感捕获与多维生产力分析。
 
-## ✨ Features
+## 🎯 应用场景与核心价值
 
-- **Mini Mode**: A floating, always-on-top widget for your desktop.
-- **Visual Timeline**: Track your focus sessions with a beautiful interactive timeline.
-- **Life Journal**: Capture moments and reflect on your productivity.
-- **Smart Analytics**: View your progress by day, week, month, or year.
-- **Customizable**: Set your own focus/rest intervals and category colors.
+Emerald Timer 不仅仅是一个番茄钟，它是一个专为需要**高视觉反馈**和**即时专注启动**的用户设计的伴侣。
 
-## 🚀 Getting Started
+### 🧠 ADHD 友好设计
+对于 ADHD（注意缺陷多动障碍）用户，开始一项任务往往是最难的。Emerald Timer 通过以下方式提供帮助：
+*   **极简启动**：首页一键进入专注模式，无需复杂配置，减少启动焦虑。
+*   **低压反馈**：通过平滑的视觉进度条和可选的“迷你模式”悬浮窗，提供持续但不间断的存在感提醒。
+*   **灵感备忘 (Muse)**：在专注过程中突然产生的杂念或灵感？无需切换窗口，直接在 Journal 侧边栏记录，减少任务切换带来的分心。
 
-### Prerequisites
+### ⏱️ 时间管理
+*   **灵活的任务分类**：支持工作、学习、健身、休息等多种自定义分类，并配以直观的图标和颜色。
+*   **正向与倒计时的平衡**：既支持传统的番茄钟工作法，也支持对超时任务的自动追踪，让你看清时间的真实流向。
 
-- [Node.js](https://nodejs.org/) (v18 or later recommended)
+### ✍️ 生命日记 (Journal)
+*   **计划与复盘同步**：在一个界面内完成今日目标的制定与专注心得的捕获。
+*   **图文并茂**：支持为每一笔记录或每一个灵感点添加压缩后的图片，支持剪贴板直接粘贴，让记忆更直观。
 
-### Installation
+---
 
-1. Clone the repository:
-   ```bash
-   git clone <your-repo-url>
-   cd emerald-timer
-   ```
+## 🚀 核心功能亮点
 
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
+*   **💎 迷你模式 (Mini Mode)**：一键切换为桌面悬浮小窗，始终置顶。无论是工作还是网课，时间进度一目了然。
+*   **📈 交互式时间轴**：在“历史”页面中，采用类似视频剪辑软件的水平时间轴设计，支持缩放与拖拽，直观展示一天的专注分布。
+*   **📊 多维统计分析**：按日、周、月、年四个维度自动聚合数据，通过热力图和占比图分析你的精力分配。
+*   **� 私有化同步 (Local + Repository)**：不同于传统 App 的集中式服务器存储。Emerald Timer 采用“本地优先 + 自建仓库”模式，通过 GitLab API 将数据同步至你个人的**私有仓库**。这意味着你的专注记录、灵感日记和照片完全由你自己掌控，极大地提升了数据安全性与私密性。
+*   **🎨 全自定义分类**：支持自定义增加、修改、删除分类及其对应的颜色与 Lucide 图标。
 
-3. Run in development mode:
-   ```bash
-   npm run dev
-   ```
+---
 
-4. Build for Windows:
-   ```bash
-   npm run build
-   ```
+## 📱 应用界面介绍
 
-## 📦 Releases & CI
+### 1. 专注看版 (Focus Board)
+核心计时界面。展开 **Journal** 侧边栏时，计时器会自动向左偏移，实现双栏并排的沉浸式工作空间。
 
-This project uses GitHub Actions to automatically build and release the Windows installer.
+### 2. 多维统计 (Analytics)
+包含“状态总览”与“数据图表”。可以查看不同分类的时间占比、专注时长趋势以及最长连续专注天数等。
 
-To trigger a new release:
-1. Update the version in `package.json`.
-2. Create and push a new git tag:
-   ```bash
-   git tag v1.0.0
-   git push origin v1.0.0
-   ```
-3. The CI will build the `.exe` and create a GitHub Release automatically.
+### 3. 时间轴历史 (History Timeline)
+最具特色的页面。支持通过鼠标滚轮缩放时间粒度，支持过滤分类。点击记录碎片可查看详情、编辑说明或添加图片。
 
-## 🛠️ Tech Stack
+### 4. 设置中心 (Settings) -> 分类管理
+在此定义你的生活模板。为不同的行为匹配专属颜色和图标，让时间记录变得色彩斑斓。
 
-- **Frontend**: React, TypeScript, Tailwind CSS
-- **Runtime**: Electron
-- **Build Tool**: Vite, electron-builder
-- **Icons**: Lucide React
-- **Charts**: Recharts
+---
+
+## � 隐私与安全性：Local + Repository 架构
+
+不同于市面上需要注册账号并将数据上传到开发者服务器的 App，Emerald Timer 采用了**“数据私有化”**的设计理念：
+
+1.  **本地优先**：所有专注记录、灵感日记和图片默认均存储在你的设备本地。
+2.  **个人仓库同步**：当你想在不同设备间同步时，你需要链接**你自己的私有 GitLab 仓库**。
+3.  **完全掌控**：数据直接在高可用的代码托管平台（如极狐GitLab）进行点对点传输。开发者无法通过任何后台手段查看到你的任何数据。
+4.  **离线可用**：在无网络环境下，所有功能完全正常运行，确保你的创作与专注不被打断。
+
+---
+
+## �💻 支持平台
+
+Emerald Timer 基于 Electron 构建，提供跨平台支持：
+*   **Windows (x64)**：提供完整的安装包 (.exe) 与便携版。
+*   **Linux (ARM64/x64)**：针对 Raspberry Pi 等 ARM 设备进行了优化，支持通过 `main.cjs` 自动适配窗口縮放限制。
+*   **Android (Capacitor)**：由于项目包含 Android 目录，支持打包为移动端应用（正在完善中）。
+
+---
+
+## 🛠️ 入门指南
+
+### 开发环境配置
+1.  **Node.js**: 推荐 v18+ 
+2.  **克隆项目**:
+    ```bash
+    git clone https://github.com/abc55667788/Timer.git
+    cd emerald-timer
+    ```
+3.  **安装依赖**: `npm install`
+4.  **启动开发版**: `npm run dev`
+
+### 构建发布版本
+*   **Windows**: `npm run build`
+*   **生成文件**: 输出至 `release-builds/` 目录下。
+
+---
+
+## 🛠️ 技术栈
+
+*   **前端**: React 18, TypeScript, Tailwind CSS
+*   **图形控制**: Lucide React (图标), Recharts (图表)
+*   **桌面驱动**: Electron
+*   **同步协议**: GitLab API (REST)
+*   **构建工具**: Vite, electron-builder
+
+---
+
+## 📄 开源说明
+本项目采用 MIT 协议。如果你喜欢这个项目，欢迎点个 ⭐。
+
+---
+*Powered by Emerald Team with ❤️*
