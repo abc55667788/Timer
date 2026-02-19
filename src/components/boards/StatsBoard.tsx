@@ -7,7 +7,7 @@ import {
   PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip,
   BarChart as ReBarChart, Bar, XAxis, YAxis, CartesianGrid, Legend, Tooltip
 } from 'recharts';
-import { LogEntry, StatsView, ViewMode, Category, DEFAULT_CATEGORY_DATA } from '../../types';
+import { LogEntry, StatsView, ViewMode, Category } from '../../types';
 import { formatTime, formatClock, formatDate, formatDisplayDateString, resolvePhaseTotals } from '../../utils/time';
 import MiniCalendar from '../MiniCalendar';
 
@@ -33,6 +33,7 @@ interface StatsBoardProps {
   handleTimelineMouseUpLeave: () => void;
   handleViewLog: (log: LogEntry) => void;
   getCategoryColor: (cat: Category) => string;
+  getCategoryIcon: (cat: Category) => any;
   setPreviewImage: (img: string | null) => void;
   setActiveTab: (tab: any) => void;
   handleSwapMainImage: (logId: string, imageUri: string) => void;
@@ -73,6 +74,7 @@ const StatsBoard: React.FC<StatsBoardProps> = ({
   handleTimelineMouseUpLeave,
   handleViewLog,
   getCategoryColor,
+  getCategoryIcon,
   setPreviewImage,
   setActiveTab,
   handleSwapMainImage,
@@ -214,7 +216,7 @@ const StatsBoard: React.FC<StatsBoardProps> = ({
                               <div className="flex justify-between items-start mb-1.5">
                                 <div className="flex items-center gap-2">
                                   <div className="p-1.5 bg-emerald-50 text-emerald-600 rounded-xl ring-1 ring-emerald-100/50">
-                                    {React.createElement(DEFAULT_CATEGORY_DATA[log.category].icon, {size: 16})}
+                                    {React.createElement(getCategoryIcon(log.category), {size: 16})}
                                   </div>
                                   <div>
                                     <div className="text-[9px] font-black uppercase text-emerald-300 tracking-[0.2em] leading-none mb-0.5">{formatClock(log.startTime)} — {log.endTime ? formatClock(log.endTime) : 'NOW'}</div>
@@ -286,7 +288,7 @@ const StatsBoard: React.FC<StatsBoardProps> = ({
                           <div key={item.name} className="bg-white px-3 py-1.5 rounded-xl border border-emerald-50 shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5 flex flex-col justify-center group/card" style={{ animationDelay: `${idx * 20}ms` }}>
                             <div className="flex items-center gap-2 mb-1">
                               <div className="w-6 h-6 rounded-lg flex items-center justify-center text-[10px] shadow-sm flex-shrink-0 transition-transform group-hover/card:scale-110" style={{ backgroundColor: `${getCategoryColor(item.name as Category)}15`, color: getCategoryColor(item.name as Category) }}>
-                                {React.createElement(DEFAULT_CATEGORY_DATA[item.name as Category].icon, { size: 12 })}
+                                {React.createElement(getCategoryIcon(item.name as Category), { size: 12 })}
                               </div>
                               <div className="flex flex-col min-w-0">
                                 <span className="text-[7px] font-black uppercase text-emerald-900/20 tracking-widest leading-none mb-0.5 truncate">{item.name}</span>
@@ -434,7 +436,7 @@ const StatsBoard: React.FC<StatsBoardProps> = ({
                       <div key={item.name} className="bg-white px-3 py-1.5 rounded-xl border border-emerald-50 shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5 flex flex-col justify-center" style={{ animationDelay: `${idx * 20}ms` }}>
                         <div className="flex items-center gap-2 mb-1">
                           <div className="w-6 h-6 rounded-lg flex items-center justify-center text-[10px] shadow-sm flex-shrink-0" style={{ backgroundColor: `${getCategoryColor(item.name as Category)}15`, color: getCategoryColor(item.name as Category) }}>
-                            {React.createElement(DEFAULT_CATEGORY_DATA[item.name as Category].icon, { size: 12 })}
+                            {React.createElement(getCategoryIcon(item.name as Category), { size: 12 })}
                           </div>
                           <div className="flex flex-col min-w-0">
                             <span className="text-[7px] font-black uppercase text-emerald-900/20 tracking-widest leading-none mb-0.5 truncate">{item.name}</span>
@@ -529,7 +531,7 @@ const StatsBoard: React.FC<StatsBoardProps> = ({
                       <div key={item.name} className="bg-white px-3 py-1.5 rounded-xl border border-emerald-50 shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5 flex flex-col justify-center" style={{ animationDelay: `${idx * 20}ms` }}>
                         <div className="flex items-center gap-2 mb-1">
                           <div className="w-6 h-6 rounded-lg flex items-center justify-center text-[10px] shadow-sm flex-shrink-0" style={{ backgroundColor: `${getCategoryColor(item.name as Category)}15`, color: getCategoryColor(item.name as Category) }}>
-                            {React.createElement(DEFAULT_CATEGORY_DATA[item.name as Category].icon, { size: 12 })}
+                            {React.createElement(getCategoryIcon(item.name as Category), { size: 12 })}
                           </div>
                           <div className="flex flex-col min-w-0">
                             <span className="text-[7px] font-black uppercase text-emerald-900/20 tracking-widest leading-none mb-0.5 truncate">{item.name}</span>

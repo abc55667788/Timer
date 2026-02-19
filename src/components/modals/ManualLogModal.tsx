@@ -1,6 +1,6 @@
 ﻿import React from 'react';
 import { X, Plus, Calendar, Clock, Edit3 } from 'lucide-react';
-import { Category, CATEGORIES, DEFAULT_CATEGORY_DATA } from '../../types';
+import { Category, CategoryData, CATEGORY_ICONS } from '../../types';
 
 interface ManualLogModalProps {
   wasMiniModeBeforeModal: boolean;
@@ -8,6 +8,7 @@ interface ManualLogModalProps {
   manualLog: { category: Category; description: string; date: string; startTime: string; endTime: string; images: string[] };
   setManualLog: (log: any) => void;
   manualLogError: string | null;
+  categories: CategoryData[];
   handleImageUpload: (e: React.ChangeEvent<HTMLInputElement>, target: 'current' | 'manual' | 'edit') => void;
   saveManualLog: () => void;
   setShowManualModal: (show: boolean) => void;
@@ -21,6 +22,7 @@ const ManualLogModal: React.FC<ManualLogModalProps> = ({
   manualLog,
   setManualLog,
   manualLogError,
+  categories,
   handleImageUpload,
   saveManualLog,
   setShowManualModal,
@@ -29,23 +31,23 @@ const ManualLogModal: React.FC<ManualLogModalProps> = ({
 }) => {
   const CategoryPicker = () => (
     <div className="grid grid-cols-4 gap-2">
-      {CATEGORIES.map(cat => {
-        const isSelected = manualLog.category === cat;
-        const Icon = DEFAULT_CATEGORY_DATA[cat].icon;
+      {categories.map((cat, idx) => {
+        const isSelected = manualLog.category === cat.name;
+        const Icon = CATEGORY_ICONS[cat.icon as keyof typeof CATEGORY_ICONS] || CATEGORY_ICONS.Briefcase;
         return (
           <button
-            key={cat}
-            onClick={() => setManualLog({...manualLog, category: cat})}
+            key={idx}
+            onClick={() => setManualLog({...manualLog, category: cat.name})}
             className={`flex flex-col items-center justify-center p-2 rounded-2xl border-2 transition-all ${
               isSelected 
                 ? 'border-emerald-500 bg-emerald-50 shadow-sm' 
                 : 'border-transparent bg-gray-50/50 hover:bg-gray-100'
             }`}
           >
-            <div className={`p-1.5 rounded-lg mb-1 ${isSelected ? 'text-emerald-600 font-bold' : 'text-gray-400'}`}>
+            <div className={`p-1.5 rounded-lg mb-1 transition-colors ${isSelected ? 'font-bold' : 'text-gray-400'}`} style={isSelected ? { color: cat.color, backgroundColor: `${cat.color}15` } : {}}>
               <Icon size={14} />
             </div>
-            <span className={`text-[8px] font-black uppercase tracking-tighter ${isSelected ? 'text-emerald-700' : 'text-gray-400'}`}>{cat}</span>
+            <span className={`text-[8px] font-black uppercase tracking-tighter transition-colors ${isSelected ? '' : 'text-gray-400'}`} style={isSelected ? { color: cat.color } : {}}>{cat.name}</span>
           </button>
         );
       })}

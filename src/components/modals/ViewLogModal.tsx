@@ -3,7 +3,7 @@ import {
   X, Edit2, ChevronRight, FileText, Image as ImageIcon, Plus, 
   Trash2, Calendar, Clock 
 } from 'lucide-react';
-import { LogEntry, Category, CATEGORIES, DEFAULT_CATEGORY_DATA } from '../../types';
+import { LogEntry, Category, CategoryData, CATEGORY_ICONS } from '../../types';
 
 interface ViewLogModalProps {
   wasMiniModeBeforeModal: boolean;
@@ -37,6 +37,7 @@ interface ViewLogModalProps {
   handleSaveEdit: () => void;
   setPhaseEditTouched: (val: boolean) => void;
   viewingLogMetadata?: any;
+  categories: CategoryData[];
 }
 
 const ViewLogModal: React.FC<ViewLogModalProps> = ({
@@ -70,33 +71,36 @@ const ViewLogModal: React.FC<ViewLogModalProps> = ({
   isEditValid,
   handleSaveEdit,
   setPhaseEditTouched,
-  viewingLogMetadata
+  viewingLogMetadata,
+  categories
 }) => {
   const CategoryPicker = () => (
     <div className="grid grid-cols-4 gap-2">
-      {CATEGORIES.map(cat => {
-        const isSelected = viewingLog.category === cat;
-        const color = getCategoryColor(cat);
-        const Icon = DEFAULT_CATEGORY_DATA[cat].icon;
+      {categories.map((cat, idx) => {
+        const isSelected = viewingLog.category === cat.name;
+        const color = cat.color;
+        const Icon = CATEGORY_ICONS[cat.icon as keyof typeof CATEGORY_ICONS] || CATEGORY_ICONS.Briefcase;
         return (
           <button
-            key={cat}
-            onClick={() => setViewingLog({...viewingLog, category: cat})}
+            key={idx}
+            onClick={() => setViewingLog({...viewingLog, category: cat.name})}
             className={`flex flex-col items-center justify-center p-2 rounded-2xl border-2 transition-all ${
               isSelected 
                 ? 'border-emerald-500 bg-emerald-50 shadow-sm' 
                 : 'border-transparent bg-gray-50/50 hover:bg-gray-100'
             }`}
           >
-            <div className={`p-1.5 rounded-lg mb-1 ${isSelected ? 'text-emerald-600' : 'text-gray-400'}`} style={{ backgroundColor: isSelected ? `${color}15` : undefined }}>
+            <div className={`p-1.5 rounded-lg mb-1 transition-colors ${isSelected ? '' : 'text-gray-400'}`} style={{ backgroundColor: isSelected ? `${color}15` : undefined, color: isSelected ? color : undefined }}>
               <Icon size={14} />
             </div>
-            <span className={`text-[8px] font-black uppercase tracking-tighter ${isSelected ? 'text-emerald-700' : 'text-gray-400'}`}>{cat}</span>
+            <span className={`text-[8px] font-black uppercase tracking-tighter transition-colors ${isSelected ? '' : 'text-gray-400'}`} style={{ color: isSelected ? color : undefined }}>{cat.name}</span>
           </button>
         );
       })}
     </div>
   );
+
+  const ViewingIcon = CATEGORY_ICONS[categories.find(c => c.name === viewingLog.category)?.icon as keyof typeof CATEGORY_ICONS] || CATEGORY_ICONS.Briefcase;
 
   return (
     <div className={`fixed inset-0 ${(wasMiniModeBeforeModal || isMiniMode) ? 'bg-transparent' : 'bg-emerald-900/60 backdrop-blur-xl'} flex items-center justify-center p-6 z-[150] animate-in fade-in duration-300`}>
@@ -106,7 +110,7 @@ const ViewLogModal: React.FC<ViewLogModalProps> = ({
              <div className="animate-in fade-in slide-in-from-bottom-4">
                <div className="flex items-center gap-5 mb-8">
                   <div className="w-16 h-16 bg-emerald-50 rounded-[1.5rem] flex items-center justify-center text-emerald-600 shadow-inner ring-4 ring-white">
-                    {React.createElement(DEFAULT_CATEGORY_DATA[viewingLog.category].icon, { size: 32 })}
+                    <ViewingIcon size={32} style={{ color: getCategoryColor(viewingLog.category) }} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <h2 className="text-2xl font-black text-emerald-950 leading-tight pr-2 tracking-tighter truncate">{viewingLog.description || 'Focus Session'}</h2>
@@ -150,7 +154,7 @@ const ViewLogModal: React.FC<ViewLogModalProps> = ({
                    <div className="grid grid-cols-3 gap-3">
                      {viewingLog.images.map((img, idx) => (
                        <div key={idx} className="relative aspect-square rounded-2xl overflow-hidden border-4 border-white shadow-md group">
-                         <img src={img} className="w-full h-full object-cover cursor-zoom-in hover:scale-110 transition-transform duration-700" onClick={() => setPreviewImage({ url: img, logId: viewingLog.id })} />
+                         <img src={img} className="w-full h-full object-cover cursor-zoom-in hover:scale-110 transition-transform duration-700" onClick={() => setPreviewImage(img)} />
                        </div>
                      ))}
                    </div>

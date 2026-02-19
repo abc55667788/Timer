@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
-import { LogEntry, StatsView, CATEGORIES } from '../types';
+import { LogEntry, StatsView, CategoryData } from '../types';
 import { formatDate, formatDisplayDateString } from '../utils/time';
 
-const useStats = (logs: LogEntry[], selectedStatsDate: string, statsView: StatsView) => {
+const useStats = (logs: LogEntry[], selectedStatsDate: string, statsView: StatsView, categories: CategoryData[]) => {
   const relevantLogs = useMemo(() => {
     return statsView === 'day' 
       ? logs.filter(l => formatDate(l.startTime) === selectedStatsDate)
@@ -29,7 +29,11 @@ const useStats = (logs: LogEntry[], selectedStatsDate: string, statsView: StatsV
 
   const statsData = useMemo(() => {
     const categoryTotals: Record<string, number> = {};
-    CATEGORIES.forEach(cat => categoryTotals[cat] = 0);
+    categories.forEach(cat => {
+      categoryTotals[cat.name] = 0;
+    });
+    // Always ensure Rest exists as it's a special system category
+    if (!categoryTotals['Rest']) categoryTotals['Rest'] = 0;
     
     relevantLogs.forEach(log => {
       const duration = log.endTime && log.startTime ? Math.max(log.duration, Math.round((log.endTime - log.startTime) / 1000)) : log.duration;

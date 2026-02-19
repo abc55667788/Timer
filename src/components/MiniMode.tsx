@@ -1,6 +1,6 @@
 ﻿import React from 'react';
 import { 
-  Maximize2, Edit3, Square, Coffee, Briefcase, RotateCcw, Pause, Play 
+  Maximize2, Edit3, Square, Coffee, Briefcase, RotateCcw, Pause, Play, BookOpen 
 } from 'lucide-react';
 import { TimerPhase, Task } from '../types';
 
@@ -8,6 +8,8 @@ interface MiniModeProps {
   phase: TimerPhase;
   currentTask: Task;
   setIsMiniMode: (val: boolean) => void;
+  setIsJournalOpen: (val: boolean) => void;
+  setActiveTab: (val: any) => void;
   formatTime: (time: number) => string;
   displayTime: number;
   isOvertime: boolean;
@@ -26,6 +28,8 @@ const MiniMode: React.FC<MiniModeProps> = ({
   phase,
   currentTask,
   setIsMiniMode,
+  setIsJournalOpen,
+  setActiveTab,
   formatTime,
   displayTime,
   isOvertime,
@@ -63,6 +67,7 @@ const MiniMode: React.FC<MiniModeProps> = ({
             </div>
           </div>
           <div className="flex gap-1.5" style={{ WebkitAppRegion: 'no-drag' } as any}>
+             <button title="Journal Sidebar" onClick={() => { setIsMiniMode(false); setActiveTab('timer'); setIsJournalOpen(true); }} className="p-2 rounded-xl bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-all duration-300 ease-in-out active:scale-90 flex items-center justify-center"><BookOpen size={14}/></button>
              <button onClick={() => setShowLoggingModal(true)} className="p-2 rounded-xl bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-all duration-300 ease-in-out active:scale-90"><Edit3 size={14}/></button>
              {isCurrentlyRecording && (
                <button onClick={handleStopClick} className="p-2 rounded-xl bg-white text-red-500 border border-red-50 hover:bg-red-50 hover:text-red-600 transition-all duration-300 ease-in-out active:scale-90"><Square size={14}/></button>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Play, Pause, Square, Coffee, Briefcase, RotateCcw, Settings, Edit3 } from 'lucide-react';
+import { Play, Pause, Square, Coffee, Briefcase, RotateCcw, Settings, Edit3, BookOpen } from 'lucide-react';
 import { Category, TimerPhase, Task } from '../../types';
 import { formatTime } from '../../utils/time';
 
@@ -18,6 +18,8 @@ interface TimerBoardProps {
   handleSkipToNextPhase: () => void;
   handleSetupClick: () => void;
   setShowLoggingModal: (show: boolean) => void;
+  isJournalOpen: boolean;
+  setIsJournalOpen: (val: boolean) => void;
 }
 
 const TimerBoard: React.FC<TimerBoardProps> = ({
@@ -35,9 +37,23 @@ const TimerBoard: React.FC<TimerBoardProps> = ({
   handleSkipToNextPhase,
   handleSetupClick,
   setShowLoggingModal,
+  isJournalOpen,
+  setIsJournalOpen,
 }) => {
   return (
-    <div className="flex flex-col items-center justify-center gap-10 py-10 w-full h-full animate-in fade-in duration-500">
+    <div className="flex flex-col items-center justify-center gap-10 py-10 w-full h-full animate-in fade-in duration-500 relative">
+      {!isJournalOpen && (
+        <div className="absolute top-10 right-10">
+          <button 
+            onClick={() => setIsJournalOpen(true)} 
+            className="p-4 rounded-[1.5rem] bg-white text-emerald-600 shadow-xl border border-emerald-50 hover:shadow-emerald-500/10 transition-all duration-300 active:scale-95 group"
+            title="Open Journal"
+          >
+            <BookOpen size={24} className="group-hover:scale-110 transition-transform"/>
+          </button>
+        </div>
+      )}
+
       <div className="flex items-center gap-2 px-5 py-2 bg-emerald-50 rounded-full border border-emerald-100/50">
         <div className={`w-2 h-2 rounded-full ${phase === 'work' ? 'bg-emerald-500' : 'bg-emerald-400'} ${isActive ? 'animate-pulse' : ''}`} />
         <span className="text-[10px] font-black uppercase tracking-[0.1em] text-emerald-700">{isActive ? (phase === 'work' ? 'Focusing' : 'Resting') : 'Idle'}</span>

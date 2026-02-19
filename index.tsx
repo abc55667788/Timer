@@ -15,11 +15,12 @@ import {
   StatsView,
   ViewMode,
   NotificationStatus,
-  DEFAULT_CATEGORY_DATA,
-  CATEGORIES,
+  CATEGORY_ICONS,
+  DEFAULT_CATEGORIES,
   APP_LOGO,
   Goal,
-  Inspiration
+  Inspiration,
+  CategoryData
 } from './src/types';
 import { formatTime, formatClock, formatDate, formatDisplayDate, formatDisplayDateString, resolvePhaseTotals, pad2 } from './src/utils/time';
 import { compressImage } from './src/utils/media';
@@ -44,7 +45,8 @@ import MiniMode from './src/components/MiniMode';
 // --- Main App Component ---
 function EmeraldTimer() {
   const [isMiniMode, setIsMiniMode] = useState(false);
-  const [activeTab, setActiveTab] = useState<'timer' | 'stats' | 'logs' | 'journal'>('timer');
+  const [activeTab, setActiveTab] = useState<'timer' | 'stats' | 'logs' | 'settings'>('timer');
+  const [isJournalOpen, setIsJournalOpen] = useState(false);
   const [phase, setPhase] = useState<TimerPhase>('work');
   const [isActive, setIsActive] = useState(false);
   const [isPausedBySettings, setIsPausedBySettings] = useState(false);
@@ -54,7 +56,6 @@ function EmeraldTimer() {
   const phaseRef = useRef<TimerPhase>(phase);
   const resetSessionPhaseDurations = () => { sessionPhaseDurationsRef.current = { work: 0, rest: 0 }; };
   
-  const [showSetupModal, setShowSetupModal] = useState(false);
   const [showLoggingModal, setShowLoggingModal] = useState(false);
   const [showManualModal, setShowManualModal] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState<null | 'stop' | 'setup'>(null);
@@ -184,16 +185,26 @@ function EmeraldTimer() {
   const [tempWorkMin, setTempWorkMin] = useState('25');
   const [tempRestMin, setTempRestMin] = useState('5');
 
-  // Custom Category Colors State
-  const [categoryColors, setCategoryColors] = useState<Record<Category, string>>(() => {
-    const saved = localStorage.getItem('emerald-category-colors');
+  // Dynamic Categories State
+  const [categories, setCategories] = useState<CategoryData[]>(() => {
+    const saved = localStorage.getItem('emerald-categories');
     if (saved) return JSON.parse(saved);
-    const defaults: any = {};
-    CATEGORIES.forEach(c => defaults[c] = DEFAULT_CATEGORY_DATA[c].color);
-    return defaults;
+    return DEFAULT_CATEGORIES;
   });
 
-  const getCategoryColor = (cat: Category) => categoryColors[cat] || DEFAULT_CATEGORY_DATA[cat].color;
+  const getCategoryColor = (catName: Category) => {
+    const cat = categories.find(c => c.name === catName);
+    if (cat) return cat.color;
+    // Fallback search in DEFAULT_CATEGORIES if not found in current ones
+    const defCat = DEFAULT_CATEGORIES.find(c => c.name === catName);
+    return defCat ? defCat.color : '#10b981';
+  };
+
+  const getCategoryIcon = (catName: Category) => {
+    const cat = categories.find(c => c.name === catName);
+    const iconKey = cat ? cat.icon : (DEFAULT_CATEGORIES.find(c => c.name === catName)?.icon || 'Briefcase');
+    return CATEGORY_ICONS[iconKey as keyof typeof CATEGORY_ICONS];
+  };
 
   const [settings, setSettings] = useState(() => {
     const saved = localStorage.getItem('emerald-settings');
@@ -230,15 +241,15 @@ function EmeraldTimer() {
     return saved ? JSON.parse(saved) : [];
   });
 
-  const [inspirations, setInspirations] = useState<{ id: string; title: string; content: string; url?: string; date: number }[]>(() => {
+  const [inspirations, setInspirations] = useState<Inspiration[]>(() => {
     const saved = localStorage.getItem('emerald-inspirations');
     return saved ? JSON.parse(saved) : [];
   });
 
-  const [selectedInspiration, setSelectedInspiration] = useState<{ id: string; title: string; content: string; url?: string; date: number } | null>(null);
+  const [selectedInspiration, setSelectedInspiration] = useState<Inspiration | null>(null);
   const [showInspirationModal, setShowInspirationModal] = useState(false);
   const [newGoalText, setNewGoalText] = useState('');
-  const [newInspiration, setNewInspiration] = useState({ title: '', content: '', url: '' });
+  const [newInspiration, setNewInspiration] = useState({ title: '', content: '', url: '', images: [] as string[] });
 
   const [gitlabConfig, setGitlabConfig] = useState(() => {
     const saved = localStorage.getItem('emerald-gitlab-config');
@@ -255,7 +266,7 @@ function EmeraldTimer() {
 
   // Exit mini mode when opening modals or editing, and restore it when done
   useEffect(() => {
-    const isAnyModalOpen = !!(showSetupModal || showLoggingModal || showManualModal || showConfirmModal || showLogContinuationPrompt || viewingLog || phasePrompt || showInspirationModal || pendingSettingsChange);
+    const isAnyModalOpen = !!(showLoggingModal || showManualModal || showConfirmModal || showLogContinuationPrompt || viewingLog || phasePrompt || showInspirationModal || pendingSettingsChange);
     if (isMiniMode && isAnyModalOpen) {
       setWasMiniModeBeforeModal(true);
       setIsMiniMode(false);
@@ -263,7 +274,7 @@ function EmeraldTimer() {
       setIsMiniMode(true);
       setWasMiniModeBeforeModal(false);
     }
-  }, [showSetupModal, showLoggingModal, showManualModal, showConfirmModal, showLogContinuationPrompt, viewingLog, phasePrompt, showInspirationModal, pendingSettingsChange, isMiniMode, wasMiniModeBeforeModal]);
+  }, [showLoggingModal, showManualModal, showConfirmModal, showLogContinuationPrompt, viewingLog, phasePrompt, showInspirationModal, pendingSettingsChange, isMiniMode, wasMiniModeBeforeModal]);
 
   const timerRef = useRef<number | null>(null);
   const timelineRef = useRef<HTMLDivElement>(null);
@@ -290,8 +301,8 @@ function EmeraldTimer() {
   }, [settings]);
 
   useEffect(() => {
-    localStorage.setItem('emerald-category-colors', JSON.stringify(categoryColors));
-  }, [categoryColors]);
+    localStorage.setItem('emerald-categories', JSON.stringify(categories));
+  }, [categories]);
 
   useEffect(() => {
     localStorage.setItem('emerald-goals', JSON.stringify(goals));
@@ -474,7 +485,7 @@ function EmeraldTimer() {
       setIsActive(false);
       setIsPausedBySettings(true);
     }
-    setShowSetupModal(true);
+    setActiveTab('settings');
   };
 
   const confirmAction = (save: boolean) => {
@@ -613,7 +624,7 @@ function EmeraldTimer() {
     setShowConfirmModal(null);
     setIsPausedBySettings(false);
     setCurrentTask({ category: 'Work', description: '', images: [], liveId: null });
-    setShowSetupModal(false);
+    setActiveTab('timer');
     setTempWorkMin((newSettings.workDuration / 60).toString());
     setTempRestMin((newSettings.restDuration / 60).toString());
     setPendingSettingsChange(null);
@@ -650,7 +661,7 @@ function EmeraldTimer() {
   };
 
   const closeSettingsWithoutSaving = () => {
-    setShowSetupModal(false);
+    setActiveTab('timer');
     if (isPausedBySettings) setIsActive(true);
   };
 
@@ -950,7 +961,7 @@ function EmeraldTimer() {
     }
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, target: 'current' | 'manual' | 'edit') => {
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, target: 'current' | 'manual' | 'edit' | 'inspiration') => {
     const files = Array.from(e.target.files || []) as File[];
     const promises = files.map(file => new Promise<string>((resolve) => {
       const reader = new FileReader();
@@ -962,14 +973,21 @@ function EmeraldTimer() {
       if (target === 'current') setCurrentTask(prev => ({ ...prev, images: [...prev.images, ...compressedBase64s] }));
       else if (target === 'manual') setManualLog(prev => ({ ...prev, images: [...prev.images, ...compressedBase64s] }));
       else if (target === 'edit') setViewingLog(prev => prev ? ({ ...prev, images: [...prev.images, ...compressedBase64s] }) : null);
+      else if (target === 'inspiration') {
+        if (selectedInspiration) setSelectedInspiration(prev => prev ? ({ ...prev, images: [...(prev.images || []), ...compressedBase64s] }) : null);
+        else setNewInspiration(prev => ({ ...prev, images: [...(prev.images || []), ...compressedBase64s] }));
+      }
     });
   };
 
-  const handleClipboardImagePaste = (e: React.ClipboardEvent<HTMLDivElement>) => {
-    if (!isEditMode || !viewingLog) return;
-    const items = Array.from(e.clipboardData?.items || []) as DataTransferItem[];
+  const handleClipboardImagePaste = (e: React.ClipboardEvent) => {
+    const target = showInspirationModal ? 'inspiration' : (viewingLog && isEditMode ? 'edit' : null);
+    if (!target) return;
+    
+    const items = Array.from((e as any).clipboardData?.items || []) as DataTransferItem[];
     const imageItems = items.filter(item => item.kind === 'file' && item.type.startsWith('image/'));
     if (imageItems.length === 0) return;
+    
     e.preventDefault();
     const fileToBase64 = imageItems.map(item => new Promise<string>((resolve) => {
       const file = item.getAsFile();
@@ -979,12 +997,17 @@ function EmeraldTimer() {
       reader.onerror = () => resolve('');
       reader.readAsDataURL(file);
     }));
+
     Promise.all(fileToBase64)
       .then(base64List => base64List.filter(Boolean) as string[])
       .then(validBase64s => Promise.all(validBase64s.map(base64 => compressImage(base64))))
       .then(pastedImages => {
         if (!pastedImages.length) return;
-        setViewingLog(prev => prev ? ({ ...prev, images: [...prev.images, ...pastedImages] }) : null);
+        if (target === 'edit') setViewingLog(prev => prev ? ({ ...prev, images: [...prev.images, ...pastedImages] }) : null);
+        else if (target === 'inspiration') {
+          if (selectedInspiration) setSelectedInspiration(prev => prev ? ({ ...prev, images: [...(prev.images || []), ...pastedImages] }) : null);
+          else setNewInspiration(prev => ({ ...prev, images: [...(prev.images || []), ...pastedImages] }));
+        }
       });
   };
 
@@ -1021,7 +1044,7 @@ function EmeraldTimer() {
   };
 
   const exportData = () => {
-    const data = JSON.stringify({ logs, settings, categoryColors, goals, inspirations });
+    const data = JSON.stringify({ logs, settings, categories, goals, inspirations });
     const blob = new Blob([data], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -1037,7 +1060,16 @@ function EmeraldTimer() {
         const parsed = JSON.parse(content);
         if (parsed.logs) setLogs(parsed.logs);
         if (parsed.settings) setSettings(parsed.settings);
-        if (parsed.categoryColors) setCategoryColors(parsed.categoryColors);
+        if (parsed.categories) {
+          setCategories(parsed.categories);
+        } else if (parsed.categoryColors) {
+          // Compatibility: Migrate old categoryColors to new categories format
+          const migrated = DEFAULT_CATEGORIES.map(def => ({
+            ...def,
+            color: parsed.categoryColors[def.name] || def.color
+          }));
+          setCategories(migrated);
+        }
         if (parsed.goals) setGoals(parsed.goals);
         if (parsed.inspirations) setInspirations(parsed.inspirations);
         return true;
@@ -1078,7 +1110,7 @@ function EmeraldTimer() {
       const data = JSON.stringify({ 
         logs, 
         settings, 
-        categoryColors, 
+        categories, 
         goals, 
         inspirations,
         lastSynced: new Date().toISOString()
@@ -1146,7 +1178,16 @@ function EmeraldTimer() {
       
       if (parsed.logs) setLogs(parsed.logs);
       if (parsed.settings) setSettings(parsed.settings);
-      if (parsed.categoryColors) setCategoryColors(parsed.categoryColors);
+      if (parsed.categories) {
+        setCategories(parsed.categories);
+      } else if (parsed.categoryColors) {
+        // Compatibility: Migrate old categoryColors to new categories format
+        const migrated = DEFAULT_CATEGORIES.map(def => ({
+          ...def,
+          color: parsed.categoryColors[def.name] || def.color
+        }));
+        setCategories(migrated);
+      }
       if (parsed.goals) setGoals(parsed.goals);
       if (parsed.inspirations) setInspirations(parsed.inspirations);
       
@@ -1171,7 +1212,7 @@ function EmeraldTimer() {
     calendarGridData,
     timelineRange,
     restTimeTotal
-  } = useStats(logs, selectedStatsDate, statsView);
+  } = useStats(logs, selectedStatsDate, statsView, categories);
 
   const filteredLogs = useMemo(() => {
     return logs.filter(log => {
@@ -1310,6 +1351,8 @@ function EmeraldTimer() {
           phase={phase}
           currentTask={currentTask}
           setIsMiniMode={setIsMiniMode}
+          setIsJournalOpen={setIsJournalOpen}
+          setActiveTab={setActiveTab}
           formatTime={formatTime}
           displayTime={displayTime}
           isOvertime={isOvertime}
@@ -1332,7 +1375,7 @@ function EmeraldTimer() {
               { id: 'timer', icon: Play, label: 'Focus' },
               { id: 'stats', icon: BarChart3, label: 'Analytics' },
               { id: 'logs', icon: Clock, label: 'History' },
-              { id: 'journal', icon: BookOpen, label: 'Journal' }
+              { id: 'settings', icon: Settings, label: 'Settings' }
             ].map(tab => (
               <button key={tab.id} onClick={() => setActiveTab(tab.id as any)} className={`flex-1 py-4 flex items-center justify-center gap-2 text-xs font-black uppercase tracking-widest relative transition-all ${activeTab === tab.id ? 'text-emerald-700' : 'text-emerald-300 hover:text-emerald-500'}`}>
                 <tab.icon size={16} /> <span className="hidden sm:inline">{tab.label}</span>
@@ -1341,97 +1384,141 @@ function EmeraldTimer() {
             ))}
           </nav>
 
-          <div className="flex-1 p-4 md:p-6 overflow-y-auto scrollbar-none">
+          <div className="flex-1 overflow-hidden">
             {activeTab === 'timer' && (
-              <TimerBoard 
-                phase={phase}
-                isActive={isActive}
-                timeLeft={timeLeft}
-                settings={settings}
-                displayTime={displayTime}
-                isOvertime={isOvertime}
-                overtimeSeconds={overtimeSeconds}
-                currentTask={currentTask}
-                isCurrentlyRecording={isCurrentlyRecording}
-                handleStart={handleStart}
-                handleStopClick={handleStopClick}
-                handleSkipToNextPhase={handleSkipToNextPhase}
-                handleSetupClick={handleSetupClick}
-                setShowLoggingModal={setShowLoggingModal}
-              />
+              <div className="flex h-full w-full overflow-hidden relative">
+                <div className={`flex-1 transition-all duration-500 ease-in-out ${isJournalOpen ? 'mr-[400px]' : 'mr-0'}`}>
+                  <TimerBoard 
+                    phase={phase}
+                    isActive={isActive}
+                    timeLeft={timeLeft}
+                    settings={settings}
+                    displayTime={displayTime}
+                    isOvertime={isOvertime}
+                    overtimeSeconds={overtimeSeconds}
+                    currentTask={currentTask}
+                    isCurrentlyRecording={isCurrentlyRecording}
+                    handleStart={handleStart}
+                    handleStopClick={handleStopClick}
+                    handleSkipToNextPhase={handleSkipToNextPhase}
+                    handleSetupClick={handleSetupClick}
+                    setShowLoggingModal={setShowLoggingModal}
+                    isJournalOpen={isJournalOpen}
+                    setIsJournalOpen={setIsJournalOpen}
+                  />
+                </div>
+                
+                {/* Journal Sidebar Overlay for Timer View */}
+                <div className={`absolute top-0 right-0 h-full z-40 transition-all duration-500 ease-in-out ${isJournalOpen ? 'translate-x-0 w-[400px] opacity-100' : 'translate-x-[100%] w-[400px] opacity-0 pointer-events-none'}`}>
+                  <JournalBoard 
+                    goals={goals}
+                    setGoals={setGoals}
+                    newGoalText={newGoalText}
+                    setNewGoalText={setNewGoalText}
+                    inspirations={inspirations}
+                    setNewInspiration={setNewInspiration}
+                    setSelectedInspiration={setSelectedInspiration}
+                    setShowInspirationModal={setShowInspirationModal}
+                    setPreviewImage={setPreviewImage}
+                    onClose={() => setIsJournalOpen(false)}
+                  />
+                </div>
+              </div>
             )}
 
             {activeTab === 'stats' && (
-              <StatsBoard 
-                logs={logs}
-                statsView={statsView}
-                viewMode={viewMode}
-                selectedStatsDate={selectedStatsDate}
-                isCalendarCollapsed={isCalendarCollapsed}
-                dayViewMode={dayViewMode}
-                timelineZoom={timelineZoom}
-                setSelectedStatsDate={setSelectedStatsDate}
-                setStatsView={setStatsView}
-                setIsCalendarCollapsed={setIsCalendarCollapsed}
-                setDayViewMode={setDayViewMode}
-                setTimelineZoom={setTimelineZoom}
-                setViewMode={setViewMode}
-                zoomIn={zoomIn}
-                zoomOut={zoomOut}
-                handleTimelineWheel={handleTimelineWheel}
-                handleTimelineMouseDown={handleTimelineMouseDown}
-                handleTimelineMouseMove={handleTimelineMouseMove}
-                handleTimelineMouseUpLeave={handleTimelineMouseUpLeave}
-                handleViewLog={handleViewLog}
-                getCategoryColor={getCategoryColor}
-                setPreviewImage={setPreviewImage}
-                setActiveTab={setActiveTab}
-                handleSwapMainImage={handleSwapMainImage}
-                statsData={statsData}
-                weekHistory={weekHistory}
-                monthHistory={monthHistory}
-                yearHistory={yearHistory}
-                yearMonthStats={yearMonthStats}
-                calendarGridData={calendarGridData}
-                timelineRange={timelineRange}
-                selectedDayLogs={selectedDayLogs}
-                relevantLogs={relevantLogs}
-                timelineRef={timelineRef}
-                MIN_ZOOM={MIN_ZOOM}
-                MAX_ZOOM={MAX_ZOOM}
-                restTimeTotal={restTimeTotal}
-              />
+              <div className="flex-1 p-4 md:p-6 h-full overflow-y-auto scrollbar-none">
+                <StatsBoard 
+                  logs={logs}
+                  statsView={statsView}
+                  viewMode={viewMode}
+                  selectedStatsDate={selectedStatsDate}
+                  isCalendarCollapsed={isCalendarCollapsed}
+                  dayViewMode={dayViewMode}
+                  timelineZoom={timelineZoom}
+                  setSelectedStatsDate={setSelectedStatsDate}
+                  setStatsView={setStatsView}
+                  setIsCalendarCollapsed={setIsCalendarCollapsed}
+                  setDayViewMode={setDayViewMode}
+                  setTimelineZoom={setTimelineZoom}
+                  setViewMode={setViewMode}
+                  zoomIn={zoomIn}
+                  zoomOut={zoomOut}
+                  handleTimelineWheel={handleTimelineWheel}
+                  handleTimelineMouseDown={handleTimelineMouseDown}
+                  handleTimelineMouseMove={handleTimelineMouseMove}
+                  handleTimelineMouseUpLeave={handleTimelineMouseUpLeave}
+                  handleViewLog={handleViewLog}
+                  getCategoryColor={getCategoryColor}
+                  getCategoryIcon={getCategoryIcon}
+                  setPreviewImage={setPreviewImage}
+                  setActiveTab={setActiveTab}
+                  handleSwapMainImage={handleSwapMainImage}
+                  statsData={statsData}
+                  weekHistory={weekHistory}
+                  monthHistory={monthHistory}
+                  yearHistory={yearHistory}
+                  yearMonthStats={yearMonthStats}
+                  calendarGridData={calendarGridData}
+                  timelineRange={timelineRange}
+                  selectedDayLogs={selectedDayLogs}
+                  relevantLogs={relevantLogs}
+                  timelineRef={timelineRef}
+                  MIN_ZOOM={MIN_ZOOM}
+                  MAX_ZOOM={MAX_ZOOM}
+                  restTimeTotal={restTimeTotal}
+                />
+              </div>
             )}
 
             {activeTab === 'logs' && (
-              <LogsBoard 
-                filteredLogs={filteredLogs}
-                showFilters={showFilters}
-                setShowFilters={setShowFilters}
-                filterCategory={filterCategory}
-                setFilterCategory={setFilterCategory}
-                filterStartDate={filterStartDate}
-                setFilterStartDate={setFilterStartDate}
-                filterEndDate={filterEndDate}
-                setFilterEndDate={setFilterEndDate}
-                setShowManualModal={setShowManualModal}
-                handleViewLog={handleViewLog}
-                getCategoryColor={getCategoryColor}
-                setPreviewImage={setPreviewImage}
-              />
+              <div className="flex-1 p-4 md:p-6 h-full overflow-y-auto scrollbar-none">
+                <LogsBoard 
+                  filteredLogs={filteredLogs}
+                  showFilters={showFilters}
+                  setShowFilters={setShowFilters}
+                  filterCategory={filterCategory}
+                  setFilterCategory={setFilterCategory}
+                  filterStartDate={filterStartDate}
+                  setFilterStartDate={setFilterStartDate}
+                  filterEndDate={filterEndDate}
+                  setFilterEndDate={setFilterEndDate}
+                  setShowManualModal={setShowManualModal}
+                  handleViewLog={handleViewLog}
+                  getCategoryColor={getCategoryColor}
+                  getCategoryIcon={getCategoryIcon}
+                  setPreviewImage={setPreviewImage}
+                  categories={categories}
+                />
+              </div>
             )}
 
-            {activeTab === 'journal' && (
-              <JournalBoard 
-                goals={goals}
-                setGoals={setGoals}
-                newGoalText={newGoalText}
-                setNewGoalText={setNewGoalText}
-                inspirations={inspirations}
-                setNewInspiration={setNewInspiration}
-                setSelectedInspiration={setSelectedInspiration}
-                setShowInspirationModal={setShowInspirationModal}
-              />
+            {activeTab === 'settings' && (
+              <div className="flex-1 h-full">
+                <SetupModal 
+                  wasMiniModeBeforeModal={false}
+                  isMiniMode={false}
+                  tempWorkMin={tempWorkMin}
+                  tempRestMin={tempRestMin}
+                  setTempWorkMin={setTempWorkMin}
+                  setTempRestMin={setTempRestMin}
+                  categories={categories}
+                  setCategories={setCategories}
+                  notificationPermission={notificationPermission}
+                  requestNotificationPermission={requestNotificationPermission}
+                  gitlabConfig={gitlabConfig}
+                  setGitlabConfig={setGitlabConfig}
+                  isSyncing={isSyncing}
+                  syncFromGitLab={syncFromGitLab}
+                  syncToGitLab={syncToGitLab}
+                  lastSyncedAt={lastSyncedAt}
+                  exportData={exportData}
+                  importData={importData}
+                  handleApplySettings={handleApplySettings}
+                  closeSettingsWithoutSaving={() => setActiveTab('timer')}
+                  isPage={true}
+                />
+              </div>
             )}
           </div>
         </main>
@@ -1471,6 +1558,7 @@ function EmeraldTimer() {
           handleSaveEdit={handleSaveEdit}
           setPhaseEditTouched={setPhaseEditTouched}
           viewingLogMetadata={viewingLogMetadata}
+          categories={categories}
         />
       )}
 
@@ -1493,6 +1581,7 @@ function EmeraldTimer() {
           manualLog={manualLog}
           setManualLog={setManualLog}
           manualLogError={manualLogError}
+          categories={categories}
           handleImageUpload={handleImageUpload}
           saveManualLog={saveManualLog}
           setShowManualModal={setShowManualModal}
@@ -1511,34 +1600,10 @@ function EmeraldTimer() {
           tempRestMin={tempRestMin}
           setTempWorkMin={setTempWorkMin}
           setTempRestMin={setTempRestMin}
+          categories={categories}
           handleImageUpload={handleImageUpload}
           setShowLoggingModal={setShowLoggingModal}
           handleApplySettings={handleApplySettings}
-        />
-      )}
-
-      {showSetupModal && (
-        <SetupModal 
-          wasMiniModeBeforeModal={wasMiniModeBeforeModal}
-          isMiniMode={isMiniMode}
-          tempWorkMin={tempWorkMin}
-          tempRestMin={tempRestMin}
-          setTempWorkMin={setTempWorkMin}
-          setTempRestMin={setTempRestMin}
-          categoryColors={categoryColors}
-          setCategoryColors={setCategoryColors}
-          notificationPermission={notificationPermission}
-          requestNotificationPermission={requestNotificationPermission}
-          gitlabConfig={gitlabConfig}
-          setGitlabConfig={setGitlabConfig}
-          isSyncing={isSyncing}
-          syncFromGitLab={syncFromGitLab}
-          syncToGitLab={syncToGitLab}
-          lastSyncedAt={lastSyncedAt}
-          exportData={exportData}
-          importData={importData}
-          handleApplySettings={handleApplySettings}
-          closeSettingsWithoutSaving={closeSettingsWithoutSaving}
         />
       )}
 
@@ -1561,6 +1626,9 @@ function EmeraldTimer() {
           setSelectedInspiration={setSelectedInspiration}
           setShowInspirationModal={setShowInspirationModal}
           setInspirations={setInspirations}
+          handleImageUpload={handleImageUpload}
+          handleClipboardImagePaste={handleClipboardImagePaste}
+          setPreviewImage={setPreviewImage}
         />
       )}
 

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Clock, Filter as FilterIcon, Plus, Search } from 'lucide-react';
-import { LogEntry, Category, CATEGORIES, DEFAULT_CATEGORY_DATA } from '../../types';
+import { LogEntry, Category, CategoryData } from '../../types';
 import { formatTime, formatDisplayDate } from '../../utils/time';
 import { Image as ImageIcon } from 'lucide-react';
 
@@ -17,7 +17,9 @@ interface LogsBoardProps {
   setShowManualModal: (show: boolean) => void;
   handleViewLog: (log: LogEntry) => void;
   getCategoryColor: (cat: Category) => string;
+  getCategoryIcon: (cat: Category) => any;
   setPreviewImage: (img: string | null) => void;
+  categories: CategoryData[];
 }
 
 const LogsBoard: React.FC<LogsBoardProps> = ({
@@ -33,7 +35,9 @@ const LogsBoard: React.FC<LogsBoardProps> = ({
   setShowManualModal,
   handleViewLog,
   getCategoryColor,
-  setPreviewImage
+  getCategoryIcon,
+  setPreviewImage,
+  categories
 }) => {
   return (
     <div className="space-y-8 w-full pb-10">
@@ -71,15 +75,15 @@ const LogsBoard: React.FC<LogsBoardProps> = ({
                 >
                   All
                 </button>
-                {CATEGORIES.map(cat => (
+                {categories.map((cat, idx) => (
                   <button 
-                    key={cat}
-                    onClick={() => setFilterCategory(cat as any)} 
+                    key={idx}
+                    onClick={() => setFilterCategory(cat.name as any)} 
                     className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
-                      filterCategory === cat ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-100' : 'bg-white text-emerald-400 border border-emerald-100 hover:bg-emerald-50'
+                      filterCategory === cat.name ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-100' : 'bg-white text-emerald-400 border border-emerald-100 hover:bg-emerald-50'
                     }`}
                   >
-                    {cat}
+                    {cat.name}
                   </button>
                 ))}
               </div>
@@ -135,7 +139,7 @@ const LogsBoard: React.FC<LogsBoardProps> = ({
             >
               <div className="flex gap-4 items-center flex-1 min-w-0">
                 <div className="w-12 h-12 bg-emerald-50 rounded-[1.25rem] flex-shrink-0 flex items-center justify-center text-emerald-600">
-                  {React.createElement(DEFAULT_CATEGORY_DATA[log.category].icon, {size: 20})}
+                  {React.createElement(getCategoryIcon(log.category), {size: 20})}
                 </div>
                 <div className="flex-1 min-w-0 pr-2">
                   <h4 className="font-black text-emerald-900 truncate tracking-tight text-sm mb-0.5">{log.description || 'Session'}</h4>
