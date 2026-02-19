@@ -2,6 +2,24 @@
 
 All notable changes to the Emerald Timer project will be documented in this file.
 
+## [1.3.2] - 2026-02-20
+
+### Added
+- **Dynamic UI Scaling**: Now supports a numeric zoom scaling input field (10%-300%) with "Enter-to-apply" logic. 
+- **Stats Board Grid Optimization**: 
+  - Redesigned the Month/Week view layout. 
+  - Month view now features a side-by-side layout (Data Grid & Category Stats) to eliminate white space on wide monitors.
+  - Week view now utilizes rectangular cards (`1.8:1`) for better horizontal density.
+  - Increased font sizes in grid cards for improved visibility on high-resolution screens.
+- **Ergonomics**: Repositioned the TimerBoard and StatsBoard views to stay near the top/center of the screen on ultra-wide monitors.
+
+### Fixed
+- **MiniCalendar Syntax**: Fixed a redundant tag error causing Babel compilation failure.
+- **Release Workflow**: Cleaned up duplicated fields in `release.yml` causing inconsistent CI releases.
+- **File Consolidation**: Synchronized `main.cjs` and `preload.cjs` as the primary entry points.
+
+---
+
 ## [1.3.0] - 2026-02-19
 
 ### Added

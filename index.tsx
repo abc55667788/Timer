@@ -258,6 +258,33 @@ function EmeraldTimer() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [lastSyncedAt, setLastSyncedAt] = useState(() => localStorage.getItem('emerald-last-synced') || '');
 
+  const [uiScale, setUiScale] = useState(() => {
+    const saved = localStorage.getItem('emerald-ui-scale');
+    return saved ? parseFloat(saved) : 1.0;
+  });
+
+  useEffect(() => {
+    localStorage.setItem('emerald-ui-scale', uiScale.toString());
+    // Apply zoom to the body or document element
+    (document.body.style as any).zoom = uiScale;
+  }, [uiScale]);
+
+  // Handle global wheel zoom
+  useEffect(() => {
+    const handleWheel = (e: WheelEvent) => {
+      if (e.ctrlKey) {
+        e.preventDefault();
+        const delta = e.deltaY > 0 ? -0.05 : 0.05;
+        setUiScale(prev => {
+          const next = Math.min(2.0, Math.max(0.5, prev + delta));
+          return Math.round(next * 100) / 100;
+        });
+      }
+    };
+    window.addEventListener('wheel', handleWheel, { passive: false });
+    return () => window.removeEventListener('wheel', handleWheel);
+  }, []);
+
   const [phasePrompt, setPhasePrompt] = useState<{ phase: TimerPhase; kind: PhasePromptKind } | null>(null);
   const REMINDER_INTERVAL = 10 * 60;
   const [nextReminderAt, setNextReminderAt] = useState(REMINDER_INTERVAL);
@@ -1516,6 +1543,8 @@ function EmeraldTimer() {
                   importData={importData}
                   handleApplySettings={handleApplySettings}
                   closeSettingsWithoutSaving={() => setActiveTab('timer')}
+                  uiScale={uiScale}
+                  setUiScale={setUiScale}
                   isPage={true}
                 />
               </div>

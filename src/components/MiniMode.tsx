@@ -44,7 +44,7 @@ const MiniMode: React.FC<MiniModeProps> = ({
   settings,
 }) => {
   return (
-    <div className="w-full h-full bg-white flex flex-col z-40 overflow-hidden select-none rounded-[2rem] border border-emerald-100 shadow-2xl" style={{ WebkitAppRegion: 'drag' } as any}>
+    <div className="w-full h-full bg-white flex flex-col z-40 overflow-hidden select-none rounded-[2rem] border-2 border-emerald-100/50" style={{ WebkitAppRegion: 'drag' } as any}>
       <div className="flex-1 flex items-center px-5">
         <div className="flex items-center justify-between w-full">
           <div className="flex flex-col">

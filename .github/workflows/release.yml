@@ -99,26 +99,25 @@ jobs:
         with:
           name: "Emerald Timer ${{ github.ref_name }}"
           body: |
-            ## 💎 Emerald Timer ${{ github.ref_name }} 正式版
-            这是一个专为 ADHD 优化的专注力工具，数据存储于本地及私有仓库。
-            
+            ## 💎 Emerald Timer ${{ github.ref_name }} 正式版 
+            此版本包含 UI 性能优化、大比例缩放支持、统计网格并列布局。
+
             ### 🌟 新特性 (New Features)
-            * **侧边栏自动偏移**：侧边栏展开时实时调整计时面板位置。
-            * **动态分类系统**：支持用户自定义分类的名称、图标及颜色。
-            * **Muse 灵感墙升级**：支持图片粘贴、上传及卡片内的实时媒体预览。
-            * **链接直达**：灵感墙卡片可直接点击外链，提升灵感捕捉效率。
+            * **动态缩放控制**：支持 10%-300% 范围内的精准 UI 缩放。
+            * **并列布局优化**：月统计图表在大屏下自动分栏，消除空白空间。
+            * **矩形周视图**：周视图采用更舒展的长方形卡片设计，提升信息密度。
+            * **UI 响应性**：调大统计网格日期和时长文字，视距更清晰。
             
-            ### 🔧 多平台适配与修复 (Fixes & Improvements)
-            * **Linux ARM (Wayland)**：修复了缩小模式窗口无法正确缩小的 UI 兼容性问题。
-            * **隐私保障**：完善了本地记录与 GitLab 私有化数据同步。
-            
+            ### 🔧 平台稳定性 (Fixes & Improvements)
+            * **Babel 语法修护**：修正了 MiniCalendar 组件中的冗余 JSX 闭合标签。
+            * **流程同步**：统一主进程入口为 `main.cjs` 确保构建一致性。
+            * **CI 工作流修复**：清理了 `release.yml` 中的冲突字段，恢复版本发布功能。
+
             ---
             *本版本由 GitHub Actions 自动构建发布。*
-          artifacts: "./dist/*.exe,./dist/*.exe.blockmap,./dist/*.AppImage,./dist/*.deb"
+          artifacts: "dist/*"
           token: ${{ secrets.GITHUB_TOKEN }}
           tag: ${{ github.ref_name }}
-          name: Release ${{ github.ref_name }}
-          body: "Automated Build (Windows & Linux ARM64) via GitHub Actions"
           allowUpdates: true
           draft: false
           prerelease: false

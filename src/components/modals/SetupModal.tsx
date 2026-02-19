@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { 
   X, Settings, Clock, Palette, Timer as TimerIcon, 
   AlertCircle, CheckCircle2, Globe, Key, Database, RefreshCw, 
-  Download, Upload, Cloud, Plus, Trash, Check
+  Download, Upload, Cloud, Plus, Trash, Check, Maximize2, Minus
 } from 'lucide-react';
 import { CategoryData, CATEGORY_ICONS, NotificationStatus, IconKey } from '../../types';
 
@@ -27,6 +27,8 @@ interface SetupModalProps {
   importData: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleApplySettings: () => void;
   closeSettingsWithoutSaving: () => void;
+  uiScale: number;
+  setUiScale: (val: number | ((prev: number) => number)) => void;
   isPage?: boolean;
 }
 
@@ -51,16 +53,23 @@ const SetupModal: React.FC<SetupModalProps> = ({
   importData,
   handleApplySettings,
   closeSettingsWithoutSaving,
+  uiScale,
+  setUiScale,
   isPage = false,
 }) => {
   const [editingIconIndex, setEditingIconIndex] = useState<number | null>(null);
+  const [scaleInputValue, setScaleInputValue] = useState((uiScale * 100).toFixed(0));
+
+  React.useEffect(() => {
+    setScaleInputValue((uiScale * 100).toFixed(0));
+  }, [uiScale]);
 
   const containerClasses = isPage 
     ? "w-full h-full flex flex-col bg-white overflow-hidden animate-in fade-in duration-500"
     : `fixed inset-0 ${(wasMiniModeBeforeModal || isMiniMode) ? 'bg-transparent' : 'bg-emerald-900/60 backdrop-blur-xl'} flex items-center justify-center p-6 z-[170] animate-in fade-in duration-300`;
 
   const contentClasses = isPage
-    ? "flex-1 flex flex-col w-full max-w-4xl mx-auto p-4 md:p-12 overflow-y-auto scrollbar-none"
+    ? "flex-1 flex flex-col w-full max-w-screen-xl mx-auto p-4 md:p-12 overflow-y-auto scrollbar-none"
     : "bg-white rounded-[2rem] p-7 max-w-sm w-full shadow-2xl relative ring-1 ring-emerald-100/50";
 
   const handleAddCategory = () => {
@@ -86,7 +95,7 @@ const SetupModal: React.FC<SetupModalProps> = ({
   return (
     <div className={containerClasses}>
       <div className={contentClasses} style={!isPage ? { WebkitAppRegion: 'drag' } as any : {}}>
-         <div style={{ WebkitAppRegion: 'no-drag' } as any} className={isPage ? "max-w-2xl mx-auto w-full" : "scrollbar-none overflow-y-auto max-h-[80vh]"}>
+         <div style={{ WebkitAppRegion: 'no-drag' } as any} className={isPage ? "max-w-4xl mx-auto w-full" : "scrollbar-none overflow-y-auto max-h-[80vh]"}>
            {!isPage && <button onClick={closeSettingsWithoutSaving} className="absolute top-4 right-4 p-2 bg-emerald-50 rounded-full text-emerald-300 hover:text-emerald-600 transition-all active:scale-90 z-50"><X size={18} /></button>}
            
            <div className={isPage ? "flex items-center justify-between mb-12" : "mb-7"}>
@@ -293,6 +302,72 @@ const SetupModal: React.FC<SetupModalProps> = ({
                          Last Cloud Sync: {lastSyncedAt}
                        </p>
                      )}
+                  </div>
+                </section>
+
+                <section>
+                  <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-400 mb-4 flex items-center gap-2"><Maximize2 size={14}/> Display Zoom</h3>
+                  <div className="bg-emerald-50/30 p-5 rounded-[2rem] border border-emerald-50">
+                    <div className="bg-white p-4 rounded-xl shadow-sm border border-emerald-50 flex flex-col gap-4">
+                      <div className="flex items-center justify-between gap-4">
+                         <span className="text-[10px] font-black text-emerald-900 uppercase tracking-widest leading-none">Global UI Scale</span>
+                         
+                         <div className="flex items-center gap-2 p-1 bg-emerald-50/50 rounded-xl">
+                            <button 
+                              onClick={() => setUiScale(prev => Math.max(0.5, Math.round((prev - 0.05) * 100) / 100))}
+                              className="p-1 px-2.5 bg-white text-emerald-600 rounded-lg shadow-sm hover:bg-emerald-600 hover:text-white transition-all active:scale-90"
+                            >
+                              <Minus size={10} strokeWidth={4} />
+                            </button>
+                            
+                            <div className="relative">
+                               <input 
+                                  type="number"
+                                  value={scaleInputValue}
+                                  onChange={(e) => setScaleInputValue(e.target.value)}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                      const val = parseInt(scaleInputValue);
+                                      if (!isNaN(val)) {
+                                        const scale = Math.min(2.0, Math.max(0.5, val / 100));
+                                        setUiScale(scale);
+                                        setScaleInputValue((scale * 100).toFixed(0));
+                                      }
+                                    }
+                                  }}
+                                  onBlur={() => {
+                                    const val = parseInt(scaleInputValue);
+                                    if (!isNaN(val)) {
+                                      const scale = Math.min(2.0, Math.max(0.5, val / 100));
+                                      setUiScale(scale);
+                                      setScaleInputValue((scale * 100).toFixed(0));
+                                    } else {
+                                      setScaleInputValue((uiScale * 100).toFixed(0));
+                                    }
+                                  }}
+                                  className="w-14 bg-white border border-emerald-100 rounded-lg py-1 px-2 text-center text-[10px] font-black text-emerald-900 outline-none focus:ring-2 focus:ring-emerald-500/10 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                               />
+                               <span className="absolute right-1 top-1/2 -translate-y-1/2 text-[8px] font-black text-emerald-300 pointer-events-none">%</span>
+                            </div>
+
+                            <button 
+                              onClick={() => setUiScale(prev => Math.min(2.0, Math.round((prev + 0.05) * 100) / 100))}
+                              className="p-1 px-2.5 bg-white text-emerald-600 rounded-lg shadow-sm hover:bg-emerald-600 hover:text-white transition-all active:scale-90"
+                            >
+                              <Plus size={10} strokeWidth={4} />
+                            </button>
+                         </div>
+                      </div>
+                      
+                      <div className="flex justify-between px-1">
+                        <span className="text-[8px] font-black text-emerald-200 uppercase tracking-tighter">Min: 50%</span>
+                        <span className="text-[8px] font-black text-emerald-200 uppercase tracking-tighter">Default: 100%</span>
+                        <span className="text-[8px] font-black text-emerald-200 uppercase tracking-tighter">Max: 200%</span>
+                      </div>
+                      <p className="text-[8px] font-black uppercase text-emerald-400/60 leading-relaxed">
+                        Tip: You can also use <span className="text-emerald-500">Ctrl + Scroll Wheel</span> to zoom anywhere.
+                      </p>
+                    </div>
                   </div>
                 </section>
 

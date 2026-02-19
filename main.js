@@ -8,28 +8,21 @@ function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1440,
     height: 900,
-    minWidth: 320, // Reduced to allow mini mode on Linux
-    minHeight: 80,  // Reduced to allow mini mode on Linux
+    minWidth: 1000,
+    minHeight: 700,
     title: "Emerald Timer",
     icon: path.join(__dirname, 'public/logo.png'),
-    frame: false, 
-    transparent: true, 
-    // Do not set backgroundColor here as it can sometimes conflict with transparency on Windows
-    hasShadow: false,
+    frame: false, // Hide native title bar
+    transparent: true, // Allow transparent background for rounded corners
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
       sandbox: true,
-      preload: path.join(__dirname, 'preload.cjs')
+      preload: path.join(__dirname, 'preload.js')
     },
-    autoHideMenuBar: true,
+    autoHideMenuBar: true
+    // backgroundColor: '#f0f9f0' removed to allow transparency
   });
-
-  // Explicitly set transparency
-  mainWindow.setBackgroundColor('#00000000');
-
-  // Enforce normal mode minimum size initially
-  mainWindow.setMinimumSize(1000, 700);
 
   // In production, load the built index.html from the dist folder
   const isDev = !app.isPackaged;
@@ -85,30 +78,19 @@ ipcMain.on('toggle-mini-mode', (event, isMini) => {
       originalSize = { width: size[0], height: size[1] };
       
       const miniWidth = 320;
-      const miniHeight = 84; // Slightly larger for safety
+      const miniHeight = 80;
       
-      // Order of operations for better Linux/ARM compatibility
-      mainWindow.setResizable(true);
+      mainWindow.setResizable(true); // Temporarily allow resize to set size
+      mainWindow.setMinimumSize(miniWidth, miniHeight);
+      mainWindow.setSize(miniWidth, miniHeight);
       
-      if (process.platform === 'linux') {
-        mainWindow.setMinimumSize(miniWidth, miniHeight);
-        mainWindow.setMaximumSize(miniWidth, miniHeight); 
-        mainWindow.setSize(miniWidth, miniHeight);
-      } else {
-        mainWindow.setMinimumSize(miniWidth, miniHeight);
-        mainWindow.setSize(miniWidth, miniHeight);
-      }
+      // Position at bottom-left
+      mainWindow.setPosition(20, screenHeight - miniHeight - 20);
       
-      // Use screen bottom-right
-      mainWindow.setPosition(screenWidth - miniWidth - 24, screenHeight - miniHeight - 24);
-      
-      mainWindow.setAlwaysOnTop(true, 'screen-saver');
+      mainWindow.setAlwaysOnTop(true);
       mainWindow.setResizable(false);
     } else {
       mainWindow.setResizable(true);
-      if (process.platform === 'linux') {
-         mainWindow.setMaximumSize(9999, 9999); // Unset limit
-      }
       mainWindow.setMinimumSize(1000, 700);
       mainWindow.setSize(originalSize.width, originalSize.height);
       

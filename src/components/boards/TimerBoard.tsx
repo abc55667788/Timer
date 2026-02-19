@@ -41,7 +41,7 @@ const TimerBoard: React.FC<TimerBoardProps> = ({
   setIsJournalOpen,
 }) => {
   return (
-    <div className="flex flex-col items-center justify-center gap-10 py-10 w-full h-full animate-in fade-in duration-500 relative">
+    <div className="flex flex-col items-center justify-start pt-20 md:pt-32 gap-12 w-full h-full animate-in fade-in duration-500 relative scrollbar-none overflow-y-auto">
       {!isJournalOpen && (
         <div className="absolute top-10 right-10">
           <button 
