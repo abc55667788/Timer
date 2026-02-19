@@ -2,6 +2,20 @@
 
 All notable changes to the Emerald Timer project will be documented in this file.
 
+## [1.3.3] - 2026-02-20
+
+### Added
+- **UI Responsiveness**: Removed fixed maximum width limits (`max-w-7xl`, `max-w-5xl`, etc.) from StatsBoard, SetupModal, and LogsBoard. The app now fully utilizes available window space in fullscreen mode.
+- **Dynamic Grid Layout**: Enhanced LogsBoard to support up to 5 columns on ultra-wide screens for better information density.
+- **Success Notifications**: Added a persistent "Preferences Saved Successfully!" notice after saving settings.
+
+### Changed
+- **Settings UX**: Consolidated "Save Changes" and "Save Preferences" into a single, prominent action button at the bottom of the Settings page.
+- **Navigation Logic**: Saving settings no longer automatically navigates the user back to the Focus view, allowing for contiguous configuration.
+
+### Fixed
+- **Layout Clipping**: Fixed an issue where the Settings content could be partially cut off or centered awkwardly on very large windows.
+
 ## [1.3.2] - 2026-02-20
 
 ### Added

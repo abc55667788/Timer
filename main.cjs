@@ -84,8 +84,8 @@ ipcMain.on('toggle-mini-mode', (event, isMini) => {
       const size = mainWindow.getSize();
       originalSize = { width: size[0], height: size[1] };
       
-      const miniWidth = 320;
-      const miniHeight = 84; // Slightly larger for safety
+      const miniWidth = 360; // 调宽一点
+      const miniHeight = 110; 
       
       // Order of operations for better Linux/ARM compatibility
       mainWindow.setResizable(true);
@@ -100,7 +100,7 @@ ipcMain.on('toggle-mini-mode', (event, isMini) => {
       }
       
       // Use screen bottom-right
-      mainWindow.setPosition(screenWidth - miniWidth - 24, screenHeight - miniHeight - 24);
+      mainWindow.setPosition(screenWidth - miniWidth - 32, screenHeight - miniHeight - 32);
       
       mainWindow.setAlwaysOnTop(true, 'screen-saver');
       mainWindow.setResizable(false);

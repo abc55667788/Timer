@@ -69,7 +69,7 @@ const SetupModal: React.FC<SetupModalProps> = ({
     : `fixed inset-0 ${(wasMiniModeBeforeModal || isMiniMode) ? 'bg-transparent' : 'bg-emerald-900/60 backdrop-blur-xl'} flex items-center justify-center p-6 z-[170] animate-in fade-in duration-300`;
 
   const contentClasses = isPage
-    ? "flex-1 flex flex-col w-full max-w-screen-xl mx-auto p-4 md:p-12 overflow-y-auto scrollbar-none"
+    ? "flex-1 flex flex-col w-full mx-auto p-4 md:p-12 overflow-y-auto scrollbar-none"
     : "bg-white rounded-[2rem] p-7 max-w-sm w-full shadow-2xl relative ring-1 ring-emerald-100/50";
 
   const handleAddCategory = () => {
@@ -95,16 +95,13 @@ const SetupModal: React.FC<SetupModalProps> = ({
   return (
     <div className={containerClasses}>
       <div className={contentClasses} style={!isPage ? { WebkitAppRegion: 'drag' } as any : {}}>
-         <div style={{ WebkitAppRegion: 'no-drag' } as any} className={isPage ? "max-w-4xl mx-auto w-full" : "scrollbar-none overflow-y-auto max-h-[80vh]"}>
+         <div style={{ WebkitAppRegion: 'no-drag' } as any} className={isPage ? "w-full" : "scrollbar-none overflow-y-auto max-h-[80vh]"}>
            {!isPage && <button onClick={closeSettingsWithoutSaving} className="absolute top-4 right-4 p-2 bg-emerald-50 rounded-full text-emerald-300 hover:text-emerald-600 transition-all active:scale-90 z-50"><X size={18} /></button>}
            
            <div className={isPage ? "flex items-center justify-between mb-12" : "mb-7"}>
              <h2 className={`${isPage ? 'text-3xl' : 'text-xl'} font-black text-emerald-950 tracking-tight flex items-center gap-3`}>
                <Settings size={isPage ? 32 : 22} className="text-emerald-500" /> Settings
              </h2>
-             {isPage && (
-               <button onClick={handleApplySettings} className="px-8 py-3 bg-emerald-600 text-white rounded-2xl font-black uppercase tracking-[0.2em] shadow-lg shadow-emerald-100 active:scale-[0.97] transition-all text-[11px]">Save Changes</button>
-             )}
            </div>
 
            <div className={`grid ${isPage ? 'grid-cols-1 md:grid-cols-2 gap-x-12' : ''} space-y-8`}>
@@ -120,7 +117,7 @@ const SetupModal: React.FC<SetupModalProps> = ({
                      </button>
                    </div>
                    <div className="bg-emerald-50/20 p-6 rounded-[2.5rem] border border-emerald-50/50">
-                      <div className="space-y-3 max-w-md mx-auto">
+                      <div className={`space-y-3 ${isPage ? 'w-full' : 'max-w-md mx-auto'}`}>
                          {categories.map((cat, idx) => (
                            <div key={idx} className="flex items-center gap-4 bg-white p-2.5 pl-3 rounded-[1.5rem] shadow-sm border border-emerald-50 group hover:border-emerald-200 hover:shadow-md transition-all relative">
                               <div className="relative group/icon flex-shrink-0">
@@ -395,7 +392,17 @@ const SetupModal: React.FC<SetupModalProps> = ({
               </div>
            </div>
 
-           {!isPage && <button onClick={handleApplySettings} className="w-full mt-8 py-4 bg-emerald-600 text-white rounded-2xl font-black uppercase tracking-[0.2em] shadow-lg shadow-emerald-100 active:scale-[0.97] transition-all text-[11px]">Save Preferences</button>}
+           {(isPage || !isPage) && (
+              <div className={`${isPage ? 'w-full pt-4 pb-20' : 'mt-8'} w-full transition-all`}>
+                 <button 
+                   onClick={handleApplySettings} 
+                   className="w-full py-4 bg-emerald-600 text-white rounded-2xl font-black uppercase tracking-[0.2em] shadow-lg shadow-emerald-100 active:scale-[0.97] transition-all text-[11px] flex items-center justify-center gap-2 hover:bg-emerald-700"
+                 >
+                   <CheckCircle2 size={16}/> Save Preferences
+                 </button>
+                 {isPage && <div className="h-10 w-full" />} {/* Extra breathing room for the tab layout */}
+              </div>
+           )}
          </div>
       </div>
     </div>

@@ -265,9 +265,9 @@ function EmeraldTimer() {
 
   useEffect(() => {
     localStorage.setItem('emerald-ui-scale', uiScale.toString());
-    // Apply zoom to the body or document element
-    (document.body.style as any).zoom = uiScale;
-  }, [uiScale]);
+    // Apply zoom to the body or document element - reset to 1 in mini mode to prevent clipping
+    (document.body.style as any).zoom = isMiniMode ? 1.0 : uiScale;
+  }, [uiScale, isMiniMode]);
 
   // Handle global wheel zoom
   useEffect(() => {
@@ -651,7 +651,13 @@ function EmeraldTimer() {
     setShowConfirmModal(null);
     setIsPausedBySettings(false);
     setCurrentTask({ category: 'Work', description: '', images: [], liveId: null });
-    setActiveTab('timer');
+    
+    if (activeTab === 'settings') {
+      showNotice('Preferences Saved Successfully!', 1500);
+    } else {
+      setActiveTab('timer');
+    }
+
     setTempWorkMin((newSettings.workDuration / 60).toString());
     setTempRestMin((newSettings.restDuration / 60).toString());
     setPendingSettingsChange(null);
@@ -1298,7 +1304,14 @@ function EmeraldTimer() {
       : 'Starting a new log resets the accumulated work/rest totals for the next block.';
 
   return (
-    <div className={`h-screen w-full ${(isMiniMode || wasMiniModeBeforeModal) ? 'bg-transparent' : 'bg-white'} text-emerald-900 flex flex-col overflow-hidden transition-all duration-300`}>
+    <div 
+      className={` ${(isMiniMode || wasMiniModeBeforeModal) ? 'bg-transparent' : 'bg-white'} text-emerald-900 flex flex-col overflow-hidden transition-all duration-300`}
+      style={isMiniMode ? { height: '100vh', width: '100vw' } : { 
+        height: `${(1 / uiScale) * 100}vh`, 
+        width: `${(1 / uiScale) * 100}vw`,
+        transformOrigin: 'top left' 
+      }}
+    >
       <style>{`
         .scrollbar-none::-webkit-scrollbar {
           display: none !important;

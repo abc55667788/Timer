@@ -343,7 +343,7 @@ const StatsBoard: React.FC<StatsBoardProps> = ({
           )}
 
           {statsView === 'month' && (
-            <div className="pb-10 space-y-6 animate-in fade-in slide-in-from-top-4 duration-500 max-w-7xl mx-auto">
+            <div className="pb-10 space-y-6 animate-in fade-in slide-in-from-top-4 duration-500 w-full">
                <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
                   {/* 统计网格天数卡片 - 占据左侧 8 列 */}
                   <div className="xl:col-span-8">
@@ -466,7 +466,7 @@ const StatsBoard: React.FC<StatsBoardProps> = ({
           )}
 
           {statsView === 'week' && (
-            <div className="pb-10 space-y-6 animate-in fade-in slide-in-from-top-4 duration-500 max-w-5xl mx-auto">
+            <div className="pb-10 space-y-6 animate-in fade-in slide-in-from-top-4 duration-500 w-full">
                <div className="bg-white rounded-[2rem] p-3 border border-emerald-50 shadow-sm overflow-hidden ring-1 ring-emerald-50/50">
                  <div className="grid grid-cols-7 gap-2">
                    {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d => (
@@ -581,9 +581,9 @@ const StatsBoard: React.FC<StatsBoardProps> = ({
           )}
 
           {statsView === 'year' && (
-            <div className="space-y-4 pb-10 animate-in fade-in slide-in-from-bottom-4">
+            <div className="space-y-4 pb-10 animate-in fade-in slide-in-from-bottom-4 w-full">
               <div className="bg-white rounded-[2.5rem] p-5 border border-emerald-50 shadow-sm overflow-hidden ring-1 ring-emerald-50/50">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 gap-4">
                   {yearMonthStats.map((m, idx) => (
                     <div 
                       key={idx} 
