@@ -45,7 +45,7 @@
         "nsis",
         "portable"
       ],
-      "icon": "https://cdn-icons-png.flaticon.com/512/3569/3569974.png"
+      "icon": "public/logo.png"
     },
     "linux": {
       "target": [

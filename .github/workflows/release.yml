@@ -9,8 +9,8 @@ permissions:
   contents: write
 
 jobs:
-  release:
-    name: Build & Release (${{ matrix.os }})
+  build:
+    name: Build (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -23,7 +23,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
           cache: 'npm'
 
       - name: Install dependencies
@@ -34,9 +34,7 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libarchive-tools
-          # For arm64 cross-compilation on x64 Runners if building .deb with complex binaries
-          # electron-builder usually handles AppImage/deb for arm64 without extra qemu unless native deps are involved
+          sudo apt-get install -y libarchive-tools fakeroot dpkg-dev
 
       # Windows specific Cert setup (preserved from original)
       - name: Decode Windows signing certificate (PFX)
@@ -46,8 +44,10 @@ jobs:
           WIN_CERT_BASE64: ${{ secrets.WIN_CERT_BASE64 }}
         run: |
           if ([string]::IsNullOrEmpty($env:WIN_CERT_BASE64)) { return }
-          $certPath = Join-Path $env:TEMP "win_cert.p12"
-          [IO.File]::WriteAllBytes($certPath, [Convert]::FromBase64String($env:WIN_CERT_BASE64))
+          $certBase64 = $env:WIN_CERT_BASE64
+          $certBytes = [System.Convert]::FromBase64String($certBase64)
+          $certPath = [System.IO.Path]::Combine([System.IO.Path]::GetTempPath(), "win_cert.p12")
+          [System.IO.File]::WriteAllBytes($certPath, $certBytes)
           Write-Host "Wrote cert to $certPath"
           echo "CSC_LINK=file://$certPath" >> $env:GITHUB_ENV
           echo "CSC_KEY_PASSWORD=${{ secrets.WIN_CERT_PASSWORD }}" >> $env:GITHUB_ENV
@@ -67,12 +67,37 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          USE_HARD_LINKS: false
         run: npm run build:linux-arm
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts-${{ matrix.os }}
+          path: |
+            release-builds/*.exe
+            release-builds/*.exe.blockmap
+            release-builds/*.AppImage
+            release-builds/*.deb
+          if-no-files-found: ignore
+
+  publish:
+    name: Create GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./dist
+          merge-multiple: true
 
       - name: Create GitHub Release and upload artifacts
         uses: ncipollo/release-action@v1
         with:
-          artifacts: "release-builds/*.exe,release-builds/*.exe.blockmap,release-builds/*.AppImage,release-builds/*.deb"
+          artifacts: "./dist/*.exe,./dist/*.exe.blockmap,./dist/*.AppImage,./dist/*.deb"
           token: ${{ secrets.GITHUB_TOKEN }}
           tag: ${{ github.ref_name }}
           name: Release ${{ github.ref_name }}
