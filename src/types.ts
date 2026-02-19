@@ -23,6 +23,35 @@ export type StatsView = 'day' | 'week' | 'month' | 'year';
 export type ViewMode = 'charts' | 'grid';
 export type NotificationStatus = NotificationPermission | 'unsupported';
 
+export interface GitLabConfig {
+  token: string;
+  projectId: string;
+  branch: string;
+  filename: string;
+  url: string;
+}
+
+export interface Task {
+  category: Category;
+  description: string;
+  images: string[];
+  liveId: string | null;
+}
+
+export interface Goal {
+  id: string;
+  text: string;
+  completed: boolean;
+}
+
+export interface Inspiration {
+  id: string;
+  title: string;
+  content: string;
+  url?: string;
+  date: number;
+}
+
 export const DEFAULT_CATEGORY_DATA: Record<Category, { icon: any; color: string }> = {
   Work: { icon: Briefcase, color: '#3b82f6' }, // Blue
   Study: { icon: GraduationCap, color: '#10b981' }, // Green

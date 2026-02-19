@@ -13,15 +13,15 @@ function createWindow() {
     title: "Emerald Timer",
     icon: path.join(__dirname, 'public/logo.png'),
     frame: false, // Hide native title bar
-    transparent: false, // Solid window
+    transparent: true, // Transparent window for rounded corners
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
       sandbox: true,
-      preload: path.join(__dirname, 'preload.js')
+      preload: path.join(__dirname, 'preload.cjs')
     },
     autoHideMenuBar: true,
-    backgroundColor: '#f0f9f0' // Match app background color
+    // backgroundColor: '#f0f9f0' // Remove solid background for transparency
   });
 
   // In production, load the built index.html from the dist folder
@@ -35,10 +35,17 @@ function createWindow() {
     mainWindow.loadFile(path.join(__dirname, 'dist/index.html'));
   }
 
-  if (isDev) {
+  if (isDev || process.env.DEBUG === 'true') {
     mainWindow.webContents.openDevTools();
   }
 }
+
+// Global shortcut for opening devtools in production for debugging
+ipcMain.on('open-devtools', () => {
+  if (mainWindow) {
+    mainWindow.webContents.openDevTools();
+  }
+});
 
 let originalSize = { width: 1440, height: 900 };
 
@@ -98,9 +105,22 @@ ipcMain.on('toggle-mini-mode', (event, isMini) => {
 app.whenReady().then(() => {
   createWindow();
 
-  app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+  // Register shortcut to toggle DevTools in production
+  const { globalShortcut } = require('electron');
+  globalShortcut.register('CommandOrControl+Shift+I', () => {
+    if (mainWindow) {
+      mainWindow.webContents.toggleDevTools();
+    }
   });
+});
+
+app.on('will-quit', () => {
+  const { globalShortcut } = require('electron');
+  globalShortcut.unregisterAll();
+});
+
+app.on('activate', () => {
+  if (BrowserWindow.getAllWindows().length === 0) createWindow();
 });
 
 app.on('window-all-closed', () => {

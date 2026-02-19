@@ -1,0 +1,614 @@
+import React from 'react';
+import { 
+  History, Settings, PanelLeftOpen, PanelLeftClose, LayoutGrid, BarChart, 
+  ZoomOut, ZoomIn, ExternalLink, Image as ImageIcon
+} from 'lucide-react';
+import { 
+  PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip,
+  BarChart as ReBarChart, Bar, XAxis, YAxis, CartesianGrid, Legend, Tooltip
+} from 'recharts';
+import { LogEntry, StatsView, ViewMode, Category, DEFAULT_CATEGORY_DATA } from '../../types';
+import { formatTime, formatClock, formatDate, formatDisplayDateString, resolvePhaseTotals } from '../../utils/time';
+import MiniCalendar from '../MiniCalendar';
+
+interface StatsBoardProps {
+  logs: LogEntry[];
+  selectedStatsDate: string;
+  statsView: StatsView;
+  isCalendarCollapsed: boolean;
+  dayViewMode: 'timeline' | 'stats';
+  timelineZoom: number;
+  viewMode: ViewMode;
+  setSelectedStatsDate: (date: string) => void;
+  setStatsView: (view: StatsView) => void;
+  setIsCalendarCollapsed: (collapsed: boolean) => void;
+  setDayViewMode: (mode: 'timeline' | 'stats') => void;
+  setTimelineZoom: (zoom: number | ((z: number) => number)) => void;
+  setViewMode: (mode: ViewMode) => void;
+  zoomIn: () => void;
+  zoomOut: () => void;
+  handleTimelineWheel: (e: React.WheelEvent) => void;
+  handleTimelineMouseDown: (e: React.MouseEvent) => void;
+  handleTimelineMouseMove: (e: React.MouseEvent) => void;
+  handleTimelineMouseUpLeave: () => void;
+  handleViewLog: (log: LogEntry) => void;
+  getCategoryColor: (cat: Category) => string;
+  setPreviewImage: (img: string | null) => void;
+  setActiveTab: (tab: any) => void;
+  handleSwapMainImage: (logId: string, imageUri: string) => void;
+  statsData: any[];
+  weekHistory: any[];
+  monthHistory: any[];
+  yearHistory: any[];
+  yearMonthStats: any[];
+  calendarGridData: any[];
+  timelineRange: { start: number; end: number; tracks: LogEntry[][] };
+  selectedDayLogs: LogEntry[];
+  relevantLogs: LogEntry[];
+  timelineRef: React.RefObject<HTMLDivElement>;
+  MIN_ZOOM: number;
+  MAX_ZOOM: number;
+  restTimeTotal: number;
+}
+
+const StatsBoard: React.FC<StatsBoardProps> = ({
+  logs,
+  selectedStatsDate,
+  statsView,
+  isCalendarCollapsed,
+  dayViewMode,
+  timelineZoom,
+  viewMode,
+  setSelectedStatsDate,
+  setStatsView,
+  setIsCalendarCollapsed,
+  setDayViewMode,
+  setTimelineZoom,
+  setViewMode,
+  zoomIn,
+  zoomOut,
+  handleTimelineWheel,
+  handleTimelineMouseDown,
+  handleTimelineMouseMove,
+  handleTimelineMouseUpLeave,
+  handleViewLog,
+  getCategoryColor,
+  setPreviewImage,
+  setActiveTab,
+  handleSwapMainImage,
+  statsData,
+  weekHistory,
+  monthHistory,
+  yearHistory,
+  yearMonthStats,
+  calendarGridData,
+  timelineRange,
+  selectedDayLogs,
+  relevantLogs,
+  timelineRef,
+  MIN_ZOOM,
+  MAX_ZOOM,
+  restTimeTotal
+}) => {
+  const getTimelineWidth = (zoom: number) => {
+    return Math.max(800, ((timelineRange.end - timelineRange.start) / 60000) * 1.5 * zoom + 120);
+  };
+
+  return (
+    <div className="flex flex-row gap-10 items-start h-full animate-in fade-in slide-in-from-right-4 duration-500">
+      {!isCalendarCollapsed && (
+        <div className="flex-shrink-0 sticky top-0">
+          <MiniCalendar logs={logs} selectedDate={selectedStatsDate} onSelectDate={setSelectedStatsDate} viewType={statsView} />
+        </div>
+      )}
+      <div className="flex-1 space-y-6 w-full h-full flex flex-col overflow-hidden">
+        <div className="flex items-center justify-between bg-emerald-50/40 p-1.5 rounded-[2rem] flex-shrink-0 border border-emerald-100/50">
+           <div className="flex items-center gap-1.5">
+             <button onClick={() => setIsCalendarCollapsed(!isCalendarCollapsed)} className="p-2.5 text-emerald-600 hover:bg-white rounded-2xl transition-all shadow-sm">
+               {isCalendarCollapsed ? <PanelLeftOpen size={18}/> : <PanelLeftClose size={18}/>}
+             </button>
+             {([
+               { id: 'day', label: 'Day' },
+               { id: 'week', label: 'Week' },
+               { id: 'month', label: 'Month' },
+               { id: 'year', label: 'Year' }
+             ] as { id: StatsView, label: string }[]).map(v => (
+               <button key={v.id} onClick={() => setStatsView(v.id)} className={`px-5 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${statsView === v.id ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-200' : 'text-emerald-500 hover:bg-emerald-100'}`}>{v.label}</button>
+             ))}
+           </div>
+           <div className="flex items-center gap-3">
+              {statsView === 'day' && (
+                <div className="bg-white/80 p-1 rounded-2xl flex border border-emerald-100/50 shadow-sm">
+                   <button onClick={() => setDayViewMode('timeline')} className={`p-2 rounded-xl transition-all ${dayViewMode === 'timeline' ? 'bg-emerald-600 text-white shadow-md' : 'text-emerald-400 hover:text-emerald-600'}`} title="Timeline View"><LayoutGrid size={16}/></button>
+                   <button onClick={() => setDayViewMode('stats')} className={`p-2 rounded-xl transition-all ${dayViewMode === 'stats' ? 'bg-emerald-600 text-white shadow-md' : 'text-emerald-400 hover:text-emerald-600'}`} title="Stats View"><BarChart size={16}/></button>
+                </div>
+              )}
+              <div className="text-[10px] font-black text-emerald-800 pr-5 uppercase tracking-widest opacity-60">{formatDisplayDateString(selectedStatsDate)}</div>
+           </div>
+        </div>
+        
+        <div className="flex-1 overflow-y-auto pr-2 space-y-4 scrollbar-none pb-20">
+          {statsView === 'day' && (
+            <div className="space-y-8 animate-in zoom-in-95 duration-500">
+               {dayViewMode === 'timeline' ? (
+                 <>
+                   <div className="relative bg-white rounded-[3rem] border border-emerald-50 h-[240px] shadow-sm overflow-visible group flex-shrink-0">
+                      <div className="absolute top-3 right-3 z-30 flex items-center gap-2 bg-white/80 backdrop-blur-sm p-1 rounded-lg border border-emerald-50 shadow-sm">
+                        <button onClick={zoomOut} title="Zoom out" className={`p-2 rounded-md text-emerald-600 hover:bg-emerald-50 transition ${timelineZoom <= MIN_ZOOM ? 'opacity-40 cursor-not-allowed' : ''}`} disabled={timelineZoom <= MIN_ZOOM}><ZoomOut size={16} /></button>
+                        <div className="text-[12px] font-mono font-bold">{Math.round(timelineZoom * 100)}%</div>
+                        <button onClick={zoomIn} title="Zoom in" className={`p-2 rounded-md text-emerald-600 hover:bg-emerald-50 transition ${timelineZoom >= MAX_ZOOM ? 'opacity-40 cursor-not-allowed' : ''}`} disabled={timelineZoom >= MAX_ZOOM}><ZoomIn size={16} /></button>
+                      </div>
+
+                      <div 
+                        ref={timelineRef} 
+                        onWheel={handleTimelineWheel} 
+                        onMouseDown={handleTimelineMouseDown}
+                        onMouseMove={handleTimelineMouseMove}
+                        onMouseUp={handleTimelineMouseUpLeave}
+                        onMouseLeave={handleTimelineMouseUpLeave}
+                        onKeyDown={(e) => { if ((e as any).key === '+' || (e as any).key === '=' ) { e.preventDefault(); zoomIn(); } else if ((e as any).key === '-') { e.preventDefault(); zoomOut(); } }} 
+                        tabIndex={0} 
+                        title="Drag to scroll | Shift + Wheel to zoom, +/- to zoom" 
+                        style={{ touchAction: 'pan-y' }} 
+                        className="absolute inset-0 overflow-x-auto overscroll-contain scrollbar-none focus:outline-none cursor-grab"
+                      >
+                        <div className="h-full relative py-14 px-10" style={{ width: `${getTimelineWidth(timelineZoom)}px` }}>
+                          {Array.from({ length: Math.ceil((timelineRange.end - timelineRange.start) / 3600000) + 1 }).map((_, i) => {
+                            const hourDate = new Date(timelineRange.start + i * 3600000);
+                            return (
+                              <div key={i} className="absolute top-0 bottom-0 border-l border-emerald-100/30" style={{ left: `${i * 60 * 1.5 * timelineZoom + 40}px` }}>
+                                <span className="absolute bottom-4 -left-4 text-[10px] font-black text-emerald-200 tracking-tighter">{formatClock(hourDate.getTime(), timelineZoom)}</span>
+                              </div>
+                            );
+                          })}
+                          <div className="relative z-10 space-y-2 mt-2">
+                                {timelineRange.tracks.map((track, trackIdx) => (
+                              <div key={trackIdx} className="h-6 relative">
+                                {track.map(log => (
+                                  <div key={log.id} onClick={() => handleViewLog(log)} className="absolute top-0 bottom-0 rounded-xl cursor-pointer transition-all hover:brightness-110 hover:shadow-lg hover:z-50 border border-white/30 shadow-sm group/log z-10 overflow-visible" style={{ left: `${((log.startTime - timelineRange.start) / 60000) * 1.5 * timelineZoom + 40}px`, width: `${Math.max(((log.endTime && log.startTime ? Math.max(log.duration, (log.endTime - log.startTime) / 1000) : log.duration) / 60) * 1.5 * timelineZoom, 6)}px`, backgroundColor: getCategoryColor(log.category) }}>
+                                    <div className="absolute hidden group-hover/log:flex flex-col items-center bg-emerald-900 text-white p-2 rounded-[1rem] text-[10px] top-full mt-2 left-1/2 -translate-x-1/2 z-[100] shadow-2xl whitespace-nowrap animate-in fade-in zoom-in-95">
+                                      <div className="font-black uppercase tracking-widest mb-1">{log.category}</div>
+                                      <div className="opacity-60 font-mono">{formatClock(log.startTime, timelineZoom)} - {log.endTime ? formatClock(log.endTime, timelineZoom) : 'NOW'}</div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                   </div>
+
+                   <div className="space-y-12 pt-4">
+                     <div className="flex items-center justify-between border-b border-emerald-50 pb-8">
+                       <div className="flex items-center gap-5">
+                         <div className="p-4 bg-emerald-600 text-white rounded-[2.25rem] shadow-xl shadow-emerald-200">
+                           <History size={26}/>
+                         </div>
+                         <div>
+                           <h4 className="text-xl font-black text-emerald-950 tracking-tight">Life Timeline</h4>
+                           <p className="text-[11px] font-black text-emerald-400 uppercase tracking-[0.4em] mt-1">{formatDisplayDateString(selectedStatsDate)}</p>
+                         </div>
+                       </div>
+                       <button 
+                         onClick={() => setActiveTab('logs')} 
+                         className="px-6 py-3 bg-emerald-50 text-emerald-600 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-100 transition-all flex items-center gap-2 shadow-sm"
+                       >
+                         Historical Logs <ExternalLink size={14}/>
+                       </button>
+                     </div>
+
+                     <div className="space-y-4 pl-6 border-l-2 border-emerald-50/60 ml-6 mr-4 flex-1 min-w-0">
+                       {selectedDayLogs.map((log, idx) => (
+                         <div key={log.id} className="relative animate-in slide-in-from-left duration-500" style={{ animationDelay: `${idx * 80}ms` }}>
+                           <div className="absolute -left-[31px] top-3 w-5 h-5 rounded-full flex items-center justify-center ring-4 ring-[#f0f9f0] z-10" style={{ backgroundColor: getCategoryColor(log.category) }}>
+                              <div className="w-1.5 h-1.5 bg-white rounded-full"/>
+                           </div>
+
+                           <div
+                             role="button"
+                             tabIndex={0}
+                             onClick={() => handleViewLog(log)}
+                             className="bg-white p-3 rounded-2xl border border-emerald-50 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-200 cursor-pointer group ring-1 ring-emerald-50/50"
+                           >
+                              <div className="flex justify-between items-start mb-1.5">
+                                <div className="flex items-center gap-2">
+                                  <div className="p-1.5 bg-emerald-50 text-emerald-600 rounded-xl ring-1 ring-emerald-100/50">
+                                    {React.createElement(DEFAULT_CATEGORY_DATA[log.category].icon, {size: 16})}
+                                  </div>
+                                  <div>
+                                    <div className="text-[9px] font-black uppercase text-emerald-300 tracking-[0.2em] leading-none mb-0.5">{formatClock(log.startTime)} — {log.endTime ? formatClock(log.endTime) : 'NOW'}</div>
+                                    <div className="text-[9px] font-bold text-emerald-500 leading-none">
+                                      {formatTime(resolvePhaseTotals(log).total)}
+                                    </div>
+                                  </div>
+                                </div>
+                                <span className="text-[8px] font-black text-white px-2 py-0.5 rounded-md shadow-md uppercase tracking-wider" style={{ backgroundColor: getCategoryColor(log.category) }}>
+                                  {log.category}
+                                </span>
+                              </div>
+
+                              {log.description && (
+                                 <h5 className="text-xs font-bold text-emerald-950 mb-2 leading-relaxed pl-1 tracking-tight line-clamp-2">{log.description}</h5>
+                              )}
+                              
+                              {log.images.length > 0 && (
+                                <div className="pt-0.5 pb-1">
+                                  <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+                                    {log.images.map((img, imgIdx) => (
+                                      <div key={imgIdx} className="relative flex-shrink-0 w-20 h-14 rounded-lg overflow-hidden border border-emerald-50 shadow-sm transition-all duration-200 group-hover:shadow-md">
+                                        <img 
+                                          src={img} 
+                                          onClick={(e) => { e.stopPropagation(); setPreviewImage(img); }} 
+                                          className="w-full h-full object-cover cursor-zoom-in"
+                                        />
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                           </div>
+                         </div>
+                       ))}
+
+                       {selectedDayLogs.length === 0 && (
+                         <div className="py-12 flex flex-col items-center justify-center gap-4 text-emerald-200 animate-in fade-in slide-in-from-bottom-8">
+                           <div className="p-6 rounded-[2rem] border-2 border-dashed border-emerald-50/50 bg-emerald-50/20">
+                             <History size={32} className="opacity-40" />
+                           </div>
+                           <p className="text-[10px] font-black uppercase tracking-[0.4em] opacity-40">No Logs Recorded</p>
+                         </div>
+                       )}
+                     </div>
+                   </div>
+                 </>
+               ) : (
+                 <div className="space-y-4">
+                   <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 animate-in slide-in-from-bottom duration-500">
+                      <div className="lg:col-span-3 space-y-2">
+                         <div className="bg-emerald-600 text-white px-4 py-3 rounded-[1.5rem] shadow-lg shadow-emerald-100/50 relative overflow-hidden group min-h-[64px] flex flex-col justify-center">
+                           <span className="text-[7px] font-black uppercase tracking-[0.2em] opacity-80 relative z-10 text-emerald-50">Focus</span>
+                           <div className="text-lg font-black tracking-tighter relative z-10 font-mono">
+                             {formatTime(statsData.filter(item => item.name !== 'Rest').reduce((acc, item) => acc + item.value * 60, 0))}
+                           </div>
+                         </div>
+                         <div className="bg-white border border-emerald-50 px-4 py-3 rounded-[1.5rem] shadow-sm relative overflow-hidden group min-h-[64px] flex flex-col justify-center">
+                           <span className="text-[7px] font-black uppercase tracking-[0.2em] text-emerald-300 relative z-10">Rest</span>
+                           <div className="text-lg font-black tracking-tighter relative z-10 font-mono text-emerald-900">
+                             {formatTime(restTimeTotal)}
+                           </div>
+                         </div>
+                         <div className="px-5 py-0.5 text-[7px] font-black text-emerald-300 uppercase tracking-widest">{selectedDayLogs.length} sessions Today</div>
+                      </div>
+                      
+                      <div className="lg:col-span-9 grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-2 pb-3">
+                        {statsData.filter(item => item.name !== 'Rest').map((item, idx) => (
+                          <div key={item.name} className="bg-white px-3 py-1.5 rounded-xl border border-emerald-50 shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5 flex flex-col justify-center group/card" style={{ animationDelay: `${idx * 20}ms` }}>
+                            <div className="flex items-center gap-2 mb-1">
+                              <div className="w-6 h-6 rounded-lg flex items-center justify-center text-[10px] shadow-sm flex-shrink-0 transition-transform group-hover/card:scale-110" style={{ backgroundColor: `${getCategoryColor(item.name as Category)}15`, color: getCategoryColor(item.name as Category) }}>
+                                {React.createElement(DEFAULT_CATEGORY_DATA[item.name as Category].icon, { size: 12 })}
+                              </div>
+                              <div className="flex flex-col min-w-0">
+                                <span className="text-[7px] font-black uppercase text-emerald-900/20 tracking-widest leading-none mb-0.5 truncate">{item.name}</span>
+                                <div className="text-[10px] font-black text-emerald-950 truncate leading-none">{item.value}m</div>
+                              </div>
+                            </div>
+                            <div className="w-full h-0.5 bg-emerald-50/70 rounded-full overflow-hidden">
+                               <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${(item.value / Math.max(1, statsData.reduce((a,b)=>a+b.value,0)))*100}%`, backgroundColor: getCategoryColor(item.name as Category) }} />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                   </div>
+
+                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-in zoom-in-95 duration-500">
+                      <div className="bg-white p-5 rounded-[2.5rem] border border-emerald-50 h-[340px] shadow-sm flex flex-col relative overflow-hidden group">
+                        <h3 className="text-[10px] font-black mb-4 text-emerald-800 uppercase tracking-[0.3em] relative z-10 flex items-center gap-2"><div className="w-1 h-3 bg-emerald-600 rounded-full"/> Category Breakdown</h3>
+                        {statsData.length > 0 ? (
+                          <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                            <Pie data={statsData.filter(d => d.value > 0)} innerRadius={70} outerRadius={95} paddingAngle={8} dataKey="value" stroke="none">
+                              {statsData.filter(d => d.value > 0).map(entry => <Cell key={entry.name} fill={getCategoryColor(entry.name as Category)} />)}
+                            </Pie>
+                              <RechartsTooltip contentStyle={{borderRadius:'24px', border:'none', boxShadow:'0 20px 25px -5px rgba(0,0,0,0.1)', padding:'10px 20px', fontWeight: 'bold'}} />
+                              <Legend layout="horizontal" verticalAlign="bottom" wrapperStyle={{fontSize: '9px', fontWeight: 'bold', paddingTop: '15px'}} />
+                            </PieChart>
+                          </ResponsiveContainer>
+                        ) : <div className="h-full flex items-center justify-center text-emerald-200 uppercase font-black tracking-[0.3em]">No Activity</div>}
+                      </div>
+                      <div className="bg-white p-5 rounded-[2.5rem] border border-emerald-50 h-[340px] shadow-sm flex flex-col relative overflow-hidden group">
+                        <h3 className="text-[10px] font-black mb-4 text-emerald-800 uppercase tracking-[0.3em] relative z-10 flex items-center gap-2"><div className="w-1 h-3 bg-emerald-600 rounded-full"/> Time Distribution</h3>
+                        <ResponsiveContainer width="100%" height="100%">
+                          <ReBarChart data={statsData.filter(d => d.value > 0)}>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                            <XAxis dataKey="name" fontSize={8} fontWeight="bold" axisLine={false} tickLine={false} tick={{fill: '#94a3b8'}} />
+                            <YAxis fontSize={8} fontWeight="bold" axisLine={false} tickLine={false} tick={{fill: '#94a3b8'}} />
+                            <RechartsTooltip cursor={{fill: '#f8fafc', radius: 10}} contentStyle={{borderRadius:'20px', border:'none', boxShadow:'0 10px 15px -3px rgba(0,0,0,0.1)'}} />
+                            <Bar dataKey="value" fill="#10b981" radius={[8, 8, 8, 8]} barSize={20} />
+                          </ReBarChart>
+                        </ResponsiveContainer>
+                      </div>
+                   </div>
+                 </div>
+               )}
+            </div>
+          )}
+
+          {(statsView === 'month' || statsView === 'week') && (
+            <div className="pb-10 space-y-3 animate-in fade-in slide-in-from-top-4 duration-500">
+               <div className="bg-white rounded-[2.5rem] p-4 border border-emerald-50 shadow-sm overflow-hidden ring-1 ring-emerald-50/50">
+                 <div className="grid grid-cols-7 gap-2">
+                   {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d => (
+                     <div key={d} className="text-center text-[10px] font-black text-emerald-200 uppercase py-1 tracking-[0.25em]">{d}</div>
+                   ))}
+                   {calendarGridData.map((item, idx) => {
+                     if (item.empty) return <div key={idx} className="aspect-[4/5] opacity-[0.03] bg-emerald-900 rounded-[2rem]" />;
+                     
+                     const isSelected = selectedStatsDate === item.dateStr;
+                     const isToday = formatDate(Date.now()) === item.dateStr;
+                     const hasLogs = item.duration > 0;
+                     const firstImage = item.images?.[0];
+
+                     return (
+                       <div 
+                         key={idx} 
+                         onClick={() => {
+                           setSelectedStatsDate(item.dateStr || '');
+                           setStatsView('day');
+                         }}
+                         className={`aspect-[4/5] rounded-[1.75rem] p-2 flex flex-col justify-between border transition-all cursor-pointer group relative overflow-hidden active:scale-95
+                           ${isSelected ? 'bg-emerald-600 border-emerald-600 shadow-2xl scale-[1.04] z-10' : 
+                             hasLogs ? 'bg-white border-emerald-50 shadow-sm hover:border-emerald-200 hover:shadow-lg hover:-translate-y-0.5' : 'bg-emerald-50/20 border-transparent'}
+                           ${isToday && !isSelected ? 'ring-2 ring-emerald-400 ring-offset-4' : ''}
+                         `}
+                       >
+                         {!isSelected && (
+                           <div className="absolute inset-0 z-0">
+                              {firstImage ? (
+                                <img src={firstImage} className="w-full h-full object-cover opacity-[0.14] group-hover:opacity-40 transition-opacity" />
+                              ) : hasLogs ? (
+                                <div className="w-full h-full bg-gradient-to-br from-emerald-50 to-white opacity-40 group-hover:opacity-60 transition-opacity flex items-center justify-center">
+                                   <div className="w-6 h-6 rounded-full bg-emerald-100/30 flex items-center justify-center">
+                                      <History size={12} className="text-emerald-200" />
+                                   </div>
+                                </div>
+                              ) : null}
+                              <div className="absolute inset-0 bg-gradient-to-t from-white/80 via-transparent to-transparent" />
+                           </div>
+                         )}
+
+                         <div className="flex justify-between items-start relative z-10">
+                           <span className={`text-[10px] font-black px-1 py-0.5 rounded-lg ${isSelected ? 'text-white bg-emerald-500/50' : isToday ? 'text-emerald-600 underline underline-offset-4 decoration-2' : 'text-emerald-900/40'}`}>
+                             {item.day}
+                           </span>
+                           {hasLogs && (
+                             <div className={`w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-white shadow-[0_0_8px_white]' : 'bg-emerald-400'}`} />
+                           )}
+                         </div>
+
+                         <div className="flex-1 flex flex-col justify-center items-center relative z-10 pointer-events-none px-1">
+                            {hasLogs && (
+                              <div className="flex flex-col items-center">
+                                 <span className={`text-[10px] font-black tracking-tighter ${isSelected ? 'text-white/90' : 'text-emerald-600'}`}>
+                                   {item.duration > 60 ? `${Math.floor(item.duration/60)}h ${item.duration%60}m` : `${item.duration}m`}
+                                 </span>
+                                 <div className={`w-5 h-0.5 mt-0.5 rounded-full ${isSelected ? 'bg-white/40' : 'bg-emerald-100'}`}>
+                                    <div className={`h-full rounded-full ${isSelected ? 'bg-white' : 'bg-emerald-500'}`} style={{width: `${Math.min((item.duration/480)*100, 100)}%`}} />
+                                 </div>
+                              </div>
+                            )}
+                         </div>
+
+                         <div className="flex -space-x-1.5 mt-auto relative z-10 pointer-events-none justify-center group-hover:space-x-1 transition-all">
+                           {item.images && item.images.slice(0, 3).map((img, imgIdx) => (
+                             <div key={imgIdx} className={`w-5 h-5 rounded-lg overflow-hidden border border-white shadow-sm ring-1 ring-emerald-900/5 ${isSelected ? 'opacity-100' : 'opacity-80 group-hover:opacity-100 group-hover:scale-110'} transition-all`}>
+                               <img src={img} className="w-full h-full object-cover" />
+                             </div>
+                           ))}
+                         </div>
+                       </div>
+                     );
+                   })}
+                 </div>
+               </div>
+
+               <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 animate-in slide-in-from-bottom duration-500 delay-150">
+                  <div className="lg:col-span-3 space-y-2">
+                     <div className="bg-emerald-600 text-white px-4 py-2.5 rounded-[1.25rem] shadow-lg shadow-emerald-100/50 relative overflow-hidden group min-h-[64px] flex flex-col justify-center">
+                       <span className="text-[7px] font-black uppercase tracking-[0.2em] opacity-80 relative z-10 text-emerald-50">Focus</span>
+                       <div className="text-lg font-black tracking-tighter relative z-10 font-mono">
+                         {formatTime(statsData.filter(item => item.name !== 'Rest').reduce((acc, item) => acc + item.value * 60, 0))}
+                       </div>
+                     </div>
+                     <div className="bg-white border border-emerald-50 px-4 py-2.5 rounded-[1.25rem] shadow-sm relative overflow-hidden group min-h-[64px] flex flex-col justify-center">
+                       <span className="text-[7px] font-black uppercase tracking-[0.2em] text-emerald-300 relative z-10">Rest</span>
+                       <div className="text-lg font-black tracking-tighter relative z-10 font-mono text-emerald-900">
+                         {formatTime(restTimeTotal)}
+                       </div>
+                     </div>
+                     <div className="px-5 py-0.5 text-[7px] font-black text-emerald-300 uppercase tracking-widest">{relevantLogs.length} sessions period</div>
+                  </div>
+                  
+                  <div className="lg:col-span-9 grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-2 pb-1">
+                    {statsData.filter(item => item.name !== 'Rest').map((item, idx) => (
+                      <div key={item.name} className="bg-white px-3 py-1.5 rounded-xl border border-emerald-50 shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5 flex flex-col justify-center" style={{ animationDelay: `${idx * 20}ms` }}>
+                        <div className="flex items-center gap-2 mb-1">
+                          <div className="w-6 h-6 rounded-lg flex items-center justify-center text-[10px] shadow-sm flex-shrink-0" style={{ backgroundColor: `${getCategoryColor(item.name as Category)}15`, color: getCategoryColor(item.name as Category) }}>
+                            {React.createElement(DEFAULT_CATEGORY_DATA[item.name as Category].icon, { size: 12 })}
+                          </div>
+                          <div className="flex flex-col min-w-0">
+                            <span className="text-[7px] font-black uppercase text-emerald-900/20 tracking-widest leading-none mb-0.5 truncate">{item.name}</span>
+                            <div className="text-[10px] font-black text-emerald-950 truncate leading-none">{item.value}m</div>
+                          </div>
+                        </div>
+                        <div className="w-full h-0.5 bg-emerald-50/70 rounded-full overflow-hidden">
+                           <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${(item.value / Math.max(1, statsData.reduce((a,b)=>a+b.value,0)))*100}%`, backgroundColor: getCategoryColor(item.name as Category) }} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+               </div>
+            </div>
+          )}
+
+          {statsView === 'year' && (
+            <div className="space-y-4 pb-10 animate-in fade-in slide-in-from-bottom-4">
+              <div className="bg-white rounded-[2.5rem] p-5 border border-emerald-50 shadow-sm overflow-hidden ring-1 ring-emerald-50/50">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  {yearMonthStats.map((m, idx) => (
+                    <div 
+                      key={idx} 
+                      onClick={() => {
+                        const year = new Date(selectedStatsDate).getFullYear();
+                        const firstDayOfMonth = `${year}-${(m.month + 1).toString().padStart(2, '0')}-01`;
+                        setSelectedStatsDate(firstDayOfMonth);
+                        setStatsView('month');
+                        setViewMode('grid');
+                      }}
+                      className="bg-white p-3 rounded-[1.5rem] border border-emerald-50 shadow-sm flex flex-col hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer group ring-1 ring-emerald-50/20"
+                    >
+                      <div className="flex items-center justify-between mb-2 px-1">
+                        <div className="text-xs font-black text-emerald-950 uppercase tracking-widest leading-none truncate pr-2">
+                           {new Date(new Date(selectedStatsDate).getFullYear(), m.month).toLocaleString(undefined, { month: 'short' })}
+                        </div>
+                        <div className="text-[9px] font-black text-emerald-400 bg-emerald-50 px-2 py-0.5 rounded-full">{m.totalMinutes}m</div>
+                      </div>
+                      <div className="flex-1 flex flex-col gap-2">
+                        <div className="w-full h-20 bg-gradient-to-br from-emerald-50/50 to-white rounded-xl overflow-hidden border border-emerald-100/30 flex items-center justify-center relative group-hover:border-emerald-200/50 transition-colors shadow-inner">
+                          {m.sampleImage ? (
+                            <img src={m.sampleImage} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"/>
+                          ) : m.totalMinutes > 0 ? (
+                            <div className="flex flex-col items-center gap-1.5 opacity-30 group-hover:scale-110 transition-transform">
+                              <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center">
+                                <History size={16} className="text-emerald-400" />
+                              </div>
+                              <span className="text-[7px] font-black uppercase tracking-widest text-emerald-600">Active</span>
+                            </div>
+                          ) : (
+                            <div className="flex flex-col items-center gap-1 opacity-10">
+                              <ImageIcon size={14} className="text-emerald-300" />
+                              <span className="text-[7px] font-black uppercase tracking-widest">Empty</span>
+                            </div>
+                          )}
+                          <div className="absolute inset-0 bg-gradient-to-t from-emerald-900/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                        </div>
+                        <div className="space-y-1 px-0.5">
+                          {m.categories.filter(cat => cat.name !== 'Rest').slice(0,2).map(cat => (
+                            <div key={cat.name} className="flex items-center gap-1.5">
+                              <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: getCategoryColor(cat.name as Category) }} />
+                              <div className="text-[9px] font-black text-emerald-800/60 truncate uppercase tracking-tighter leading-none">{cat.name}</div>
+                              <div className="ml-auto text-[9px] font-bold text-emerald-400 leading-none">{cat.minutes}m</div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+               <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 animate-in slide-in-from-bottom duration-500 delay-150">
+                  <div className="lg:col-span-3 space-y-2">
+                     <div className="bg-emerald-600 text-white px-4 py-3 rounded-[1.25rem] shadow-lg shadow-emerald-100/50 relative overflow-hidden group min-h-[64px] flex flex-col justify-center">
+                       <span className="text-[7px] font-black uppercase tracking-[0.2em] opacity-80 relative z-10 text-emerald-50">Focus</span>
+                       <div className="text-lg font-black mt-0.5 tracking-tighter relative z-10 font-mono">
+                         {formatTime(statsData.filter(item => item.name !== 'Rest').reduce((acc, item) => acc + item.value * 60, 0))}
+                       </div>
+                     </div>
+                     <div className="bg-white border border-emerald-50 px-4 py-3 rounded-[1.25rem] shadow-sm relative overflow-hidden group min-h-[64px] flex flex-col justify-center">
+                       <span className="text-[7px] font-black uppercase tracking-[0.2em] text-emerald-300 relative z-10">Rest</span>
+                       <div className="text-lg font-black mt-0.5 tracking-tighter relative z-10 font-mono text-emerald-900">
+                         {formatTime(restTimeTotal)}
+                       </div>
+                     </div>
+                     <div className="px-5 py-0.5 text-[7px] font-black text-emerald-300 uppercase tracking-widest">{relevantLogs.length} sessions year</div>
+                  </div>
+                  
+                  <div className="lg:col-span-9 grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-2 pb-1">
+                    {statsData.filter(item => item.name !== 'Rest').map((item, idx) => (
+                      <div key={item.name} className="bg-white px-3 py-1.5 rounded-xl border border-emerald-50 shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5 flex flex-col justify-center" style={{ animationDelay: `${idx * 20}ms` }}>
+                        <div className="flex items-center gap-2 mb-1">
+                          <div className="w-6 h-6 rounded-lg flex items-center justify-center text-[10px] shadow-sm flex-shrink-0" style={{ backgroundColor: `${getCategoryColor(item.name as Category)}15`, color: getCategoryColor(item.name as Category) }}>
+                            {React.createElement(DEFAULT_CATEGORY_DATA[item.name as Category].icon, { size: 12 })}
+                          </div>
+                          <div className="flex flex-col min-w-0">
+                            <span className="text-[7px] font-black uppercase text-emerald-900/20 tracking-widest leading-none mb-0.5 truncate">{item.name}</span>
+                            <div className="text-[10px] font-black text-emerald-950 truncate leading-none">{item.value}m</div>
+                          </div>
+                        </div>
+                        <div className="w-full h-0.5 bg-emerald-50/70 rounded-full overflow-hidden">
+                           <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${(item.value / Math.max(1, statsData.reduce((a,b)=>a+b.value,0)))*100}%`, backgroundColor: getCategoryColor(item.name as Category) }} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+               </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                 <div className="bg-white p-6 rounded-[2.5rem] border border-emerald-50 h-[360px] shadow-sm flex flex-col relative overflow-hidden group ring-1 ring-emerald-50/50">
+                   <h3 className="text-[10px] font-black mb-4 text-emerald-800 uppercase tracking-[0.3em] relative z-10 flex items-center gap-2"><div className="w-1 h-3 bg-emerald-600 rounded-full"/> Category Breakdown</h3>
+                   {statsData.length > 0 ? (
+                     <ResponsiveContainer width="100%" height="100%">
+                       <PieChart>
+                       <Pie data={statsData.filter(d => d.value > 0)} innerRadius={70} outerRadius={95} paddingAngle={8} dataKey="value" stroke="none">
+                         {statsData.filter(d => d.value > 0).map(entry => <Cell key={entry.name} fill={getCategoryColor(entry.name as Category)} />)}
+                         </Pie>
+                         <RechartsTooltip contentStyle={{borderRadius:'24px', border:'none', boxShadow:'0 20px 50px rgba(0,0,0,0.1)', padding:'10px 20px', fontWeight: 'bold'}} />
+                         <Legend layout="horizontal" verticalAlign="bottom" wrapperStyle={{fontSize: '9px', fontWeight: 'bold', paddingTop: '15px'}} />
+                       </PieChart>
+                     </ResponsiveContainer>
+                   ) : <div className="h-full flex items-center justify-center text-emerald-200 uppercase font-black tracking-[0.3em]">No Activity</div>}
+                 </div>
+                 <div className="bg-white p-6 rounded-[2.5rem] border border-emerald-50 h-[360px] shadow-sm flex flex-col relative overflow-hidden group ring-1 ring-emerald-50/50">
+                   <h3 className="text-[10px] font-black mb-4 text-emerald-800 uppercase tracking-[0.3em] relative z-10 flex items-center gap-2"><div className="w-1 h-3 bg-emerald-600 rounded-full"/> Time Spent (Min)</h3>
+                   <ResponsiveContainer width="100%" height="100%">
+                     <ReBarChart data={yearHistory}>
+                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                       <XAxis dataKey="name" fontSize={8} fontWeight="bold" axisLine={false} tickLine={false} tick={{fill: '#94a3b8'}} />
+                       <YAxis fontSize={8} fontWeight="bold" axisLine={false} tickLine={false} tick={{fill: '#94a3b8'}} />
+                       <RechartsTooltip cursor={{fill: '#f8fafc', radius: 10}} contentStyle={{borderRadius:'24px', border:'none', boxShadow:'0 20px 50px rgba(0,0,0,0.1)'}} />
+                       <Bar dataKey="minutes" fill="#10b981" radius={[8, 8, 8, 8]} barSize={24} />
+                     </ReBarChart>
+                   </ResponsiveContainer>
+                 </div>
+              </div>
+            </div>
+          )}
+
+          {(statsView === 'month' || statsView === 'week') && viewMode === 'charts' && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-20 animate-in zoom-in-95 duration-500">
+               <div className="bg-white p-5 rounded-[2.5rem] border border-emerald-50 h-[340px] shadow-sm flex flex-col relative overflow-hidden group">
+                 <h3 className="text-[10px] font-black mb-4 text-emerald-800 uppercase tracking-[0.3em] relative z-10 flex items-center gap-2"><div className="w-1 h-3 bg-emerald-600 rounded-full"/> Category Breakdown</h3>
+                 {statsData.length > 0 ? (
+                   <ResponsiveContainer width="100%" height="100%">
+                     <PieChart>
+                     <Pie data={statsData.filter(d => d.value > 0)} innerRadius={70} outerRadius={95} paddingAngle={8} dataKey="value" stroke="none">
+                       {statsData.filter(d => d.value > 0).map(entry => <Cell key={entry.name} fill={getCategoryColor(entry.name as Category)} />)}
+                     </Pie>
+                       <RechartsTooltip contentStyle={{borderRadius:'24px', border:'none', boxShadow:'0 20px 25px -5px rgba(0,0,0,0.1)', padding:'10px 20px', fontWeight: 'bold'}} />
+                       <Legend layout="horizontal" verticalAlign="bottom" wrapperStyle={{fontSize: '9px', fontWeight: 'bold', paddingTop: '15px'}} />
+                     </PieChart>
+                   </ResponsiveContainer>
+                 ) : <div className="h-full flex items-center justify-center text-emerald-200 uppercase font-black tracking-[0.3em]">No Activity</div>}
+               </div>
+               <div className="bg-white p-5 rounded-[2.5rem] border border-emerald-50 h-[340px] shadow-sm flex flex-col relative overflow-hidden group">
+                 <h3 className="text-[10px] font-black mb-4 text-emerald-800 uppercase tracking-[0.3em] relative z-10 flex items-center gap-2"><div className="w-1 h-3 bg-emerald-600 rounded-full"/> Time Spent (Min)</h3>
+                 <ResponsiveContainer width="100%" height="100%">
+                   <ReBarChart data={statsView === 'week' ? weekHistory : monthHistory}>
+                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                     <XAxis dataKey="name" fontSize={8} fontWeight="bold" axisLine={false} tickLine={false} tick={{fill: '#94a3b8'}} />
+                     <YAxis fontSize={8} fontWeight="bold" axisLine={false} tickLine={false} tick={{fill: '#94a3b8'}} />
+                     <RechartsTooltip cursor={{fill: '#f8fafc', radius: 10}} contentStyle={{borderRadius:'20px', border:'none', boxShadow:'0 10px 15px -3px rgba(0,0,0,0.1)'}} />
+                     <Bar dataKey="minutes" fill="#10b981" radius={[8, 8, 8, 8]} barSize={20} />
+                   </ReBarChart>
+                 </ResponsiveContainer>
+               </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default StatsBoard;

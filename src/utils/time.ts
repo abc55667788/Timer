@@ -29,10 +29,25 @@ export const formatDisplayDateString = (dateStr: string) => {
   return `${parts[0]}.${parseInt(parts[1])}.${parseInt(parts[2])}`;
 };
 
-export const resolvePhaseTotals = (log: { duration: number; phaseDurations?: { work: number; rest: number } }) => {
+export const resolvePhaseTotals = (log: { duration: number; startTime: number; endTime?: number; phaseDurations?: { work: number; rest: number } }) => {
   const hasPhase = Boolean(log.phaseDurations);
-  const work = log.phaseDurations?.work ?? (hasPhase ? 0 : log.duration);
-  const rest = log.phaseDurations?.rest ?? 0;
+  let work = log.phaseDurations?.work ?? (hasPhase ? 0 : log.duration);
+  let rest = log.phaseDurations?.rest ?? 0;
+  
+  // Robustness check: if duration seems like minutes but endTime/startTime shows seconds
+  if (log.endTime && log.startTime) {
+    const diffSeconds = Math.round((log.endTime - log.startTime) / 1000);
+    // If the difference is roughly 60 times larger than the stored duration,
+    // it's highly likely duration was stored in minutes incorrectly.
+    if (diffSeconds > log.duration * 50 && diffSeconds < log.duration * 70) {
+      work = diffSeconds;
+      rest = 0;
+    } else if (diffSeconds > (work + rest) * 1.5) {
+      // General case: if the gap is significantly larger, trust the timestamps
+      work = diffSeconds - rest; 
+    }
+  }
+
   const total = work + rest;
   return {
     work,
