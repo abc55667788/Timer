@@ -69,9 +69,17 @@ Emerald Timer 基于 Electron 构建，提供跨平台支持：
 
 ---
 
-## 🛠️ 入门指南
+## � 获取与运行 (Getting Started)
 
-### 开发环境配置
+### 1. 📂 下载发行版 (Download Release) - 推荐
+你可以直接前往 [GitHub Releases](https://github.com/abc55667788/Timer/releases) 页面获取编译好的版本。我们提供两种形式：
+*   **安装版 (.exe)**: 标准 Windows 安装程序，提供完整的安装和卸载体验。
+*   **免安装版 (Portable)**: 即下即用，无需安装。适合存储在 U 盘中或临时在不同环境下使用。
+
+### 2. 🛠️ 手动编译与开发 (Manual Compilation & Development)
+如果你希望自行编译或进行二次开发，请参考以下指南。
+
+#### 开发环境配置
 1.  **Node.js**: 推荐 v18+ 
 2.  **克隆项目**:
     ```bash
@@ -81,7 +89,7 @@ Emerald Timer 基于 Electron 构建，提供跨平台支持：
 3.  **安装依赖**: `npm install`
 4.  **启动开发版**: `npm run dev`
 
-### 构建发布版本
+#### 构建发布版本
 *   **Windows**: `npm run build`
 *   **生成文件**: 输出至 `release-builds/` 目录下。
 
