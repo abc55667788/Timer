@@ -2,6 +2,21 @@
 
 All notable changes to the Emerald Timer project will be documented in this file.
 
+## [1.3.4] - 2026-02-20
+
+### Added
+- **Global Design Refinement**: Implemented a unified "Mature Bold Tight" typography system (`font-bold tracking-tight`) across all components (Setting, Stats, Log Viewers).
+- **Settings Architecture**: Swapped the positions of "Display Zoom" (now on the primary left column) and "Notifications" (now secondary bottom-right) for better ergonomic flow.
+- **Visual Smoothness**: Fixed "invisible" entry animations and restored transition speeds to 500ms (Window) and 200ms (Tabs) for a snappier, more professional feel.
+
+### Changed
+- **Stats Unification**: Standardized the Month and Week view layouts to use the high-density grid pattern from the Year view, maximizing screen utility on wide monitors.
+- **Logging Interface**: Refactored labels and inputs in manual and automatic logging modals for better readability and consistent design.
+
+### Fixed
+- **Runtime Error**: Fixed `ReferenceError: Bell is not defined` in the Setup modal notification section.
+- **Component Stability**: Ensured all icons and state variables in the Settings panel are properly synchronized with the core application state.
+
 ## [1.3.3] - 2026-02-20
 
 ### Added

@@ -1,5 +1,8 @@
 {
 	"appId": "com.emerald.timer",
 	"appName": "Emerald Timer",
-	"webDir": "dist"
+	"webDir": "dist",
+	"server": {
+		"androidScheme": "https"
+	}
 }

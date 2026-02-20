@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { 
   X, Settings, Clock, Palette, Timer as TimerIcon, 
   AlertCircle, CheckCircle2, Globe, Key, Database, RefreshCw, 
-  Download, Upload, Cloud, Plus, Trash, Check, Maximize2, Minus
+  Download, Upload, Cloud, Plus, Trash, Check, Maximize2, Minus,
+  Bell, BellOff
 } from 'lucide-react';
 import { CategoryData, CATEGORY_ICONS, NotificationStatus, IconKey } from '../../types';
 
@@ -98,28 +99,22 @@ const SetupModal: React.FC<SetupModalProps> = ({
          <div style={{ WebkitAppRegion: 'no-drag' } as any} className={isPage ? "w-full" : "scrollbar-none overflow-y-auto max-h-[80vh]"}>
            {!isPage && <button onClick={closeSettingsWithoutSaving} className="absolute top-4 right-4 p-2 bg-emerald-50 rounded-full text-emerald-300 hover:text-emerald-600 transition-all active:scale-90 z-50"><X size={18} /></button>}
            
-           <div className={isPage ? "flex items-center justify-between mb-12" : "mb-7"}>
-             <h2 className={`${isPage ? 'text-3xl' : 'text-xl'} font-black text-emerald-950 tracking-tight flex items-center gap-3`}>
-               <Settings size={isPage ? 32 : 22} className="text-emerald-500" /> Settings
-             </h2>
-           </div>
-
-           <div className={`grid ${isPage ? 'grid-cols-1 md:grid-cols-2 gap-x-12' : ''} space-y-8`}>
-              <div className="space-y-8">
+           <div className={`grid ${isPage ? 'grid-cols-1 md:grid-cols-2 gap-x-12' : ''} space-y-6`}>
+              <div className="space-y-6">
                 <section>
                    <div className="flex items-center justify-between mb-4">
-                     <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-400 flex items-center gap-2"><Palette size={14}/> Categories</h3>
+                     <h3 className="text-sm font-bold tracking-tight text-emerald-800 flex items-center gap-2"><Palette size={14}/> Categories</h3>
                      <button 
                         onClick={handleAddCategory}
-                        className="p-1 px-2.5 bg-emerald-50 text-emerald-600 rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-emerald-600 hover:text-white transition-all flex items-center gap-1"
+                        className="p-1 px-2.5 bg-emerald-50 text-emerald-600 rounded-lg text-[11px] font-bold tracking-tight hover:bg-emerald-600 hover:text-white transition-all flex items-center gap-1"
                      >
-                       <Plus size={10} /> Add
+                       <Plus size={12} /> Add
                      </button>
                    </div>
-                   <div className="bg-emerald-50/20 p-6 rounded-[2.5rem] border border-emerald-50/50">
-                      <div className={`space-y-3 ${isPage ? 'w-full' : 'max-w-md mx-auto'}`}>
+                   <div className="bg-emerald-50/20 p-5 rounded-[2rem] border border-emerald-50/50">
+                      <div className={`space-y-2.5 ${isPage ? 'w-full' : 'max-w-md mx-auto'}`}>
                          {categories.map((cat, idx) => (
-                           <div key={idx} className="flex items-center gap-4 bg-white p-2.5 pl-3 rounded-[1.5rem] shadow-sm border border-emerald-50 group hover:border-emerald-200 hover:shadow-md transition-all relative">
+                           <div key={idx} className="flex items-center gap-4 bg-white p-2.5 pl-3 rounded-[1.2rem] shadow-sm border border-emerald-50 group hover:border-emerald-200 hover:shadow-md transition-all relative">
                               <div className="relative group/icon flex-shrink-0">
                                  <button 
                                     onClick={() => setEditingIconIndex(idx)}
@@ -134,7 +129,7 @@ const SetupModal: React.FC<SetupModalProps> = ({
                                 type="text"
                                 value={cat.name}
                                 onChange={(e) => handleUpdateCategory(idx, { name: e.target.value })}
-                                className="flex-1 min-w-0 bg-transparent text-[10px] font-black text-emerald-900 uppercase tracking-widest outline-none border-b-2 border-transparent focus:border-emerald-100 py-1 transition-colors"
+                                className="flex-1 min-w-0 bg-transparent text-[13px] font-bold text-emerald-900 tracking-tight outline-none border-b-2 border-transparent focus:border-emerald-100 py-1 transition-colors"
                               />
 
                               <div className="flex items-center gap-2 pr-1">
@@ -145,16 +140,16 @@ const SetupModal: React.FC<SetupModalProps> = ({
                                     onChange={(e) => handleUpdateCategory(idx, { color: e.target.value })}
                                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                                   />
-                                  <div className="w-6 h-6 rounded-full shadow-inner border-2 border-white ring-1 ring-emerald-100" style={{ backgroundColor: cat.color }} />
+                                  <div className="w-6 h-6 rounded-full shadow-inner border-2 border-white ring-1 ring-emerald-200" style={{ backgroundColor: cat.color }} />
                                 </div>
                                 
                                 {categories.length > 1 && (
                                   <button 
                                     onClick={() => handleDeleteCategory(idx)}
-                                    className="p-2 text-emerald-100 hover:text-red-400 hover:bg-red-50 transition-all rounded-xl md:opacity-0 md:group-hover:opacity-100 md:-mr-2"
+                                    className="p-2 text-emerald-200 hover:text-red-500 hover:bg-red-50 transition-all rounded-xl md:opacity-0 md:group-hover:opacity-100 md:-mr-2"
                                     title="Delete Category"
                                   >
-                                    <Trash size={14} />
+                                    <Trash size={15} />
                                   </button>
                                 )}
                               </div>
@@ -169,7 +164,7 @@ const SetupModal: React.FC<SetupModalProps> = ({
                     <div className="absolute inset-0 bg-emerald-950/40 backdrop-blur-md" onClick={() => setEditingIconIndex(null)} />
                     <div className="bg-white rounded-[2.5rem] p-8 w-full max-w-lg shadow-2xl relative animate-in zoom-in-95 duration-200">
                       <div className="flex items-center justify-between mb-8">
-                        <h4 className="text-sm font-black text-emerald-950 uppercase tracking-widest">Select Icon</h4>
+                        <h4 className="text-sm font-bold text-emerald-950 tracking-tight">Select Icon</h4>
                         <button onClick={() => setEditingIconIndex(null)} className="p-2 hover:bg-emerald-50 rounded-full transition-all"><X size={20}/></button>
                       </div>
                       <div className="grid grid-cols-6 sm:grid-cols-8 gap-3 max-h-[40vh] overflow-y-auto pr-2 scrollbar-none">
@@ -191,130 +186,18 @@ const SetupModal: React.FC<SetupModalProps> = ({
                 )}
 
                 <section>
-                  <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-400 mb-4 flex items-center gap-2"><TimerIcon size={14}/> Notifications</h3>
-                  <div className="bg-emerald-50/30 p-4 rounded-[2rem] border border-emerald-50">
-                     <div className="flex items-center justify-between bg-white p-3 rounded-xl shadow-sm border border-emerald-50">
-                        <div className="flex items-center gap-3">
-                           <div className={`p-2 rounded-lg ${notificationPermission === 'granted' ? 'bg-emerald-50 text-emerald-600' : notificationPermission === 'denied' ? 'bg-red-50 text-red-500' : 'bg-orange-50 text-orange-500'}`}>
-                              {notificationPermission === 'granted' ? <CheckCircle2 size={16}/> : <AlertCircle size={16}/>}
-                           </div>
-                           <div className="flex flex-col">
-                              <span className="text-[10px] font-black text-emerald-900 uppercase tracking-widest">
-                                 {notificationPermission}
-                              </span>
-                              <span className={`text-[8px] font-black uppercase tracking-tighter ${notificationPermission === 'denied' ? 'text-red-400' : 'text-emerald-400'}`}>
-                                 {notificationPermission === 'granted' ? 'Active' : notificationPermission === 'denied' ? 'Blocked' : 'Request'}
-                              </span>
-                           </div>
-                        </div>
-                        <button 
-                          onClick={() => requestNotificationPermission(true)}
-                          className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest shadow-md active:scale-95 transition-all ${notificationPermission === 'denied' ? 'bg-white border border-red-100 text-red-500' : 'bg-emerald-600 text-white'}`}
-                        >
-                           {notificationPermission === 'denied' ? 'Refresh' : notificationPermission === 'granted' ? 'Test' : 'Enable'}
-                        </button>
-                     </div>
-                  </div>
-                </section>
-              </div>
-
-              <div className="space-y-8">
-                <section>
-                  <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-400 mb-4 flex items-center gap-2"><Cloud size={14}/> GitLab Cloud Sync</h3>
-                  <div className="bg-emerald-50/30 p-5 rounded-[2rem] border border-emerald-50 space-y-4">
-                     <div className="space-y-3">
-                        <div className="relative">
-                           <div className="absolute left-3 top-1/2 -translate-y-1/2 text-emerald-300"><Globe size={12} /></div>
-                           <input 
-                              type="text" 
-                              placeholder="GitLab URL (e.g. https://gitlab.com)"
-                              value={gitlabConfig.url}
-                              onChange={(e) => setGitlabConfig({...gitlabConfig, url: e.target.value})}
-                              className="w-full bg-white border border-emerald-100 rounded-xl py-2.5 pl-9 pr-3 text-[10px] font-bold text-emerald-900 outline-none focus:ring-2 focus:ring-emerald-500/10 placeholder:text-emerald-200"
-                           />
-                        </div>
-                        <div className="relative">
-                           <div className="absolute left-3 top-1/2 -translate-y-1/2 text-emerald-300"><Key size={12} /></div>
-                           <input 
-                              type="password" 
-                              placeholder="Personal Access Token"
-                              value={gitlabConfig.token}
-                              onChange={(e) => setGitlabConfig({...gitlabConfig, token: e.target.value})}
-                              className="w-full bg-white border border-emerald-100 rounded-xl py-2.5 pl-9 pr-3 text-[10px] font-bold text-emerald-900 outline-none focus:ring-2 focus:ring-emerald-500/10 placeholder:text-emerald-200"
-                           />
-                        </div>
-                        <div className="relative">
-                           <div className="absolute left-3 top-1/2 -translate-y-1/2 text-emerald-300"><Database size={12} /></div>
-                           <input 
-                              type="text" 
-                              placeholder="Project Path or ID (e.g. username/repo)"
-                              value={gitlabConfig.projectId}
-                              onChange={(e) => setGitlabConfig({...gitlabConfig, projectId: e.target.value})}
-                              className="w-full bg-white border border-emerald-100 rounded-xl py-2.5 pl-9 pr-3 text-[10px] font-bold text-emerald-900 outline-none focus:ring-2 focus:ring-emerald-500/10 placeholder:text-emerald-200"
-                           />
-                        </div>
-                        <div className="grid grid-cols-2 gap-3">
-                           <input 
-                              type="text" 
-                              placeholder="Branch (main)"
-                              value={gitlabConfig.branch}
-                              onChange={(e) => setGitlabConfig({...gitlabConfig, branch: e.target.value})}
-                              className="w-full bg-white border border-emerald-100 rounded-xl py-2 px-3 text-[10px] font-bold text-emerald-700 outline-none focus:ring-2 focus:ring-emerald-500/10 placeholder:text-emerald-200"
-                           />
-                           <input 
-                              type="text" 
-                              placeholder="File (data.json)"
-                              value={gitlabConfig.filename}
-                              onChange={(e) => setGitlabConfig({...gitlabConfig, filename: e.target.value})}
-                              className="w-full bg-white border border-emerald-100 rounded-xl py-2 px-3 text-[10px] font-bold text-emerald-700 outline-none focus:ring-2 focus:ring-emerald-500/10 placeholder:text-emerald-200"
-                           />
-                        </div>
-                     </div>
-                     
-                     <div className="grid grid-cols-2 gap-3">
-                        <button 
-                          disabled={isSyncing}
-                          onClick={syncFromGitLab}
-                          className="bg-white p-3 rounded-xl shadow-sm border border-emerald-50 flex flex-col items-center gap-2 hover:bg-emerald-50 transition-all active:scale-95 group disabled:opacity-50"
-                        >
-                           <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg group-hover:bg-emerald-100">
-                              {isSyncing ? <RefreshCw size={14} className="animate-spin" /> : <Download size={14}/>}
-                           </div>
-                           <span className="text-[8px] font-black uppercase text-emerald-900 tracking-widest">Pull Restored</span>
-                        </button>
-                        <button 
-                          disabled={isSyncing}
-                          onClick={syncToGitLab}
-                          className="bg-white p-3 rounded-xl shadow-sm border border-emerald-50 flex flex-col items-center gap-2 hover:bg-emerald-50 transition-all active:scale-95 group disabled:opacity-50"
-                        >
-                           <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg group-hover:bg-emerald-100">
-                              {isSyncing ? <RefreshCw size={14} className="animate-spin" /> : <Upload size={14}/>}
-                           </div>
-                           <span className="text-[8px] font-black uppercase text-emerald-900 tracking-widest">Push Sync</span>
-                        </button>
-                     </div>
-                     
-                     {lastSyncedAt && (
-                       <p className="text-[7px] font-black uppercase text-emerald-400 tracking-widest text-center mt-2">
-                         Last Cloud Sync: {lastSyncedAt}
-                       </p>
-                     )}
-                  </div>
-                </section>
-
-                <section>
-                  <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-400 mb-4 flex items-center gap-2"><Maximize2 size={14}/> Display Zoom</h3>
-                  <div className="bg-emerald-50/30 p-5 rounded-[2rem] border border-emerald-50">
-                    <div className="bg-white p-4 rounded-xl shadow-sm border border-emerald-50 flex flex-col gap-4">
+                  <h3 className="text-sm font-bold tracking-tight text-emerald-800 mb-4 flex items-center gap-2"><Maximize2 size={14}/> Display Zoom</h3>
+                  <div className="bg-emerald-50/30 p-5 rounded-[1.8rem] border border-emerald-50">
+                    <div className="bg-white p-5 rounded-xl shadow-sm border border-emerald-50 flex flex-col gap-4">
                       <div className="flex items-center justify-between gap-4">
-                         <span className="text-[10px] font-black text-emerald-900 uppercase tracking-widest leading-none">Global UI Scale</span>
+                         <span className="text-[12px] font-bold text-emerald-950 tracking-tight leading-none">Global UI Scale</span>
                          
-                         <div className="flex items-center gap-2 p-1 bg-emerald-50/50 rounded-xl">
+                         <div className="flex items-center gap-2.5 p-1.5 bg-emerald-50/50 rounded-xl">
                             <button 
                               onClick={() => setUiScale(prev => Math.max(0.5, Math.round((prev - 0.05) * 100) / 100))}
                               className="p-1 px-2.5 bg-white text-emerald-600 rounded-lg shadow-sm hover:bg-emerald-600 hover:text-white transition-all active:scale-90"
                             >
-                              <Minus size={10} strokeWidth={4} />
+                              <Minus size={12} strokeWidth={4} />
                             </button>
                             
                             <div className="relative">
@@ -342,50 +225,165 @@ const SetupModal: React.FC<SetupModalProps> = ({
                                       setScaleInputValue((uiScale * 100).toFixed(0));
                                     }
                                   }}
-                                  className="w-14 bg-white border border-emerald-100 rounded-lg py-1 px-2 text-center text-[10px] font-black text-emerald-900 outline-none focus:ring-2 focus:ring-emerald-500/10 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                  className="w-16 bg-white border border-emerald-200 rounded-lg py-1.5 px-2 text-center text-[11px] font-bold text-emerald-950 outline-none focus:ring-2 focus:ring-emerald-500/10 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                />
-                               <span className="absolute right-1 top-1/2 -translate-y-1/2 text-[8px] font-black text-emerald-300 pointer-events-none">%</span>
+                               <span className="absolute right-1 top-1/2 -translate-y-1/2 text-[10px] font-bold text-emerald-400 pointer-events-none">%</span>
                             </div>
 
                             <button 
                               onClick={() => setUiScale(prev => Math.min(2.0, Math.round((prev + 0.05) * 100) / 100))}
                               className="p-1 px-2.5 bg-white text-emerald-600 rounded-lg shadow-sm hover:bg-emerald-600 hover:text-white transition-all active:scale-90"
                             >
-                              <Plus size={10} strokeWidth={4} />
+                              <Plus size={12} strokeWidth={4} />
                             </button>
                          </div>
                       </div>
                       
                       <div className="flex justify-between px-1">
-                        <span className="text-[8px] font-black text-emerald-200 uppercase tracking-tighter">Min: 50%</span>
-                        <span className="text-[8px] font-black text-emerald-200 uppercase tracking-tighter">Default: 100%</span>
-                        <span className="text-[8px] font-black text-emerald-200 uppercase tracking-tighter">Max: 200%</span>
+                        <span className="text-[10px] font-semibold text-emerald-400 tracking-tight">Min: 50%</span>
+                        <span className="text-[10px] font-semibold text-emerald-600 tracking-tight">Default: 100%</span>
+                        <span className="text-[10px] font-semibold text-emerald-400 tracking-tight">Max: 200%</span>
                       </div>
-                      <p className="text-[8px] font-black uppercase text-emerald-400/60 leading-relaxed">
-                        Tip: You can also use <span className="text-emerald-500">Ctrl + Scroll Wheel</span> to zoom anywhere.
+                      <p className="text-[11px] font-medium text-emerald-600/70 leading-relaxed">
+                        Tip: You can also use <span className="text-emerald-700 font-bold">Ctrl + Scroll Wheel</span> to zoom anywhere.
                       </p>
                     </div>
                   </div>
                 </section>
+              </div>
+
+              <div className="space-y-6">
+                <section>
+                  <h3 className="text-sm font-bold tracking-tight text-emerald-800 mb-4 flex items-center gap-2"><Cloud size={14}/> GitLab Cloud Sync</h3>
+                  <div className="bg-emerald-50/30 p-5 rounded-[1.8rem] border border-emerald-50 space-y-3.5">
+                     <div className="space-y-2.5">
+                        <div className="relative">
+                           <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-emerald-400"><Globe size={13} /></div>
+                           <input 
+                              type="text" 
+                              placeholder="GitLab URL (e.g. https://gitlab.com)"
+                              value={gitlabConfig.url}
+                              onChange={(e) => setGitlabConfig({...gitlabConfig, url: e.target.value})}
+                              className="w-full bg-white border border-emerald-100 rounded-xl py-3 pl-10 pr-4 text-[11px] font-bold text-emerald-900 outline-none focus:ring-2 focus:ring-emerald-500/10 placeholder:text-emerald-300"
+                           />
+                        </div>
+                        <div className="relative">
+                           <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-emerald-400"><Key size={13} /></div>
+                           <input 
+                              type="password" 
+                              placeholder="Personal Access Token"
+                              value={gitlabConfig.token}
+                              onChange={(e) => setGitlabConfig({...gitlabConfig, token: e.target.value})}
+                              className="w-full bg-white border border-emerald-100 rounded-xl py-3 pl-10 pr-4 text-[11px] font-bold text-emerald-900 outline-none focus:ring-2 focus:ring-emerald-500/10 placeholder:text-emerald-300"
+                           />
+                        </div>
+                        <div className="relative">
+                           <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-emerald-400"><Database size={13} /></div>
+                           <input 
+                              type="text" 
+                              placeholder="Project Path or ID (e.g. username/repo)"
+                              value={gitlabConfig.projectId}
+                              onChange={(e) => setGitlabConfig({...gitlabConfig, projectId: e.target.value})}
+                              className="w-full bg-white border border-emerald-100 rounded-xl py-3 pl-10 pr-4 text-[11px] font-bold text-emerald-900 outline-none focus:ring-2 focus:ring-emerald-500/10 placeholder:text-emerald-300"
+                           />
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                           <input 
+                              type="text" 
+                              placeholder="Branch (main)"
+                              value={gitlabConfig.branch}
+                              onChange={(e) => setGitlabConfig({...gitlabConfig, branch: e.target.value})}
+                              className="w-full bg-white border border-emerald-100 rounded-xl py-2.5 px-4 text-[11px] font-bold text-emerald-800 outline-none focus:ring-2 focus:ring-emerald-500/10 placeholder:text-emerald-300"
+                           />
+                           <input 
+                              type="text" 
+                              placeholder="File (data.json)"
+                              value={gitlabConfig.filename}
+                              onChange={(e) => setGitlabConfig({...gitlabConfig, filename: e.target.value})}
+                              className="w-full bg-white border border-emerald-100 rounded-xl py-2.5 px-4 text-[11px] font-bold text-emerald-800 outline-none focus:ring-2 focus:ring-emerald-500/10 placeholder:text-emerald-300"
+                           />
+                        </div>
+                     </div>
+                     
+                     <div className="grid grid-cols-2 gap-3">
+                        <button 
+                          disabled={isSyncing}
+                          onClick={syncFromGitLab}
+                          className="bg-white p-4 rounded-[1.2rem] shadow-sm border border-emerald-50 flex flex-col items-center gap-2 hover:bg-emerald-50 transition-all active:scale-95 group disabled:opacity-50"
+                        >
+                           <div className="p-2.5 bg-emerald-50 text-emerald-600 rounded-lg group-hover:bg-emerald-100">
+                              {isSyncing ? <RefreshCw size={16} className="animate-spin" /> : <Download size={16}/>}
+                           </div>
+                           <span className="text-[11px] font-bold text-emerald-950 tracking-tight">Pull Restored</span>
+                        </button>
+                        <button 
+                          disabled={isSyncing}
+                          onClick={syncToGitLab}
+                          className="bg-white p-4 rounded-[1.2rem] shadow-sm border border-emerald-50 flex flex-col items-center gap-2 hover:bg-emerald-50 transition-all active:scale-95 group disabled:opacity-50"
+                        >
+                           <div className="p-2.5 bg-emerald-50 text-emerald-600 rounded-lg group-hover:bg-emerald-100">
+                              {isSyncing ? <RefreshCw size={16} className="animate-spin" /> : <Upload size={16}/>}
+                           </div>
+                           <span className="text-[11px] font-bold text-emerald-950 tracking-tight">Push Sync</span>
+                        </button>
+                     </div>
+                     
+                     {lastSyncedAt && (
+                       <p className="text-[10px] font-bold text-emerald-600 tracking-tight text-center mt-1">
+                         Last Cloud Sync: {lastSyncedAt}
+                       </p>
+                     )}
+                  </div>
+                </section>
 
                 <section>
-                  <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-400 mb-4 flex items-center gap-2"><Download size={14}/> Data Persistence</h3>
-                  <div className="bg-emerald-50/30 p-4 rounded-[2rem] border border-emerald-50">
+                  <h3 className="text-sm font-bold tracking-tight text-emerald-800 mb-4 flex items-center gap-2"><Download size={14}/> Data Persistence</h3>
+                  <div className="bg-emerald-50/30 p-5 rounded-[1.8rem] border border-emerald-50">
                      <div className="grid grid-cols-2 gap-3">
                         <button 
                           onClick={exportData}
-                          className="bg-white p-3 rounded-xl shadow-sm border border-emerald-50 flex flex-col items-center gap-2 hover:bg-emerald-50 transition-all active:scale-95 group"
+                          className="bg-white p-4 rounded-[1.2rem] shadow-sm border border-emerald-50 flex flex-col items-center gap-2 hover:bg-emerald-50 transition-all active:scale-95 group"
                         >
-                           <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg group-hover:bg-emerald-100"><Download size={14}/></div>
-                           <span className="text-[8px] font-black uppercase text-emerald-900 tracking-widest">Backup</span>
+                           <div className="p-2.5 bg-emerald-50 text-emerald-600 rounded-lg group-hover:bg-emerald-100"><Download size={16}/></div>
+                           <span className="text-[11px] font-bold text-emerald-950 tracking-tight">Backup</span>
                         </button>
                         <label 
-                          className="bg-white p-3 rounded-xl shadow-sm border border-emerald-50 flex flex-col items-center gap-2 cursor-pointer hover:bg-emerald-50 transition-all active:scale-95 group"
+                          className="bg-white p-4 rounded-[1.2rem] shadow-sm border border-emerald-50 flex flex-col items-center gap-2 cursor-pointer hover:bg-emerald-50 transition-all active:scale-95 group"
                         >
-                           <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg group-hover:bg-emerald-100"><Upload size={14}/></div>
-                           <span className="text-[8px] font-black uppercase text-emerald-900 tracking-widest">Restore</span>
+                           <div className="p-2.5 bg-emerald-50 text-emerald-600 rounded-lg group-hover:bg-emerald-100"><Upload size={16}/></div>
+                           <span className="text-[11px] font-bold text-emerald-950 tracking-tight">Restore</span>
                            <input type="file" accept=".json" onChange={importData} className="hidden" />
                         </label>
+                     </div>
+                  </div>
+                </section>
+
+                <section>
+                  <h3 className="text-sm font-bold tracking-tight text-emerald-800 mb-4 flex items-center gap-2"><Bell size={14}/> Notifications</h3>
+                  <div className="bg-emerald-50/30 p-5 rounded-[1.8rem] border border-emerald-50">
+                     <div className="flex items-center justify-between p-4 bg-white rounded-xl shadow-sm border border-emerald-50">
+                        <div className="flex items-center gap-3">
+                           <div className={`p-2 rounded-lg ${notificationPermission === 'granted' ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-500'}`}>
+                              <Bell size={16} />
+                           </div>
+                           <div>
+                              <p className="text-[12px] font-bold text-emerald-950 tracking-tight leading-none mb-1">Status: {notificationPermission === 'granted' ? 'Enabled' : 'Disabled'}</p>
+                              <p className="text-[10px] font-bold text-emerald-400 tracking-tight">Desktop alerts & sounds</p>
+                           </div>
+                        </div>
+                        {notificationPermission !== 'granted' && (
+                          <button 
+                            onClick={() => requestNotificationPermission(true)}
+                            className="bg-emerald-600 text-white px-4 py-2 rounded-xl text-[11px] font-bold shadow-md shadow-emerald-100/50 hover:bg-emerald-700 transition-all active:scale-95"
+                          >
+                             Enable
+                          </button>
+                        )}
+                        {notificationPermission === 'granted' && (
+                          <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg">
+                            <CheckCircle2 size={16} />
+                          </div>
+                        )}
                      </div>
                   </div>
                 </section>
@@ -396,7 +394,7 @@ const SetupModal: React.FC<SetupModalProps> = ({
               <div className={`${isPage ? 'w-full pt-4 pb-20' : 'mt-8'} w-full transition-all`}>
                  <button 
                    onClick={handleApplySettings} 
-                   className="w-full py-4 bg-emerald-600 text-white rounded-2xl font-black uppercase tracking-[0.2em] shadow-lg shadow-emerald-100 active:scale-[0.97] transition-all text-[11px] flex items-center justify-center gap-2 hover:bg-emerald-700"
+                   className="w-full py-4 bg-emerald-600 text-white rounded-2xl font-bold tracking-tight shadow-lg shadow-emerald-100 active:scale-[0.97] transition-all text-sm flex items-center justify-center gap-2 hover:bg-emerald-700"
                  >
                    <CheckCircle2 size={16}/> Save Preferences
                  </button>

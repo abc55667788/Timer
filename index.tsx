@@ -1,6 +1,9 @@
 ﻿
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { createRoot } from 'react-dom/client';
+import { Capacitor } from '@capacitor/core';
+import { LocalNotifications } from '@capacitor/local-notifications';
+import { Haptics, ImpactStyle } from '@capacitor/haptics';
 import './index.css';
 import { 
   Play, BarChart3, Clock, BookOpen, 
@@ -41,6 +44,12 @@ import PhasePromptModal from './src/components/modals/PhasePromptModal';
 import PendingSettingsModal from './src/components/modals/PendingSettingsModal';
 import LogContinuationModal from './src/components/modals/LogContinuationModal';
 import MiniMode from './src/components/MiniMode';
+
+const triggerHaptic = async (style: ImpactStyle = ImpactStyle.Light) => {
+  if (Capacitor.isNativePlatform()) {
+    try { await Haptics.impact({ style }); } catch (e) { /* ignore */ }
+  }
+};
 
 // --- Main App Component ---
 function EmeraldTimer() {
@@ -263,11 +272,27 @@ function EmeraldTimer() {
     return saved ? parseFloat(saved) : 1.0;
   });
 
+  const [noticeMessage, setNoticeMessage] = useState('');
+  const showNotice = (msg: string, duration = 2000) => {
+    setNoticeMessage(msg);
+    setTimeout(() => setNoticeMessage(''), duration);
+  };
+
+  const isAndroid = useMemo(() => {
+    return Capacitor.getPlatform() === 'android' || /Android/i.test(navigator.userAgent);
+  }, []);
+
   useEffect(() => {
     localStorage.setItem('emerald-ui-scale', uiScale.toString());
-    // Apply zoom to the body or document element - reset to 1 in mini mode to prevent clipping
-    (document.body.style as any).zoom = isMiniMode ? 1.0 : uiScale;
-  }, [uiScale, isMiniMode]);
+    // On Android, we should usually avoid global CSS zoom as it can mess with keyboard/touch events differently than Electron
+    if (isAndroid) {
+      if (document.body.style.zoom) (document.body.style as any).zoom = 1.0;
+      // Prevent browser default touch behaviors on mobile that might zoom in/out
+      document.documentElement.style.touchAction = 'pan-x pan-y';
+    } else {
+      (document.body.style as any).zoom = isMiniMode ? 1.0 : uiScale;
+    }
+  }, [uiScale, isMiniMode, isAndroid]);
 
   // Handle global wheel zoom
   useEffect(() => {
@@ -418,6 +443,7 @@ function EmeraldTimer() {
   }, [phasePrompt]);
 
   const handleStart = () => {
+    triggerHaptic(ImpactStyle.Medium);
     if (!isActive) {
       if (!sessionStartTime) {
         resetSessionPhaseDurations();
@@ -476,17 +502,45 @@ function EmeraldTimer() {
     resetSessionPhaseDurations();
   };
 
-  const [noticeMessage, setNoticeMessage] = useState<string | null>(null);
-  const showNotice = (msg: string, timeout = 600) => {
-    setNoticeMessage(msg);
-    window.setTimeout(() => setNoticeMessage(null), timeout);
-  };
-
   const basePhaseDuration = phase === 'work' ? settings.workDuration : settings.restDuration;
   const displayTime = timeLeft > 0 ? timeLeft : basePhaseDuration + overtimeSeconds;
   const isCurrentlyRecording = isActive || isOvertime || (timeLeft < basePhaseDuration);
 
+  useEffect(() => {
+    if (!isAndroid) return;
+    
+    const updateNotification = async () => {
+      try {
+        if (isActive) {
+          const body = `Emerald Timer: ${phase === 'work' ? 'Focus' : 'Rest'} — ${formatTime(displayTime)} ${isOvertime ? '+' + formatTime(overtimeSeconds) : ''}`;
+          await LocalNotifications.schedule({
+            notifications: [{
+              id: 999,
+              title: "Timer active",
+              body: body,
+              ongoing: true, // This keeps it there
+              smallIcon: 'ic_stat_icon_config_sample'
+            }]
+          });
+        } else {
+          await LocalNotifications.cancel({ notifications: [{ id: 999 }] });
+        }
+      } catch (e) {
+        console.warn("Failed to update ongoing notification", e);
+      }
+    };
+    
+    const interval = setInterval(updateNotification, 5000);
+    updateNotification();
+    
+    return () => {
+      clearInterval(interval);
+      if (isAndroid) LocalNotifications.cancel({ notifications: [{ id: 999 }] }).catch(() => {});
+    };
+  }, [isActive, phase, displayTime, isOvertime, overtimeSeconds, isAndroid]);
+
   const handleStopClick = () => {
+    triggerHaptic(ImpactStyle.Heavy);
     setIsActive(false);
     setShowConfirmModal('stop');
   };
@@ -528,6 +582,7 @@ function EmeraldTimer() {
   };
 
   const transitionToPhase = (targetPhase: TimerPhase, autoStart = true) => {
+    triggerHaptic(ImpactStyle.Medium);
     setPhase(targetPhase);
     setTimeLeft(targetPhase === 'work' ? settings.workDuration : settings.restDuration);
     setIsOvertime(false);
@@ -545,6 +600,7 @@ function EmeraldTimer() {
   };
 
   const handleContinuePhase = () => {
+    triggerHaptic(ImpactStyle.Light);
     setPhasePrompt(null);
     if (!isOvertime) {
       setIsOvertime(true);
@@ -1305,8 +1361,8 @@ function EmeraldTimer() {
 
   return (
     <div 
-      className={` ${(isMiniMode || wasMiniModeBeforeModal) ? 'bg-transparent' : 'bg-white'} text-emerald-900 flex flex-col overflow-hidden transition-all duration-300`}
-      style={isMiniMode ? { height: '100vh', width: '100vw' } : { 
+      className={` ${(isMiniMode || wasMiniModeBeforeModal) ? 'bg-transparent' : 'bg-white'} text-emerald-900 flex flex-col overflow-hidden transition-all duration-500 ease-in-out`}
+      style={isMiniMode ? { height: '100vh', width: '100vw', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: isAndroid ? '20px' : '0' } : { 
         height: `${(1 / uiScale) * 100}vh`, 
         width: `${(1 / uiScale) * 100}vw`,
         transformOrigin: 'top left' 
@@ -1338,7 +1394,7 @@ function EmeraldTimer() {
       )}
 
       {!isMiniMode && !wasMiniModeBeforeModal && (
-        <header className="w-full h-16 flex justify-between items-center px-6 flex-shrink-0 bg-[#f0f9f0]/40 backdrop-blur-sm border-b border-emerald-50/50" style={{ WebkitAppRegion: 'drag' } as any}>
+        <header className="w-full h-16 flex justify-between items-center px-6 flex-shrink-0 bg-[#f0f9f0]/40 backdrop-blur-sm border-b border-emerald-50/50 animate-in fade-in slide-in-from-top-12 duration-500 ease-out" style={{ WebkitAppRegion: 'drag' } as any}>
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-white rounded-xl flex items-center justify-center shadow-lg shadow-emerald-100 overflow-hidden border border-emerald-50">
               <img src={APP_LOGO} alt="Emerald Timer Logo" className="w-full h-full object-cover p-1" />
@@ -1352,36 +1408,38 @@ function EmeraldTimer() {
               <Settings size={18} />
             </button>
             <button onClick={() => setIsMiniMode(true)} className="p-2 bg-white rounded-xl border border-emerald-100 hover:bg-emerald-50 text-emerald-600 flex items-center gap-2 text-sm font-bold shadow-sm transition-all active:scale-95" style={{ WebkitAppRegion: 'no-drag' } as any}>
-              <Minimize2 size={16} /> <span>Mini Mode</span>
+              <Minimize2 size={16} /> <span className="hidden sm:inline">Mini Mode</span>
             </button>
 
-            {/* Window Controls Group */}
-            <div className="flex items-center gap-0.5 ml-2 pl-4 border-l border-emerald-100/30">
-              <button 
-                onClick={() => handleWindowControl('minimize')} 
-                className="p-2.5 text-emerald-400 hover:bg-emerald-50 hover:text-emerald-700 transition-all rounded-xl" 
-                style={{ WebkitAppRegion: 'no-drag' } as any} 
-                title="Minimize"
-              >
-                <Minus size={18} />
-              </button>
-              <button 
-                onClick={() => handleWindowControl('maximize')} 
-                className="p-2.5 text-emerald-400 hover:bg-emerald-50 hover:text-emerald-700 transition-all rounded-xl" 
-                style={{ WebkitAppRegion: 'no-drag' } as any} 
-                title="Maximize"
-              >
-                <Copy size={16} strokeWidth={2.5} />
-              </button>
-              <button 
-                onClick={() => handleWindowControl('close')} 
-                className="p-2.5 text-emerald-300 hover:bg-red-500 hover:text-white transition-all rounded-xl ml-1" 
-                style={{ WebkitAppRegion: 'no-drag' } as any} 
-                title="Close"
-              >
-                <X size={18} />
-              </button>
-            </div>
+            {/* Window Controls Group - Hide on Android */}
+            {!isAndroid && (
+              <div className="flex items-center gap-0.5 ml-2 pl-4 border-l border-emerald-100/30">
+                <button 
+                  onClick={() => handleWindowControl('minimize')} 
+                  className="p-2.5 text-emerald-400 hover:bg-emerald-50 hover:text-emerald-700 transition-all rounded-xl" 
+                  style={{ WebkitAppRegion: 'no-drag' } as any} 
+                  title="Minimize"
+                >
+                  <Minus size={18} />
+                </button>
+                <button 
+                  onClick={() => handleWindowControl('maximize')} 
+                  className="p-2.5 text-emerald-400 hover:bg-emerald-50 hover:text-emerald-700 transition-all rounded-xl" 
+                  style={{ WebkitAppRegion: 'no-drag' } as any} 
+                  title="Maximize"
+                >
+                  <Copy size={16} strokeWidth={2.5} />
+                </button>
+                <button 
+                  onClick={() => handleWindowControl('close')} 
+                  className="p-2.5 text-emerald-300 hover:bg-red-500 hover:text-white transition-all rounded-xl ml-1" 
+                  style={{ WebkitAppRegion: 'no-drag' } as any} 
+                  title="Close"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+            )}
           </div>
         </header>
       )}
@@ -1409,7 +1467,7 @@ function EmeraldTimer() {
       )}
 
       {!hideShellForMiniPrompt && !isMiniMode && !wasMiniModeBeforeModal && (
-        <main className="w-full bg-white flex flex-col flex-1 overflow-hidden">
+        <main className="w-full bg-white flex flex-col flex-1 overflow-hidden animate-in fade-in slide-in-from-bottom-2 zoom-in-95 duration-500 ease-out">
           <nav className="flex border-b border-emerald-50 bg-emerald-50/20 px-4 flex-shrink-0">
             {[
               { id: 'timer', icon: Play, label: 'Focus' },
@@ -1417,17 +1475,26 @@ function EmeraldTimer() {
               { id: 'logs', icon: Clock, label: 'History' },
               { id: 'settings', icon: Settings, label: 'Settings' }
             ].map(tab => (
-              <button key={tab.id} onClick={() => setActiveTab(tab.id as any)} className={`flex-1 py-4 flex items-center justify-center gap-2 text-xs font-black uppercase tracking-widest relative transition-all ${activeTab === tab.id ? 'text-emerald-700' : 'text-emerald-300 hover:text-emerald-500'}`}>
-                <tab.icon size={16} /> <span className="hidden sm:inline">{tab.label}</span>
-                {activeTab === tab.id && <div className="absolute bottom-0 left-4 right-4 h-1 bg-emerald-600 rounded-t-full shadow-[0_-4px_10px_rgba(5,150,105,0.3)]" />}
+              <button 
+                key={tab.id} 
+                onClick={() => setActiveTab(tab.id as any)} 
+                className={`flex-1 py-4 flex flex-col items-center justify-center gap-1 text-[11px] font-bold tracking-tight relative transition-all duration-300 ${activeTab === tab.id ? 'text-emerald-700' : 'text-emerald-300 hover:text-emerald-500'}`}
+              >
+                <div className={`p-1 rounded-lg transition-all duration-300 ${activeTab === tab.id ? 'bg-emerald-100 scale-110 shadow-sm' : ''}`}>
+                  <tab.icon size={18} />
+                </div>
+                <span className="hidden sm:inline">{tab.label}</span>
+                {activeTab === tab.id && (
+                  <div className="absolute bottom-0 left-6 right-6 h-0.5 bg-emerald-600 rounded-t-full shadow-[0_-4px_12px_rgba(5,150,105,0.4)] animate-in fade-in duration-300" />
+                )}
               </button>
             ))}
           </nav>
 
           <div className="flex-1 overflow-hidden">
             {activeTab === 'timer' && (
-              <div className="flex h-full w-full overflow-hidden relative">
-                <div className={`flex-1 transition-all duration-500 ease-in-out ${isJournalOpen ? 'mr-[400px]' : 'mr-0'}`}>
+              <div className="flex h-full w-full overflow-hidden relative animate-in fade-in duration-200">
+                <div className={`flex-1 transition-all duration-500 ease-in-out ${isJournalOpen ? 'md:mr-[400px]' : 'mr-0'}`}>
                   <TimerBoard 
                     phase={phase}
                     isActive={isActive}
@@ -1449,7 +1516,7 @@ function EmeraldTimer() {
                 </div>
                 
                 {/* Journal Sidebar Overlay for Timer View */}
-                <div className={`absolute top-0 right-0 h-full z-40 transition-all duration-500 ease-in-out ${isJournalOpen ? 'translate-x-0 w-[400px] opacity-100' : 'translate-x-[100%] w-[400px] opacity-0 pointer-events-none'}`}>
+                <div className={`absolute top-0 right-0 h-full z-40 transition-all duration-500 ease-in-out ${isJournalOpen ? 'translate-x-0 w-full sm:w-[400px] opacity-100' : 'translate-x-[100%] w-full sm:w-[400px] opacity-0 pointer-events-none'}`}>
                   <JournalBoard 
                     goals={goals}
                     setGoals={setGoals}
@@ -1467,7 +1534,7 @@ function EmeraldTimer() {
             )}
 
             {activeTab === 'stats' && (
-              <div className="flex-1 p-4 md:p-6 h-full overflow-y-auto scrollbar-none">
+              <div className="flex-1 p-4 md:p-6 h-full overflow-y-auto scrollbar-none animate-in fade-in duration-200">
                 <StatsBoard 
                   logs={logs}
                   statsView={statsView}
@@ -1512,7 +1579,7 @@ function EmeraldTimer() {
             )}
 
             {activeTab === 'logs' && (
-              <div className="flex-1 p-4 md:p-6 h-full overflow-y-auto scrollbar-none">
+              <div className="flex-1 p-4 md:p-6 h-full overflow-y-auto scrollbar-none animate-in fade-in duration-200">
                 <LogsBoard 
                   filteredLogs={filteredLogs}
                   showFilters={showFilters}
@@ -1534,7 +1601,7 @@ function EmeraldTimer() {
             )}
 
             {activeTab === 'settings' && (
-              <div className="flex-1 h-full">
+              <div className="flex-1 h-full animate-in fade-in duration-200">
                 <SetupModal 
                   wasMiniModeBeforeModal={false}
                   isMiniMode={false}
@@ -1691,7 +1758,7 @@ function EmeraldTimer() {
       )}
 
       {noticeMessage && (
-        <div className={`fixed ${isMiniMode ? 'bottom-4 scale-90' : 'bottom-8'} left-1/2 -translate-x-1/2 z-[320] bg-emerald-900 text-white px-5 py-2.5 rounded-full shadow-lg text-[11px] font-black uppercase tracking-widest animate-in fade-in duration-200 whitespace-nowrap`}>
+        <div className={`fixed ${isMiniMode ? 'bottom-4 scale-90' : 'bottom-8'} left-1/2 -translate-x-1/2 z-[320] bg-emerald-900 text-white px-5 py-2.5 rounded-full shadow-lg text-[11px] font-bold tracking-tight animate-in fade-in duration-200 whitespace-nowrap`}>
           {noticeMessage}
         </div>
       )}

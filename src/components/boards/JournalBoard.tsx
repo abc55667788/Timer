@@ -33,7 +33,7 @@ const JournalBoard: React.FC<JournalBoardProps> = ({
       <div className="p-6 border-b border-emerald-50 flex items-center justify-between bg-white/80 backdrop-blur-md sticky top-0 z-20">
         <div>
           <h2 className="text-xl font-black text-emerald-950 tracking-tight">Journal</h2>
-          <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest leading-none">Daily Plan & Muse</p>
+          <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest leading-none">Daily Plan & Muse</p>
         </div>
         {onClose && (
           <button 
@@ -49,10 +49,10 @@ const JournalBoard: React.FC<JournalBoardProps> = ({
         {/* Goals Section */}
         <section className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-500 flex items-center gap-2">
+            <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-emerald-700 flex items-center gap-2">
               <Target size={14} /> Goals
             </h3>
-            <span className="text-[9px] font-black text-emerald-300 uppercase">
+            <span className="text-[9px] font-black text-emerald-500 uppercase">
               {goals.filter(g => g.completed).length}/{goals.length} Done
             </span>
           </div>
@@ -115,7 +115,7 @@ const JournalBoard: React.FC<JournalBoardProps> = ({
         {/* Musings Section */}
         <section className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-500 flex items-center gap-2">
+            <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-emerald-700 flex items-center gap-2">
               <Quote size={14} /> Musing
             </h3>
             <button 

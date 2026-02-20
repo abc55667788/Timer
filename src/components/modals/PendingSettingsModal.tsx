@@ -21,14 +21,14 @@ const PendingSettingsModal: React.FC<PendingSettingsModalProps> = ({
           <div className="flex items-center justify-center w-12 h-12 rounded-full bg-emerald-50 mx-auto mb-4">
             <Clock size={24} className="text-emerald-600" />
           </div>
-          <h2 className="text-xl font-black text-emerald-950 mb-2 tracking-tight">Update Timer?</h2>
-          <p className="text-[10px] uppercase font-bold tracking-[0.2em] text-emerald-500 mb-3">Session in progress</p>
-          <p className="text-[11px] font-black uppercase tracking-[0.4em] text-emerald-400 mb-6">
+          <h2 className="text-xl font-bold text-emerald-950 mb-2 tracking-tight">Update Timer?</h2>
+          <p className="text-[10px] font-bold tracking-tight text-emerald-500 mb-3">Session in progress</p>
+          <p className="text-[11px] font-bold tracking-[0.2em] text-emerald-400 mb-6 underline decoration-emerald-100 decoration-2 underline-offset-4">
             {pendingSettingsChange.workDuration / 60}m  {pendingSettingsChange.restDuration / 60}m
           </p>
           <div className="space-y-3">
-            <button onClick={() => handleSettingsSaveDecision(true)} className="w-full py-3.5 bg-emerald-600 text-white font-black uppercase tracking-[0.15em] rounded-2xl shadow-lg active:scale-[0.97] transition-all text-xs">Save & Restart</button>
-            <button onClick={() => handleSettingsSaveDecision(false)} className="w-full py-3.5 bg-white border border-emerald-100 text-emerald-700 font-black uppercase tracking-[0.15em] rounded-2xl shadow-sm active:scale-[0.97] transition-all text-xs">Keep current</button>
+            <button onClick={() => handleSettingsSaveDecision(true)} className="w-full py-3.5 bg-emerald-600 text-white font-bold tracking-tight rounded-2xl shadow-lg active:scale-[0.97] transition-all text-xs">Save & Restart</button>
+            <button onClick={() => handleSettingsSaveDecision(false)} className="w-full py-3.5 bg-white border border-emerald-100 text-emerald-700 font-bold tracking-tight rounded-2xl shadow-sm active:scale-[0.97] transition-all text-xs">Keep current</button>
           </div>
         </div>
       </div>

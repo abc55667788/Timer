@@ -30,8 +30,8 @@ const PhasePromptModal: React.FC<PhasePromptModalProps> = ({
             <Clock size={20} />
           </div>
           <div className="text-center">
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-400 mb-1">Phase Complete</p>
-            <h3 className="text-xl font-black text-emerald-950 leading-tight">
+            <p className="text-[10px] font-bold tracking-tight text-emerald-400 mb-1">Phase Complete</p>
+            <h3 className="text-xl font-bold text-emerald-950 leading-tight tracking-tight">
               {phasePrompt.kind === 'cycle-complete' ? 'Cycle Complete' : (phasePrompt.phase === 'work' ? 'Work phase finished' : 'Rest phase finished')}
             </h3>
           </div>
@@ -46,19 +46,19 @@ const PhasePromptModal: React.FC<PhasePromptModalProps> = ({
         <div className="space-y-2.5 pt-2">
           <button 
             onClick={handleContinuePhase} 
-            className="w-full py-3.5 bg-emerald-600 text-white text-[11px] font-black uppercase tracking-[0.2em] rounded-2xl shadow-lg shadow-emerald-200 hover:bg-emerald-700 transition-all active:scale-[0.97]"
+            className="w-full py-3.5 bg-emerald-600 text-white text-[11px] font-bold tracking-tight rounded-2xl shadow-lg shadow-emerald-200 hover:bg-emerald-700 transition-all active:scale-[0.97]"
           >
             Continue current phase
           </button>
           <button 
             onClick={handleNextPhaseFromPrompt} 
-            className="w-full py-3.5 bg-white border border-emerald-100 text-emerald-700 text-[11px] font-black uppercase tracking-[0.2em] rounded-2xl hover:bg-emerald-50 transition-all active:scale-[0.97]"
+            className="w-full py-3.5 bg-white border border-emerald-100 text-emerald-700 text-[11px] font-bold tracking-tight rounded-2xl hover:bg-emerald-50 transition-all active:scale-[0.97]"
           >
             {phasePrompt.phase === 'work' ? 'Go to rest' : 'Go to work'}
           </button>
           <button 
             onClick={handleExitAndSave} 
-            className="w-full py-3.5 bg-emerald-50 text-emerald-600 text-[11px] font-black uppercase tracking-[0.2em] rounded-2xl border border-emerald-100 transition-all hover:bg-emerald-100 active:scale-[0.97]"
+            className="w-full py-3.5 bg-emerald-50 text-emerald-600 text-[11px] font-bold tracking-tight rounded-2xl border border-emerald-100 transition-all hover:bg-emerald-100 active:scale-[0.97]"
           >
             Save & exit
           </button>

@@ -43,7 +43,7 @@ const LogsBoard: React.FC<LogsBoardProps> = ({
     <div className="space-y-8 w-full pb-10">
       <div className="flex justify-between items-center py-6 border-b border-emerald-50 px-4">
         <div className="flex items-center gap-4">
-          <h3 className="text-sm font-black uppercase tracking-[0.2em] text-emerald-900 flex items-center gap-3">
+          <h3 className="text-sm font-bold tracking-tight text-emerald-900 flex items-center gap-3">
             <Clock size={20} className="text-emerald-500" /> History Logs
           </h3>
           <button 
@@ -55,7 +55,7 @@ const LogsBoard: React.FC<LogsBoardProps> = ({
         </div>
         <button 
           onClick={() => setShowManualModal(true)} 
-          className="flex items-center gap-2.5 px-6 py-3 bg-emerald-600 text-white rounded-[1.5rem] text-xs font-black uppercase tracking-widest shadow-xl shadow-emerald-200 active:scale-95 transition-all"
+          className="flex items-center gap-2.5 px-6 py-3 bg-emerald-600 text-white rounded-[1.5rem] text-xs font-bold tracking-tight shadow-xl shadow-emerald-200 active:scale-95 transition-all"
         >
           <Plus size={16} /> Add Entry
         </button>
@@ -65,11 +65,11 @@ const LogsBoard: React.FC<LogsBoardProps> = ({
         <div className="bg-emerald-50/50 p-7 rounded-[3rem] border border-emerald-100/50 animate-in fade-in slide-in-from-top-6 duration-500 mb-6">
           <div className="space-y-6">
             <div className="space-y-3">
-              <label className="text-[10px] font-black uppercase text-emerald-400 tracking-widest ml-1">Category Filter</label>
+              <label className="text-[11px] font-bold text-emerald-400 tracking-tight ml-1">Category Filter</label>
               <div className="flex flex-wrap gap-2">
                 <button 
                   onClick={() => setFilterCategory('All')} 
-                  className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                  className={`px-4 py-2 rounded-xl text-[11px] font-bold tracking-tight transition-all ${
                     filterCategory === 'All' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-100' : 'bg-white text-emerald-400 border border-emerald-100 hover:bg-emerald-50'
                   }`}
                 >
@@ -79,7 +79,7 @@ const LogsBoard: React.FC<LogsBoardProps> = ({
                   <button 
                     key={idx}
                     onClick={() => setFilterCategory(cat.name as any)} 
-                    className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                    className={`px-4 py-2 rounded-xl text-[11px] font-bold tracking-tight transition-all ${
                       filterCategory === cat.name ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-100' : 'bg-white text-emerald-400 border border-emerald-100 hover:bg-emerald-50'
                     }`}
                   >
@@ -91,26 +91,26 @@ const LogsBoard: React.FC<LogsBoardProps> = ({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <div className="space-y-3">
-                <label className="text-[10px] font-black uppercase text-emerald-400 tracking-widest ml-1">From Date</label>
+                <label className="text-[11px] font-bold text-emerald-400 tracking-tight ml-1">From Date</label>
                 <div className="relative group">
                   <div className="absolute left-4 top-1/2 -translate-y-1/2 w-1 h-4 bg-emerald-200 rounded-full transition-all group-focus-within:bg-emerald-500" />
                   <input 
                     type="date" 
                     value={filterStartDate} 
                     onChange={(e) => setFilterStartDate(e.target.value)} 
-                    className="w-full bg-white border border-emerald-100 rounded-2xl py-3 pl-8 pr-4 text-xs font-black text-emerald-900 outline-none focus:ring-4 focus:ring-emerald-500/5 transition-all" 
+                    className="w-full bg-white border border-emerald-100 rounded-2xl py-3 pl-8 pr-4 text-xs font-bold text-emerald-900 outline-none focus:ring-4 focus:ring-emerald-500/5 transition-all" 
                   />
                 </div>
               </div>
               <div className="space-y-3">
-                <label className="text-[10px] font-black uppercase text-emerald-400 tracking-widest ml-1">To Date</label>
+                <label className="text-[11px] font-bold text-emerald-400 tracking-tight ml-1">To Date</label>
                 <div className="relative group">
                   <div className="absolute left-4 top-1/2 -translate-y-1/2 w-1 h-4 bg-emerald-200 rounded-full transition-all group-focus-within:bg-emerald-500" />
                   <input 
                     type="date" 
                     value={filterEndDate} 
                     onChange={(e) => setFilterEndDate(e.target.value)} 
-                    className="w-full bg-white border border-emerald-100 rounded-2xl py-3 pl-8 pr-4 text-xs font-black text-emerald-900 outline-none focus:ring-4 focus:ring-emerald-500/5 transition-all" 
+                    className="w-full bg-white border border-emerald-100 rounded-2xl py-3 pl-8 pr-4 text-xs font-bold text-emerald-900 outline-none focus:ring-4 focus:ring-emerald-500/5 transition-all" 
                   />
                 </div>
               </div>
@@ -120,7 +120,7 @@ const LogsBoard: React.FC<LogsBoardProps> = ({
           <div className="flex justify-end mt-6 pt-4 border-t border-emerald-100/50">
             <button 
               onClick={() => { setFilterCategory('All'); setFilterStartDate(''); setFilterEndDate(''); }} 
-              className="px-4 py-1 text-[10px] font-black uppercase text-emerald-300 hover:text-emerald-600 tracking-widest transition-all hover:translate-x-1"
+              className="px-4 py-1 text-[11px] font-bold text-emerald-400 hover:text-emerald-700 tracking-tight transition-all hover:translate-x-1"
             >
               Reset Filters →
             </button>
@@ -146,7 +146,7 @@ const LogsBoard: React.FC<LogsBoardProps> = ({
                   <div className="flex items-center gap-2">
                     <span className="text-[10px] text-emerald-400 font-bold whitespace-nowrap">{formatDisplayDate(log.startTime)}</span>
                     <span className="w-1 h-1 bg-emerald-100 rounded-full"/>
-                    <span className="text-[10px] text-emerald-600 font-black uppercase tracking-widest">{formatTime(log.duration)}</span>
+                    <span className="text-[11px] text-emerald-600 font-bold tracking-tight">{formatTime(log.duration)}</span>
                   </div>
                 </div>
               </div>
@@ -173,7 +173,7 @@ const LogsBoard: React.FC<LogsBoardProps> = ({
       ) : (
         <div className="flex flex-col items-center justify-center py-24 bg-emerald-50/20 rounded-[3.5rem] border-2 border-dashed border-emerald-100 gap-4">
            <Search size={48} className="text-emerald-200" />
-           <p className="text-[10px] font-black uppercase tracking-[0.4em] text-emerald-300">No matching logs found</p>
+           <p className="text-[10px] font-bold tracking-tight text-emerald-300">No matching logs found</p>
         </div>
       )}
     </div>

@@ -41,7 +41,7 @@ function MiniCalendar({ logs, selectedDate, onSelectDate, viewType, compact = fa
   };
 
   return (
-    <div className={`bg-white ${compact ? 'p-4 rounded-[1.5rem]' : 'p-6 rounded-[2.5rem]'} border border-emerald-50 shadow-sm w-full ${compact ? 'max-w-[240px]' : 'max-w-[280px]'} animate-in slide-in-from-left duration-500 ring-1 ring-emerald-50/50`}>
+    <div className={`bg-white ${compact ? 'p-4 rounded-[1.5rem]' : 'p-4 sm:p-6 rounded-[2rem] sm:rounded-[2.5rem]'} border border-emerald-50 shadow-sm w-full ${compact ? 'max-w-full sm:max-w-[240px]' : 'max-w-full sm:max-w-[280px]'} animate-in slide-in-from-left duration-500 ring-1 ring-emerald-50/50`}>
       <div className={`flex justify-between items-center ${compact ? 'mb-4 px-3 py-2' : 'mb-6 px-4 py-3'} bg-emerald-50 rounded-[1rem] border border-emerald-100`}>
         <div className={`flex ${compact ? 'gap-2' : 'gap-4'}`}>
           <div className="relative group">
@@ -76,7 +76,7 @@ function MiniCalendar({ logs, selectedDate, onSelectDate, viewType, compact = fa
       </div>
       <div className={`grid grid-cols-7 gap-1 text-center ${compact ? 'mb-4' : 'mb-6'}`}>
         {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, idx) => (
-          <div key={`${d}-${idx}`} className={`${compact ? 'text-[10px]' : 'text-xs'} font-bold text-emerald-200`}>
+          <div key={`${d}-${idx}`} className={`${compact ? 'text-[10px]' : 'text-xs'} font-bold text-emerald-500`}>
             {d}
           </div>
         ))}
@@ -107,7 +107,7 @@ function MiniCalendar({ logs, selectedDate, onSelectDate, viewType, compact = fa
           setViewDate(new Date());
           onSelectDate(today);
         }}
-        className={`w-full ${compact ? 'py-2' : 'py-3'} bg-emerald-50 text-emerald-600 rounded-[0.75rem] ${compact ? 'text-[10px]' : 'text-xs'} font-black uppercase tracking-widest hover:bg-emerald-100 transition-colors flex items-center justify-center gap-2 overflow-hidden`}
+        className={`w-full ${compact ? 'py-2' : 'py-3'} bg-emerald-50 text-emerald-600 rounded-[0.75rem] ${compact ? 'text-[10px]' : 'text-xs'} font-bold tracking-tight hover:bg-emerald-100 transition-colors flex items-center justify-center gap-2 overflow-hidden`}
       >
         <CalendarDays size={compact ? 14 : 16} /> Today
       </button>

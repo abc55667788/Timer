@@ -97,22 +97,21 @@ const StatsBoard: React.FC<StatsBoardProps> = ({
   };
 
   return (
-    <div className="flex flex-row gap-10 items-start h-full animate-in fade-in slide-in-from-right-4 duration-500">
+    <div className="flex flex-col lg:flex-row gap-6 lg:gap-10 items-start h-full animate-in fade-in slide-in-from-right-4 duration-500 overflow-hidden">
       {!isCalendarCollapsed && (
-        <div className="flex-shrink-0 sticky top-0">
+        <div className="w-full lg:w-auto flex-shrink-0 sticky top-0 z-20">
           <MiniCalendar 
             logs={logs} 
             selectedDate={selectedStatsDate} 
             onSelectDate={setSelectedStatsDate} 
             viewType={statsView} 
-
           />
         </div>
       )}
       <div className="flex-1 space-y-6 w-full h-full flex flex-col overflow-hidden">
-        <div className="flex items-center justify-between bg-emerald-50/40 p-1.5 rounded-[2rem] flex-shrink-0 border border-emerald-100/50">
-           <div className="flex items-center gap-1.5">
-             <button onClick={() => setIsCalendarCollapsed(!isCalendarCollapsed)} className="p-2.5 text-emerald-600 hover:bg-white rounded-2xl transition-all shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between bg-emerald-50/40 p-2 sm:p-1.5 rounded-[2rem] flex-shrink-0 border border-emerald-100/50 gap-2">
+           <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none pb-1 sm:pb-0">
+             <button onClick={() => setIsCalendarCollapsed(!isCalendarCollapsed)} className="p-2.5 text-emerald-600 hover:bg-white rounded-2xl transition-all shadow-sm flex-shrink-0">
                {isCalendarCollapsed ? <PanelLeftOpen size={18}/> : <PanelLeftClose size={18}/>}
              </button>
              {([
@@ -121,25 +120,25 @@ const StatsBoard: React.FC<StatsBoardProps> = ({
                { id: 'month', label: 'Month' },
                { id: 'year', label: 'Year' }
              ] as { id: StatsView, label: string }[]).map(v => (
-               <button key={v.id} onClick={() => setStatsView(v.id)} className={`px-5 py-2.5 rounded-2xl text-xs font-black uppercase tracking-widest transition-all ${statsView === v.id ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-200' : 'text-emerald-500 hover:bg-emerald-100'}`}>{v.label}</button>
+               <button key={v.id} onClick={() => setStatsView(v.id)} className={`px-4 sm:px-5 py-2.5 rounded-2xl text-[11px] sm:text-xs font-bold tracking-tight transition-all flex-shrink-0 ${statsView === v.id ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-200' : 'text-emerald-500 hover:bg-emerald-100'}`}>{v.label}</button>
              ))}
            </div>
-           <div className="flex items-center gap-3">
+           <div className="flex items-center justify-between sm:justify-end gap-3 px-2 sm:px-0">
               {statsView === 'day' && (
                 <div className="bg-white/80 p-1 rounded-2xl flex border border-emerald-100/50 shadow-sm">
                    <button onClick={() => setDayViewMode('timeline')} className={`p-2 rounded-xl transition-all ${dayViewMode === 'timeline' ? 'bg-emerald-600 text-white shadow-md' : 'text-emerald-400 hover:text-emerald-600'}`} title="Timeline View"><LayoutGrid size={16}/></button>
                    <button onClick={() => setDayViewMode('stats')} className={`p-2 rounded-xl transition-all ${dayViewMode === 'stats' ? 'bg-emerald-600 text-white shadow-md' : 'text-emerald-400 hover:text-emerald-600'}`} title="Stats View"><BarChart size={16}/></button>
                 </div>
               )}
-              <div className="text-xs font-black text-emerald-800 pr-5 uppercase tracking-widest opacity-60">{formatDisplayDateString(selectedStatsDate)}</div>
+              <div className="text-[11px] sm:text-xs font-bold text-emerald-800 sm:pr-5 tracking-tight opacity-60 truncate">{formatDisplayDateString(selectedStatsDate)}</div>
            </div>
         </div>
         
         <div className="flex-1 overflow-y-auto pr-2 space-y-4 scrollbar-none pb-20">
           {statsView === 'day' && (
-            <div className="space-y-8 animate-in zoom-in-95 duration-500">
+            <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
                {dayViewMode === 'timeline' ? (
-                 <>
+                 <div className="animate-in fade-in zoom-in-95 duration-500">
                    <div className="relative bg-white rounded-[3rem] border border-emerald-50 h-[240px] shadow-sm overflow-visible group flex-shrink-0">
                       <div className="absolute top-3 right-3 z-30 flex items-center gap-2 bg-white/80 backdrop-blur-sm p-1 rounded-lg border border-emerald-50 shadow-sm">
                         <button onClick={zoomOut} title="Zoom out" className={`p-2 rounded-md text-emerald-600 hover:bg-emerald-50 transition ${timelineZoom <= MIN_ZOOM ? 'opacity-40 cursor-not-allowed' : ''}`} disabled={timelineZoom <= MIN_ZOOM}><ZoomOut size={16} /></button>
@@ -175,7 +174,7 @@ const StatsBoard: React.FC<StatsBoardProps> = ({
                                 {track.map(log => (
                                   <div key={log.id} onClick={() => handleViewLog(log)} className="absolute top-0 bottom-0 rounded-xl cursor-pointer transition-all hover:brightness-110 hover:shadow-lg hover:z-50 border border-white/30 shadow-sm group/log z-10 overflow-visible" style={{ left: `${((log.startTime - timelineRange.start) / 60000) * 1.5 * timelineZoom + 40}px`, width: `${Math.max(((log.endTime && log.startTime ? Math.max(log.duration, (log.endTime - log.startTime) / 1000) : log.duration) / 60) * 1.5 * timelineZoom, 6)}px`, backgroundColor: getCategoryColor(log.category) }}>
                                     <div className="absolute hidden group-hover/log:flex flex-col items-center bg-emerald-900 text-white p-2 rounded-[1rem] text-[10px] top-full mt-2 left-1/2 -translate-x-1/2 z-[100] shadow-2xl whitespace-nowrap animate-in fade-in zoom-in-95">
-                                      <div className="font-black uppercase tracking-widest mb-1">{log.category}</div>
+                                      <div className="font-bold tracking-tight mb-1">{log.category}</div>
                                       <div className="opacity-60 font-mono">{formatClock(log.startTime, timelineZoom)} - {log.endTime ? formatClock(log.endTime, timelineZoom) : 'NOW'}</div>
                                     </div>
                                   </div>
@@ -194,13 +193,13 @@ const StatsBoard: React.FC<StatsBoardProps> = ({
                            <History size={26}/>
                          </div>
                          <div>
-                           <h4 className="text-xl font-black text-emerald-950 tracking-tight">Life Timeline</h4>
-                           <p className="text-[11px] font-black text-emerald-400 uppercase tracking-[0.4em] mt-1">{formatDisplayDateString(selectedStatsDate)}</p>
+                           <h4 className="text-xl font-bold text-emerald-950 tracking-tight">Life Timeline</h4>
+                           <p className="text-[11px] font-bold text-emerald-400 tracking-tight mt-1">{formatDisplayDateString(selectedStatsDate)}</p>
                          </div>
                        </div>
                        <button 
                          onClick={() => setActiveTab('logs')} 
-                         className="px-6 py-3 bg-emerald-50 text-emerald-600 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-100 transition-all flex items-center gap-2 shadow-sm"
+                         className="px-6 py-3 bg-emerald-50 text-emerald-600 rounded-2xl text-[11px] font-bold tracking-tight hover:bg-emerald-100 transition-all flex items-center gap-2 shadow-sm"
                        >
                          Historical Logs <ExternalLink size={14}/>
                        </button>
@@ -225,13 +224,13 @@ const StatsBoard: React.FC<StatsBoardProps> = ({
                                     {React.createElement(getCategoryIcon(log.category), {size: 16})}
                                   </div>
                                   <div>
-                                    <div className="text-[9px] font-black uppercase text-emerald-300 tracking-[0.2em] leading-none mb-0.5">{formatClock(log.startTime)} — {log.endTime ? formatClock(log.endTime) : 'NOW'}</div>
-                                    <div className="text-[9px] font-bold text-emerald-500 leading-none">
+                                    <div className="text-[10px] font-bold text-emerald-300 tracking-tight leading-none mb-0.5">{formatClock(log.startTime)} — {log.endTime ? formatClock(log.endTime) : 'NOW'}</div>
+                                    <div className="text-[10px] font-bold text-emerald-500 leading-none">
                                       {formatTime(resolvePhaseTotals(log).total)}
                                     </div>
                                   </div>
                                 </div>
-                                <span className="text-[8px] font-black text-white px-2 py-0.5 rounded-md shadow-md uppercase tracking-wider" style={{ backgroundColor: getCategoryColor(log.category) }}>
+                                <span className="text-[9px] font-bold text-white px-2 py-0.5 rounded-md shadow-md tracking-tight" style={{ backgroundColor: getCategoryColor(log.category) }}>
                                   {log.category}
                                 </span>
                               </div>
@@ -264,29 +263,32 @@ const StatsBoard: React.FC<StatsBoardProps> = ({
                            <div className="p-6 rounded-[2rem] border-2 border-dashed border-emerald-50/50 bg-emerald-50/20">
                              <History size={32} className="opacity-40" />
                            </div>
-                           <p className="text-[10px] font-black uppercase tracking-[0.4em] opacity-40">No Logs Recorded</p>
+                           <p className="text-[12px] font-bold tracking-tight opacity-40">No logs recorded</p>
                          </div>
                        )}
                      </div>
                    </div>
-                 </>
+                 </div>
                ) : (
-                 <div className="space-y-4">
-                   <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 animate-in slide-in-from-bottom duration-500">
+                 <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-700">
+                   <div className="grid grid-cols-1 lg:grid-cols-12 gap-3">
                       <div className="lg:col-span-3 space-y-2">
                          <div className="bg-emerald-600 text-white px-4 py-3 rounded-[1.5rem] shadow-lg shadow-emerald-100/50 relative overflow-hidden group min-h-[64px] flex flex-col justify-center">
-                           <span className="text-[10px] font-black uppercase tracking-[0.2em] opacity-80 relative z-10 text-emerald-50">Focus</span>
+                           <span className="text-[11px] font-bold tracking-tight opacity-80 relative z-10 text-emerald-50">Focus</span>
                            <div className="text-xl font-black tracking-tighter relative z-10 font-mono">
                              {formatTime(statsData.filter(item => item.name !== 'Rest').reduce((acc, item) => acc + item.value * 60, 0))}
                            </div>
                          </div>
                          <div className="bg-white border border-emerald-50 px-4 py-3 rounded-[1.5rem] shadow-sm relative overflow-hidden group min-h-[64px] flex flex-col justify-center">
-                           <span className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-300 relative z-10">Rest</span>
+                           <span className="text-[11px] font-bold tracking-tight text-emerald-600 relative z-10">Rest</span>
                            <div className="text-xl font-black tracking-tighter relative z-10 font-mono text-emerald-900">
                              {formatTime(restTimeTotal)}
                            </div>
                          </div>
-                         <div className="px-5 py-0.5 text-[10px] font-black text-emerald-300 uppercase tracking-widest">{selectedDayLogs.length} sessions Today</div>
+                         <div className="px-5 py-0.5 text-[11px] font-bold text-emerald-500 tracking-tight">{selectedDayLogs.length} sessions Today</div>
+                         <div className="px-5 py-1 text-[11px] font-bold text-emerald-800 tracking-tight flex items-center gap-2 mb-1 mt-2">
+                            <div className="w-1 h-3 bg-emerald-500 rounded-full"/> Categories
+                         </div>
                       </div>
                       
                       <div className="lg:col-span-9 grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-2 pb-3">
@@ -297,7 +299,7 @@ const StatsBoard: React.FC<StatsBoardProps> = ({
                                 {React.createElement(getCategoryIcon(item.name as Category), { size: 16 })}
                               </div>
                               <div className="flex flex-col min-w-0">
-                                <span className="text-[10px] font-black uppercase text-emerald-900/40 tracking-widest leading-none mb-1 truncate">{item.name}</span>
+                                <span className="text-[11px] font-bold text-emerald-900/40 tracking-tight leading-none mb-1 truncate">{item.name}</span>
                                 <div className="text-sm font-black text-emerald-950 truncate leading-none">{item.value}m</div>
                               </div>
                             </div>
@@ -311,7 +313,7 @@ const StatsBoard: React.FC<StatsBoardProps> = ({
 
                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-in zoom-in-95 duration-500">
                       <div className="bg-white p-6 rounded-[2.5rem] border border-emerald-50 h-[380px] shadow-sm flex flex-col relative overflow-hidden group">
-                        <h3 className="text-xs font-black mb-4 text-emerald-800 uppercase tracking-[0.3em] relative z-10 flex items-center gap-2"><div className="w-1.5 h-4 bg-emerald-600 rounded-full"/> Category Breakdown</h3>
+                        <h3 className="text-sm font-bold mb-4 text-emerald-800 tracking-tight relative z-10 flex items-center gap-2"><div className="w-1.5 h-4 bg-emerald-600 rounded-full"/> Category Breakdown</h3>
                         {statsData.length > 0 ? (
                           <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
@@ -322,10 +324,10 @@ const StatsBoard: React.FC<StatsBoardProps> = ({
                               <Legend layout="horizontal" verticalAlign="bottom" wrapperStyle={{fontSize: '11px', fontWeight: 'bold', paddingTop: '15px'}} />
                             </PieChart>
                           </ResponsiveContainer>
-                        ) : <div className="h-full flex items-center justify-center text-emerald-200 uppercase font-black tracking-[0.3em]">No Activity</div>}
+                        ) : <div className="h-full flex items-center justify-center text-emerald-200 font-bold tracking-tight">No Activity</div>}
                       </div>
                       <div className="bg-white p-6 rounded-[2.5rem] border border-emerald-50 h-[380px] shadow-sm flex flex-col relative overflow-hidden group">
-                        <h3 className="text-xs font-black mb-4 text-emerald-800 uppercase tracking-[0.3em] relative z-10 flex items-center gap-2"><div className="w-1.5 h-4 bg-emerald-600 rounded-full"/> Time Distribution</h3>
+                        <h3 className="text-sm font-bold mb-4 text-emerald-800 tracking-tight relative z-10 flex items-center gap-2"><div className="w-1.5 h-4 bg-emerald-600 rounded-full"/> Time Distribution</h3>
                         <ResponsiveContainer width="100%" height="100%">
                           <ReBarChart data={statsData.filter(d => d.value > 0)}>
                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
@@ -350,7 +352,7 @@ const StatsBoard: React.FC<StatsBoardProps> = ({
                     <div className="bg-white rounded-[2rem] p-3 border border-emerald-50 shadow-sm overflow-hidden ring-1 ring-emerald-50/50">
                       <div className="grid grid-cols-7 gap-1">
                         {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d => (
-                          <div key={d} className="text-center text-[10px] font-black text-emerald-200 uppercase py-1 tracking-[0.2em]">{d}</div>
+                          <div key={d} className="text-center text-[10px] font-bold text-emerald-500 py-1 tracking-tight">{d}</div>
                         ))}
                         {calendarGridData.map((item, idx) => {
                           if (item.empty) return <div key={idx} className="aspect-square opacity-[0.03] bg-emerald-900 rounded-xl" />;
@@ -425,22 +427,22 @@ const StatsBoard: React.FC<StatsBoardProps> = ({
                   <div className="xl:col-span-4 space-y-4 animate-in slide-in-from-right duration-700">
                     <div className="grid grid-cols-2 gap-3">
                        <div className="bg-emerald-600 text-white px-4 py-3 rounded-2xl shadow-lg shadow-emerald-100/50 relative overflow-hidden group min-h-[70px] flex flex-col justify-center">
-                         <span className="text-[9px] font-black uppercase tracking-[0.2em] opacity-80 relative z-10 text-emerald-50">Focus</span>
-                         <div className="text-xl font-black tracking-tighter relative z-10 font-mono">
+                         <span className="text-[9px] font-bold tracking-tight opacity-80 relative z-10 text-emerald-50">Focus</span>
+                         <div className="text-xl font-bold tracking-tighter relative z-10 font-mono">
                            {formatTime(statsData.filter(item => item.name !== 'Rest').reduce((acc, item) => acc + item.value * 60, 0))}
                          </div>
                        </div>
                        <div className="bg-white border border-emerald-50 px-4 py-3 rounded-2xl shadow-sm relative overflow-hidden group min-h-[70px] flex flex-col justify-center">
-                         <span className="text-[9px] font-black uppercase tracking-[0.2em] text-emerald-300 relative z-10">Rest</span>
-                         <div className="text-xl font-black tracking-tighter relative z-10 font-mono text-emerald-900">
+                         <span className="text-[9px] font-bold tracking-tight text-emerald-600 relative z-10">Rest</span>
+                         <div className="text-xl font-bold tracking-tighter relative z-10 font-mono text-emerald-900">
                            {formatTime(restTimeTotal)}
                          </div>
                        </div>
                     </div>
 
                     <div className="grid grid-cols-1 gap-2">
-                       <div className="px-1 text-[10px] font-black text-emerald-800 uppercase tracking-[0.3em] flex items-center gap-2 mb-1">
-                          <div className="w-1 h-3 bg-emerald-400 rounded-full"/> Category Breakdown
+                       <div className="px-1 text-[11px] font-bold text-emerald-800 tracking-tight flex items-center gap-2 mb-1">
+                          <div className="w-1.5 h-4 bg-emerald-600 rounded-full"/> Category Breakdown
                        </div>
                        {statsData.filter(item => item.name !== 'Rest').map((item, idx) => (
                         <div key={item.name} className="bg-white px-3 py-2.5 rounded-xl border border-emerald-50 shadow-sm hover:shadow-md transition-all hover:-translate-x-1 flex items-center gap-3" style={{ animationDelay: `${idx * 20}ms` }}>
@@ -449,8 +451,8 @@ const StatsBoard: React.FC<StatsBoardProps> = ({
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex justify-between items-end mb-1">
-                              <span className="text-[10px] font-black uppercase text-emerald-900/40 tracking-widest truncate">{item.name}</span>
-                              <span className="text-xs font-black text-emerald-950 font-mono">{item.value}m</span>
+                              <span className="text-[11px] font-bold text-emerald-700 tracking-tight truncate">{item.name}</span>
+                              <span className="text-xs font-bold text-emerald-950 font-mono tracking-tight">{item.value}m</span>
                             </div>
                             <div className="w-full h-1.5 bg-emerald-50 rounded-full overflow-hidden">
                                <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${(item.value / Math.max(1, statsData.reduce((a,b)=>a+b.value,0)))*100}%`, backgroundColor: getCategoryColor(item.name as Category) }} />
@@ -458,7 +460,7 @@ const StatsBoard: React.FC<StatsBoardProps> = ({
                           </div>
                         </div>
                       ))}
-                      <div className="px-5 py-2 text-[9px] font-black text-emerald-300/60 uppercase tracking-widest text-center">{relevantLogs.length} sessions in this period</div>
+                      <div className="px-5 py-2 text-[10px] font-bold text-emerald-500 tracking-tight text-center">{relevantLogs.length} sessions in this period</div>
                     </div>
                   </div>
                </div>
@@ -470,7 +472,7 @@ const StatsBoard: React.FC<StatsBoardProps> = ({
                <div className="bg-white rounded-[2rem] p-3 border border-emerald-50 shadow-sm overflow-hidden ring-1 ring-emerald-50/50">
                  <div className="grid grid-cols-7 gap-2">
                    {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d => (
-                     <div key={d} className="text-center text-[11px] font-black text-emerald-200 uppercase py-1 tracking-[0.2em]">{d}</div>
+                       <div key={d} className="text-center text-[10px] font-bold text-emerald-500 py-1 tracking-tight">{d}</div>
                    ))}
                    {calendarGridData.map((item, idx) => {
                      if (item.empty) return <div key={idx} className="aspect-[1.8/1] opacity-[0.03] bg-emerald-900 rounded-xl" />;
@@ -487,7 +489,7 @@ const StatsBoard: React.FC<StatsBoardProps> = ({
                            setSelectedStatsDate(item.dateStr || '');
                            setStatsView('day');
                          }}
-                         className={`aspect-[1.8/1] rounded-xl p-2 flex flex-col justify-between border transition-all cursor-pointer group relative overflow-hidden active:scale-95
+                         className={`aspect-[1.8/1] rounded-xl p-1.5 sm:p-2 flex flex-col justify-between border transition-all cursor-pointer group relative overflow-hidden active:scale-95
                            ${isSelected ? 'bg-emerald-600 border-emerald-600 shadow-xl scale-[1.01] z-10' : 
                              hasLogs ? 'bg-white border-emerald-50 shadow-sm hover:border-emerald-200 hover:shadow-md' : 'bg-emerald-50/20 border-transparent'}
                            ${isToday && !isSelected ? 'ring-1 ring-emerald-400 ring-offset-1' : ''}
@@ -506,32 +508,32 @@ const StatsBoard: React.FC<StatsBoardProps> = ({
                          )}
 
                          <div className="flex justify-between items-start relative z-10">
-                           <span className={`text-[12px] font-black px-1.5 rounded-md ${isSelected ? 'text-white bg-emerald-500/50' : isToday ? 'text-emerald-600 underline underline-offset-1 decoration-2' : 'text-emerald-900/40'}`}>
+                           <span className={`text-[10px] sm:text-[12px] font-black px-1 sm:px-1.5 rounded-md ${isSelected ? 'text-white bg-emerald-500/50' : isToday ? 'text-emerald-600 underline underline-offset-1 decoration-2' : 'text-emerald-900/40'}`}>
                              {item.day}
                            </span>
                            {hasLogs && (
-                             <div className={`w-2 h-2 rounded-full ${isSelected ? 'bg-white shadow-[0_0_4px_white]' : 'bg-emerald-400'}`} />
+                             <div className={`w-1.5 sm:w-2 h-1.5 sm:h-2 rounded-full ${isSelected ? 'bg-white shadow-[0_0_4px_white]' : 'bg-emerald-400'}`} />
                            )}
                          </div>
 
                          <div className="flex-1 flex flex-col justify-center items-center relative z-10 pointer-events-none">
                             {hasLogs ? (
                               <div className="flex flex-col items-center">
-                                 <span className={`text-[13px] font-black tracking-tighter leading-none ${isSelected ? 'text-white/90' : 'text-emerald-700'}`}>
+                                 <span className={`text-[10px] sm:text-[13px] font-black tracking-tighter leading-none ${isSelected ? 'text-white/90' : 'text-emerald-700'}`}>
                                    {item.duration > 60 ? `${Math.floor(item.duration/60)}h ${item.duration%60}m` : `${item.duration}m`}
                                  </span>
-                                 <div className={`w-12 h-1.5 mt-1.5 rounded-full ${isSelected ? 'bg-white/30' : 'bg-emerald-50'}`}>
+                                 <div className={`w-8 sm:w-12 h-1 mt-1 sm:mt-1.5 rounded-full ${isSelected ? 'bg-white/30' : 'bg-emerald-50'}`}>
                                     <div className={`h-full rounded-full transition-all duration-700 ${isSelected ? 'bg-white' : 'bg-emerald-500'}`} style={{width: `${Math.min((item.duration/480)*100, 100)}%`}} />
                                  </div>
                               </div>
                             ) : (
-                              <span className="text-[10px] font-black text-emerald-200/50 uppercase tracking-widest">No Logs</span>
+                              <span className="text-[10px] font-bold text-emerald-200/50 tracking-tight">No logs</span>
                             )}
                          </div>
 
                          <div className="flex -space-x-1 relative z-10 pointer-events-none justify-center">
                            {item.images && item.images.slice(0, 4).map((img, imgIdx) => (
-                             <div key={imgIdx} className={`w-4 h-4 rounded-md overflow-hidden border border-white shadow-sm ring-1 ring-emerald-900/5 ${isSelected ? 'opacity-100' : 'opacity-80'}`}>
+                             <div key={imgIdx} className={`w-3 sm:w-4 h-3 sm:h-4 rounded-md overflow-hidden border border-white shadow-sm ring-1 ring-emerald-900/5 ${isSelected ? 'opacity-100' : 'opacity-80'}`}>
                                <img src={img} className="w-full h-full object-cover" />
                              </div>
                            ))}
@@ -545,32 +547,32 @@ const StatsBoard: React.FC<StatsBoardProps> = ({
                <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
                   <div className="lg:col-span-3 space-y-3">
                      <div className="bg-emerald-600 text-white px-5 py-4 rounded-[1.5rem] shadow-lg shadow-emerald-100/50 relative overflow-hidden group min-h-[80px] flex flex-col justify-center">
-                       <span className="text-[10px] font-black uppercase tracking-[0.2em] opacity-80 relative z-10 text-emerald-50">Focus</span>
-                       <div className="text-2xl font-black tracking-tighter relative z-10 font-mono">
+                       <span className="text-[10px] font-bold tracking-tight opacity-80 relative z-10 text-emerald-50">Focus</span>
+                       <div className="text-2xl font-bold tracking-tighter relative z-10 font-mono">
                          {formatTime(statsData.filter(item => item.name !== 'Rest').reduce((acc, item) => acc + item.value * 60, 0))}
                        </div>
                      </div>
                      <div className="bg-white border border-emerald-50 px-5 py-4 rounded-[1.5rem] shadow-sm relative overflow-hidden group min-h-[80px] flex flex-col justify-center">
-                       <span className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-300 relative z-10">Rest</span>
-                       <div className="text-2xl font-black tracking-tighter relative z-10 font-mono text-emerald-900">
+                       <span className="text-[10px] font-bold tracking-tight text-emerald-300 relative z-10">Rest</span>
+                       <div className="text-2xl font-bold tracking-tighter relative z-10 font-mono text-emerald-900">
                          {formatTime(restTimeTotal)}
                        </div>
                      </div>
                   </div>
                   
-                  <div className="lg:col-span-9 grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3">
+                  <div className="lg:col-span-9 grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-2 pb-1">
                     {statsData.filter(item => item.name !== 'Rest').map((item, idx) => (
-                      <div key={item.name} className="bg-white px-4 py-3 rounded-2xl border border-emerald-50 shadow-sm hover:shadow-md transition-all hover:-translate-y-1 flex flex-col justify-center" style={{ animationDelay: `${idx * 20}ms` }}>
-                        <div className="flex items-center gap-3 mb-2">
-                          <div className="w-10 h-10 rounded-xl flex items-center justify-center text-sm shadow-sm flex-shrink-0" style={{ backgroundColor: `${getCategoryColor(item.name as Category)}15`, color: getCategoryColor(item.name as Category) }}>
-                            {React.createElement(getCategoryIcon(item.name as Category), { size: 18 })}
+                      <div key={item.name} className="bg-white px-3 py-2 rounded-xl border border-emerald-50 shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5 flex flex-col justify-center" style={{ animationDelay: `${idx * 20}ms` }}>
+                        <div className="flex items-center gap-2 mb-1.5">
+                          <div className="w-8 h-8 rounded-lg flex items-center justify-center text-xs shadow-sm flex-shrink-0" style={{ backgroundColor: `${getCategoryColor(item.name as Category)}15`, color: getCategoryColor(item.name as Category) }}>
+                            {React.createElement(getCategoryIcon(item.name as Category), { size: 14 })}
                           </div>
                           <div className="flex flex-col min-w-0">
-                            <span className="text-[10px] font-black uppercase text-emerald-900/40 tracking-widest truncate leading-none mb-1">{item.name}</span>
-                            <div className="text-base font-black text-emerald-950 truncate leading-none">{item.value}m</div>
+                            <span className="text-[11px] font-bold text-emerald-900/40 tracking-tight leading-none mb-1 truncate">{item.name}</span>
+                            <div className="text-sm font-bold text-emerald-950 truncate leading-none tracking-tight">{item.value}m</div>
                           </div>
                         </div>
-                        <div className="w-full h-2 bg-emerald-50/70 rounded-full overflow-hidden">
+                        <div className="w-full h-1.5 bg-emerald-50/70 rounded-full overflow-hidden">
                            <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${(item.value / Math.max(1, statsData.reduce((a,b)=>a+b.value,0)))*100}%`, backgroundColor: getCategoryColor(item.name as Category) }} />
                         </div>
                       </div>
@@ -597,10 +599,10 @@ const StatsBoard: React.FC<StatsBoardProps> = ({
                       className="bg-white p-3 rounded-[1.5rem] border border-emerald-50 shadow-sm flex flex-col hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer group ring-1 ring-emerald-50/20"
                     >
                       <div className="flex items-center justify-between mb-2 px-1">
-                        <div className="text-xs font-black text-emerald-950 uppercase tracking-widest leading-none truncate pr-2">
+                        <div className="text-[11px] font-bold text-emerald-950 tracking-tight leading-none truncate pr-2">
                            {new Date(new Date(selectedStatsDate).getFullYear(), m.month).toLocaleString(undefined, { month: 'short' })}
                         </div>
-                        <div className="text-[9px] font-black text-emerald-400 bg-emerald-50 px-2 py-0.5 rounded-full">{m.totalMinutes}m</div>
+                        <div className="text-[9px] font-bold text-emerald-400 bg-emerald-50 px-2 py-0.5 rounded-full">{m.totalMinutes}m</div>
                       </div>
                       <div className="flex-1 flex flex-col gap-2">
                         <div className="w-full h-20 bg-gradient-to-br from-emerald-50/50 to-white rounded-xl overflow-hidden border border-emerald-100/30 flex items-center justify-center relative group-hover:border-emerald-200/50 transition-colors shadow-inner">
@@ -611,12 +613,12 @@ const StatsBoard: React.FC<StatsBoardProps> = ({
                               <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center">
                                 <History size={16} className="text-emerald-400" />
                               </div>
-                              <span className="text-[7px] font-black uppercase tracking-widest text-emerald-600">Active</span>
+                              <span className="text-[8px] font-bold tracking-tight text-emerald-600">Active</span>
                             </div>
                           ) : (
                             <div className="flex flex-col items-center gap-1 opacity-10">
                               <ImageIcon size={14} className="text-emerald-300" />
-                              <span className="text-[7px] font-black uppercase tracking-widest">Empty</span>
+                              <span className="text-[8px] font-bold tracking-tight">Empty</span>
                             </div>
                           )}
                           <div className="absolute inset-0 bg-gradient-to-t from-emerald-900/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -625,7 +627,7 @@ const StatsBoard: React.FC<StatsBoardProps> = ({
                           {m.categories.filter(cat => cat.name !== 'Rest').slice(0,2).map(cat => (
                             <div key={cat.name} className="flex items-center gap-1.5">
                               <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: getCategoryColor(cat.name as Category) }} />
-                              <div className="text-[9px] font-black text-emerald-800/60 truncate uppercase tracking-tighter leading-none">{cat.name}</div>
+                              <div className="text-[9px] font-bold text-emerald-800/60 truncate tracking-tight leading-none">{cat.name}</div>
                               <div className="ml-auto text-[9px] font-bold text-emerald-400 leading-none">{cat.minutes}m</div>
                             </div>
                           ))}
@@ -639,18 +641,18 @@ const StatsBoard: React.FC<StatsBoardProps> = ({
                <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 animate-in slide-in-from-bottom duration-500 delay-150">
                   <div className="lg:col-span-3 space-y-2">
                      <div className="bg-emerald-600 text-white px-4 py-3 rounded-[1.25rem] shadow-lg shadow-emerald-100/50 relative overflow-hidden group min-h-[64px] flex flex-col justify-center">
-                       <span className="text-[10px] font-black uppercase tracking-[0.2em] opacity-80 relative z-10 text-emerald-50">Focus</span>
-                       <div className="text-xl font-black mt-0.5 tracking-tighter relative z-10 font-mono">
+                       <span className="text-[10px] font-bold tracking-tight opacity-80 relative z-10 text-emerald-50">Focus</span>
+                       <div className="text-xl font-bold mt-0.5 tracking-tighter relative z-10 font-mono">
                          {formatTime(statsData.filter(item => item.name !== 'Rest').reduce((acc, item) => acc + item.value * 60, 0))}
                        </div>
                      </div>
                      <div className="bg-white border border-emerald-50 px-4 py-3 rounded-[1.25rem] shadow-sm relative overflow-hidden group min-h-[64px] flex flex-col justify-center">
-                       <span className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-300 relative z-10">Rest</span>
-                       <div className="text-xl font-black mt-0.5 tracking-tighter relative z-10 font-mono text-emerald-900">
+                       <span className="text-[10px] font-bold tracking-tight text-emerald-300 relative z-10">Rest</span>
+                       <div className="text-xl font-bold mt-0.5 tracking-tighter relative z-10 font-mono text-emerald-900">
                          {formatTime(restTimeTotal)}
                        </div>
                      </div>
-                     <div className="px-5 py-0.5 text-[10px] font-black text-emerald-300 uppercase tracking-widest">{relevantLogs.length} sessions year</div>
+                     <div className="px-5 py-0.5 text-[10px] font-bold text-emerald-300 tracking-tight">{relevantLogs.length} sessions year</div>
                   </div>
                   
                   <div className="lg:col-span-9 grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-2 pb-1">
@@ -661,8 +663,8 @@ const StatsBoard: React.FC<StatsBoardProps> = ({
                             {React.createElement(getCategoryIcon(item.name as Category), { size: 14 })}
                           </div>
                           <div className="flex flex-col min-w-0">
-                            <span className="text-[10px] font-black uppercase text-emerald-900/40 tracking-widest leading-none mb-1 truncate">{item.name}</span>
-                            <div className="text-sm font-black text-emerald-950 truncate leading-none">{item.value}m</div>
+                            <span className="text-[11px] font-bold text-emerald-900/40 tracking-tight leading-none mb-1 truncate">{item.name}</span>
+                            <div className="text-sm font-bold text-emerald-950 truncate leading-none tracking-tight">{item.value}m</div>
                           </div>
                         </div>
                         <div className="w-full h-1.5 bg-emerald-50/70 rounded-full overflow-hidden">
@@ -675,7 +677,7 @@ const StatsBoard: React.FC<StatsBoardProps> = ({
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                  <div className="bg-white p-6 rounded-[2.5rem] border border-emerald-50 h-[360px] shadow-sm flex flex-col relative overflow-hidden group ring-1 ring-emerald-50/50">
-                   <h3 className="text-[10px] font-black mb-4 text-emerald-800 uppercase tracking-[0.3em] relative z-10 flex items-center gap-2"><div className="w-1 h-3 bg-emerald-600 rounded-full"/> Category Breakdown</h3>
+                   <h3 className="text-sm font-bold mb-4 text-emerald-800 tracking-tight relative z-10 flex items-center gap-2"><div className="w-1.5 h-4 bg-emerald-600 rounded-full"/> Category Breakdown</h3>
                    {statsData.length > 0 ? (
                      <ResponsiveContainer width="100%" height="100%">
                        <PieChart>
@@ -686,10 +688,10 @@ const StatsBoard: React.FC<StatsBoardProps> = ({
                          <Legend layout="horizontal" verticalAlign="bottom" wrapperStyle={{fontSize: '9px', fontWeight: 'bold', paddingTop: '15px'}} />
                        </PieChart>
                      </ResponsiveContainer>
-                   ) : <div className="h-full flex items-center justify-center text-emerald-200 uppercase font-black tracking-[0.3em]">No Activity</div>}
+                   ) : <div className="h-full flex items-center justify-center text-emerald-200 font-bold tracking-tight">No Activity</div>}
                  </div>
                  <div className="bg-white p-6 rounded-[2.5rem] border border-emerald-50 h-[360px] shadow-sm flex flex-col relative overflow-hidden group ring-1 ring-emerald-50/50">
-                   <h3 className="text-[10px] font-black mb-4 text-emerald-800 uppercase tracking-[0.3em] relative z-10 flex items-center gap-2"><div className="w-1 h-3 bg-emerald-600 rounded-full"/> Time Spent (Min)</h3>
+                   <h3 className="text-sm font-bold mb-4 text-emerald-800 tracking-tight relative z-10 flex items-center gap-2"><div className="w-1.5 h-4 bg-emerald-600 rounded-full"/> Time Spent (Min)</h3>
                    <ResponsiveContainer width="100%" height="100%">
                      <ReBarChart data={yearHistory}>
                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
@@ -707,7 +709,7 @@ const StatsBoard: React.FC<StatsBoardProps> = ({
           {(statsView === 'month' || statsView === 'week') && viewMode === 'charts' && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-20 animate-in zoom-in-95 duration-500">
                <div className="bg-white p-5 rounded-[2.5rem] border border-emerald-50 h-[340px] shadow-sm flex flex-col relative overflow-hidden group">
-                 <h3 className="text-[10px] font-black mb-4 text-emerald-800 uppercase tracking-[0.3em] relative z-10 flex items-center gap-2"><div className="w-1 h-3 bg-emerald-600 rounded-full"/> Category Breakdown</h3>
+                 <h3 className="text-sm font-bold mb-4 text-emerald-800 tracking-tight relative z-10 flex items-center gap-2"><div className="w-1.5 h-4 bg-emerald-600 rounded-full"/> Category Breakdown</h3>
                  {statsData.length > 0 ? (
                    <ResponsiveContainer width="100%" height="100%">
                      <PieChart>
@@ -718,10 +720,10 @@ const StatsBoard: React.FC<StatsBoardProps> = ({
                        <Legend layout="horizontal" verticalAlign="bottom" wrapperStyle={{fontSize: '9px', fontWeight: 'bold', paddingTop: '15px'}} />
                      </PieChart>
                    </ResponsiveContainer>
-                 ) : <div className="h-full flex items-center justify-center text-emerald-200 uppercase font-black tracking-[0.3em]">No Activity</div>}
+                 ) : <div className="h-full flex items-center justify-center text-emerald-200 font-bold tracking-tight">No Activity</div>}
                </div>
                <div className="bg-white p-5 rounded-[2.5rem] border border-emerald-50 h-[340px] shadow-sm flex flex-col relative overflow-hidden group">
-                 <h3 className="text-[10px] font-black mb-4 text-emerald-800 uppercase tracking-[0.3em] relative z-10 flex items-center gap-2"><div className="w-1 h-3 bg-emerald-600 rounded-full"/> Time Spent (Min)</h3>
+                 <h3 className="text-sm font-bold mb-4 text-emerald-800 tracking-tight relative z-10 flex items-center gap-2"><div className="w-1.5 h-4 bg-emerald-600 rounded-full"/> Time Spent (Min)</h3>
                  <ResponsiveContainer width="100%" height="100%">
                    <ReBarChart data={statsView === 'week' ? weekHistory : monthHistory}>
                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />

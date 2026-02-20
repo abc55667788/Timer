@@ -33,8 +33,8 @@ const LogContinuationModal: React.FC<LogContinuationModalProps> = ({
             <FileText size={20} />
           </div>
           <div className="text-center">
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-400 mb-1">Log Decision</p>
-            <h3 className="text-xl font-black text-emerald-950 leading-tight">Carry over this log?</h3>
+            <p className="text-[10px] font-bold tracking-tight text-emerald-400 mb-1">Log Decision</p>
+            <h3 className="text-xl font-bold text-emerald-950 leading-tight tracking-tight">Carry over this log?</h3>
           </div>
           <p className="text-xs text-emerald-500/80 text-center leading-relaxed px-2">
             {continuationDescription}
@@ -43,13 +43,13 @@ const LogContinuationModal: React.FC<LogContinuationModalProps> = ({
         <div className="space-y-2.5 pt-2">
           <button 
             onClick={handleContinueCurrentLog} 
-            className="w-full py-3.5 bg-emerald-600 text-white text-[11px] font-black uppercase tracking-[0.2em] rounded-2xl shadow-lg shadow-emerald-200 hover:bg-emerald-700 transition-all active:scale-[0.97]"
+            className="w-full py-3.5 bg-emerald-600 text-white text-[11px] font-bold tracking-tight rounded-2xl shadow-lg shadow-emerald-200 hover:bg-emerald-700 transition-all active:scale-[0.97]"
           >
             {continueButtonLabel}
           </button>
           <button 
             onClick={handleStartNewLog} 
-            className="w-full py-3.5 bg-white border border-emerald-100 text-emerald-700 text-[11px] font-black uppercase tracking-[0.2em] rounded-2xl hover:bg-emerald-50 transition-all active:scale-[0.97]"
+            className="w-full py-3.5 bg-white border border-emerald-100 text-emerald-700 text-[11px] font-bold tracking-tight rounded-2xl hover:bg-emerald-50 transition-all active:scale-[0.97]"
           >
             {startNewButtonLabel}
           </button>

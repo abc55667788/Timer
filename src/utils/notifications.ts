@@ -1,7 +1,10 @@
 import { APP_LOGO } from '../types';
+import { Capacitor } from '@capacitor/core';
+import { LocalNotifications } from '@capacitor/local-notifications';
 
-export function playBeep() {
+export async function playBeep() {
   if (typeof window === 'undefined') return;
+  // On mobile, native sound is preferred but we only have a beep here
   const AudioCtor = window.AudioContext || (window as any).webkitAudioContext;
   if (!AudioCtor) return;
   try {
@@ -21,7 +24,33 @@ export function playBeep() {
   }
 }
 
-export function triggerSystemNotification(title: string, body: string, onPermissionUpdate?: (permission: NotificationPermission) => void) {
+export async function triggerSystemNotification(title: string, body: string, onPermissionUpdate?: (permission: any) => void) {
+  if (Capacitor.isNativePlatform()) {
+    try {
+      const { display } = await LocalNotifications.checkPermissions();
+      if (display !== 'granted') {
+        const { display: newDisplay } = await LocalNotifications.requestPermissions();
+        if (newDisplay !== 'granted') return;
+      }
+      await LocalNotifications.schedule({
+        notifications: [
+          {
+            title,
+            body,
+            id: 1,
+            extra: {
+              data: 'emerald'
+            },
+            smallIcon: 'ic_stat_icon_config_sample' // This needs to be in android res
+          }
+        ]
+      });
+      return;
+    } catch (e) {
+      console.warn('Capacitor notifications failed', e);
+    }
+  }
+
   if (typeof window === 'undefined' || !('Notification' in window)) return;
 
   const show = () => {
