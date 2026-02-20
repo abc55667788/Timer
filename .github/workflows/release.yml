@@ -70,6 +70,25 @@ jobs:
           USE_HARD_LINKS: false
         run: npm run build:linux-arm
 
+      - name: Setup Java (for Android)
+        if: matrix.os == 'ubuntu-latest'
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Build Android APK
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          npm run build:mobile
+          npx cap sync android
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug
+          # Rename output for release
+          mkdir -p ../release-builds
+          cp app/build/outputs/apk/debug/app-debug.apk ../release-builds/emerald-timer-v1.3.4.apk
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -79,6 +98,7 @@ jobs:
             release-builds/*.exe.blockmap
             release-builds/*.AppImage
             release-builds/*.deb
+            release-builds/*.apk
           if-no-files-found: ignore
 
   publish:
