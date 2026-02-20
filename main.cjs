@@ -37,8 +37,6 @@ function createWindow() {
   mainWindow.setMinimumSize(1000, 700);
 
   // In production, load the built index.html from the dist folder
-  const isDev = !app.isPackaged;
-  
   if (isDev) {
     mainWindow.loadFile(path.join(__dirname, 'dist/index.html')).catch(() => {
       mainWindow.loadFile('index.html');
