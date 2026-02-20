@@ -1443,8 +1443,8 @@ function EmeraldTimer() {
       {!isMiniMode && !wasMiniModeBeforeModal && !isAndroid && (
         <header className="w-full h-16 flex justify-between items-center px-6 flex-shrink-0 bg-[#f0f9f0]/40 backdrop-blur-sm border-b border-emerald-50/50 animate-in fade-in slide-in-from-top-12 duration-500 ease-out" style={{ WebkitAppRegion: 'drag' } as any}>
           <div className="flex items-center gap-3">
-            <div className={`w-8 h-8 bg-white rounded-[10px] flex items-center justify-center shadow-lg shadow-emerald-100 overflow-hidden border border-emerald-50`}>
-              <img src={APP_LOGO} alt="Emerald Timer Logo" className="w-[85%] h-[85%] object-contain" />
+            <div className={`w-10 h-10 flex items-center justify-center overflow-hidden`}>
+              <img src={APP_LOGO} alt="Emerald Timer Logo" className="w-full h-full object-contain filter drop-shadow-sm" />
             </div>
             <div className="flex items-center gap-3">
               <h1 className="text-lg font-black text-emerald-800 tracking-tight">Emerald Timer</h1>

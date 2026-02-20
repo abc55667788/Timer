@@ -1,17 +1,25 @@
 
-const { app, BrowserWindow, ipcMain, screen } = require('electron');
+const { app, BrowserWindow, ipcMain, screen, nativeImage } = require('electron');
 const path = require('path');
 
 let mainWindow;
 
+// Set AppUserModelId for Windows taskbar icon
+if (process.platform === 'win32') {
+  app.setAppUserModelId("com.emerald.timer");
+}
+
 function createWindow() {
+  const iconPath = path.join(__dirname, 'public/logo.png');
+  const appIcon = nativeImage.createFromPath(iconPath);
+
   mainWindow = new BrowserWindow({
     width: 1440,
     height: 900,
     minWidth: 1000,
     minHeight: 700,
     title: "Emerald Timer",
-    icon: path.join(__dirname, 'public/logo.png'),
+    icon: appIcon,
     frame: false, // Hide native title bar
     transparent: true, // Allow transparent background for rounded corners
     backgroundColor: "#00000000",
@@ -25,6 +33,11 @@ function createWindow() {
     autoHideMenuBar: true
     // backgroundColor: '#f0f9f0' removed to allow transparency
   });
+
+  // Explicitly set the taskbar icon for Windows
+  if (process.platform === 'win32') {
+    mainWindow.setIcon(appIcon);
+  }
 
   // In production, load the built index.html from the dist folder
   const isDev = !app.isPackaged;
