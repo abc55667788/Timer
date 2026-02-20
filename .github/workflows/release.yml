@@ -139,7 +139,8 @@ jobs:
             * **UI 响应性**：调大统计网格日期和时长文字，视距更清晰。
             
             ### 🔧 平台稳定性 (Fixes & Improvements)
-            * **Babel 语法修护**：修正了 MiniCalendar 组件中的冗余 JSX 闭合标签。
+            * **图标清晰度**：修复了 PC 端的模糊图标问题，并优化了运行时加载路径。
+            * **加载体感**：新增 React 加载屏 (Splash Screen)，掩盖系统级渲染延迟。
             * **界面残留修复**：彻底解决了 MiniMode 悬浮窗四周的直角阴影/背景伪影问题。
             * **全平台构建同步**：包含 Windows (x64), Linux (ARM64) 以及 Android APK 构建。
 
@@ -149,5 +150,6 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           tag: ${{ github.ref_name }}
           allowUpdates: true
-          draft: false
-          prerelease: false
+          replacesArtifacts: true
+          makeLatest: true
+          removeArtifacts: false
