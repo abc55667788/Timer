@@ -3,7 +3,7 @@ import {
   X, Settings, Clock, Palette, Timer as TimerIcon, 
   AlertCircle, CheckCircle2, Globe, Key, Database, RefreshCw, 
   Download, Upload, Cloud, Plus, Trash, Check, Maximize2, Minus,
-  Bell, BellOff
+  Bell, BellOff, User
 } from 'lucide-react';
 import { CategoryData, CATEGORY_ICONS, NotificationStatus, IconKey } from '../../types';
 
@@ -20,9 +20,16 @@ interface SetupModalProps {
   requestNotificationPermission: (showPreview?: boolean) => void;
   gitlabConfig: { url: string; token: string; projectId: string; branch: string; filename: string };
   setGitlabConfig: (config: any) => void;
+  webdavConfig: { url: string; username: string; password?: string; filename: string };
+  setWebdavConfig: (config: any) => void;
+  syncMethod: 'gitlab' | 'webdav';
+  setSyncMethod: (method: 'gitlab' | 'webdav') => void;
   isSyncing: boolean;
+  verifySyncConfig: () => Promise<boolean>;
   syncFromGitLab: () => void;
   syncToGitLab: () => void;
+  syncFromWebDAV: () => void;
+  syncToWebDAV: () => void;
   lastSyncedAt: string | null;
   exportData: () => void;
   importData: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -46,9 +53,16 @@ const SetupModal: React.FC<SetupModalProps> = ({
   requestNotificationPermission,
   gitlabConfig,
   setGitlabConfig,
+  webdavConfig,
+  setWebdavConfig,
+  syncMethod,
+  setSyncMethod,
   isSyncing,
+  verifySyncConfig,
   syncFromGitLab,
   syncToGitLab,
+  syncFromWebDAV,
+  syncToWebDAV,
   lastSyncedAt,
   exportData,
   importData,
@@ -70,7 +84,7 @@ const SetupModal: React.FC<SetupModalProps> = ({
     : `fixed inset-0 ${(wasMiniModeBeforeModal || isMiniMode) ? 'bg-transparent' : 'bg-emerald-900/60 backdrop-blur-xl'} flex items-center justify-center p-6 z-[170] animate-in fade-in duration-300`;
 
   const contentClasses = isPage
-    ? "flex-1 flex flex-col w-full mx-auto p-4 md:p-12 overflow-y-auto scrollbar-none"
+    ? "flex-1 flex flex-col w-full mx-auto p-4 md:p-6 scrollbar-none"
     : "bg-white rounded-[2rem] p-7 max-w-sm w-full shadow-2xl relative ring-1 ring-emerald-100/50";
 
   const handleAddCategory = () => {
@@ -263,61 +277,149 @@ const SetupModal: React.FC<SetupModalProps> = ({
 
               <div className="space-y-6">
                 <section>
-                  <h3 className="text-sm font-bold tracking-tight text-emerald-800 mb-4 flex items-center gap-2"><Cloud size={14}/> GitLab Cloud Sync</h3>
-                  <div className="bg-emerald-50/30 p-5 rounded-[1.8rem] border border-emerald-50 space-y-3.5">
-                     <div className="space-y-2.5">
-                        <div className="relative">
-                           <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-emerald-400"><Globe size={13} /></div>
-                           <input 
-                              type="text" 
-                              placeholder="GitLab URL (e.g. https://gitlab.com)"
-                              value={gitlabConfig.url}
-                              onChange={(e) => setGitlabConfig({...gitlabConfig, url: e.target.value})}
-                              className="w-full bg-white border border-emerald-100 rounded-xl py-3 pl-10 pr-4 text-[11px] font-bold text-emerald-900 outline-none focus:ring-2 focus:ring-emerald-500/10 placeholder:text-emerald-300"
-                           />
-                        </div>
-                        <div className="relative">
-                           <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-emerald-400"><Key size={13} /></div>
-                           <input 
-                              type="password" 
-                              placeholder="Personal Access Token"
-                              value={gitlabConfig.token}
-                              onChange={(e) => setGitlabConfig({...gitlabConfig, token: e.target.value})}
-                              className="w-full bg-white border border-emerald-100 rounded-xl py-3 pl-10 pr-4 text-[11px] font-bold text-emerald-900 outline-none focus:ring-2 focus:ring-emerald-500/10 placeholder:text-emerald-300"
-                           />
-                        </div>
-                        <div className="relative">
-                           <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-emerald-400"><Database size={13} /></div>
-                           <input 
-                              type="text" 
-                              placeholder="Project Path or ID (e.g. username/repo)"
-                              value={gitlabConfig.projectId}
-                              onChange={(e) => setGitlabConfig({...gitlabConfig, projectId: e.target.value})}
-                              className="w-full bg-white border border-emerald-100 rounded-xl py-3 pl-10 pr-4 text-[11px] font-bold text-emerald-900 outline-none focus:ring-2 focus:ring-emerald-500/10 placeholder:text-emerald-300"
-                           />
-                        </div>
-                        <div className="grid grid-cols-2 gap-3">
-                           <input 
-                              type="text" 
-                              placeholder="Branch (main)"
-                              value={gitlabConfig.branch}
-                              onChange={(e) => setGitlabConfig({...gitlabConfig, branch: e.target.value})}
-                              className="w-full bg-white border border-emerald-100 rounded-xl py-2.5 px-4 text-[11px] font-bold text-emerald-800 outline-none focus:ring-2 focus:ring-emerald-500/10 placeholder:text-emerald-300"
-                           />
-                           <input 
-                              type="text" 
-                              placeholder="File (data.json)"
-                              value={gitlabConfig.filename}
-                              onChange={(e) => setGitlabConfig({...gitlabConfig, filename: e.target.value})}
-                              className="w-full bg-white border border-emerald-100 rounded-xl py-2.5 px-4 text-[11px] font-bold text-emerald-800 outline-none focus:ring-2 focus:ring-emerald-500/10 placeholder:text-emerald-300"
-                           />
-                        </div>
+                  <h3 className="text-sm font-bold tracking-tight text-emerald-800 mb-4 flex items-center gap-2"><Cloud size={14}/> Cloud Sync</h3>
+                  
+                  <div className="bg-emerald-50/30 p-5 rounded-[1.8rem] border border-emerald-50 space-y-4">
+                     {/* Method Selector */}
+                     <div className="flex bg-white/50 p-1 rounded-2xl border border-emerald-100/50">
+                        <button 
+                          onClick={() => setSyncMethod('gitlab')}
+                          className={`flex-1 py-2 px-3 rounded-xl text-[10px] font-bold transition-all ${syncMethod === 'gitlab' ? 'bg-emerald-600 text-white shadow-sm' : 'text-emerald-400 hover:text-emerald-600'}`}
+                        >
+                          GitLab
+                        </button>
+                        <button 
+                          onClick={() => setSyncMethod('webdav')}
+                          className={`flex-1 py-2 px-3 rounded-xl text-[10px] font-bold transition-all ${syncMethod === 'webdav' ? 'bg-emerald-600 text-white shadow-sm' : 'text-emerald-400 hover:text-emerald-600'}`}
+                        >
+                          WebDAV
+                        </button>
                      </div>
+
+                     {syncMethod === 'gitlab' ? (
+                        <div className="space-y-2.5">
+                           <div className="flex items-center justify-between mb-1 px-1">
+                              <span className="text-[10px] font-bold text-emerald-800 tracking-tight flex items-center gap-1.5"><Globe size={11}/> Connection Configuration</span>
+                              <button 
+                                 disabled={isSyncing}
+                                 onClick={verifySyncConfig}
+                                 className="text-[10px] font-bold text-emerald-600 hover:text-emerald-700 flex items-center gap-1 bg-emerald-50 px-2 py-1 rounded-lg transition-all active:scale-95 disabled:opacity-50"
+                              >
+                                 <Check size={11} strokeWidth={3}/> Verify Server
+                              </button>
+                           </div>
+                           <div className="relative">
+                              <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-emerald-400"><Globe size={13} /></div>
+                              <input 
+                                 type="text" 
+                                 placeholder="GitLab URL (e.g. https://gitlab.com)"
+                                 value={gitlabConfig.url}
+                                 onChange={(e) => setGitlabConfig({...gitlabConfig, url: e.target.value})}
+                                 className="w-full bg-white border border-emerald-100 rounded-xl py-3 pl-10 pr-4 text-[11px] font-bold text-emerald-900 outline-none focus:ring-2 focus:ring-emerald-500/10 placeholder:text-emerald-300"
+                              />
+                           </div>
+                           <div className="relative">
+                              <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-emerald-400"><Key size={13} /></div>
+                              <input 
+                                 type="password" 
+                                 placeholder="Personal Access Token"
+                                 value={gitlabConfig.token}
+                                 onChange={(e) => setGitlabConfig({...gitlabConfig, token: e.target.value})}
+                                 className="w-full bg-white border border-emerald-100 rounded-xl py-3 pl-10 pr-4 text-[11px] font-bold text-emerald-900 outline-none focus:ring-2 focus:ring-emerald-500/10 placeholder:text-emerald-300"
+                              />
+                           </div>
+                           <div className="relative">
+                              <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-emerald-400"><Database size={13} /></div>
+                              <input 
+                                 type="text" 
+                                 placeholder="Project Path or ID (e.g. username/repo)"
+                                 value={gitlabConfig.projectId}
+                                 onChange={(e) => setGitlabConfig({...gitlabConfig, projectId: e.target.value})}
+                                 className="w-full bg-white border border-emerald-100 rounded-xl py-3 pl-10 pr-4 text-[11px] font-bold text-emerald-900 outline-none focus:ring-2 focus:ring-emerald-500/10 placeholder:text-emerald-300"
+                              />
+                           </div>
+                           <div className="grid grid-cols-2 gap-3">
+                              <input 
+                                 type="text" 
+                                 placeholder="Branch (main)"
+                                 value={gitlabConfig.branch}
+                                 onChange={(e) => setGitlabConfig({...gitlabConfig, branch: e.target.value})}
+                                 className="w-full bg-white border border-emerald-100 rounded-xl py-2.5 px-4 text-[11px] font-bold text-emerald-800 outline-none focus:ring-2 focus:ring-emerald-500/10 placeholder:text-emerald-300"
+                              />
+                              <div className="relative">
+                                 <input 
+                                    type="text" 
+                                    placeholder="File (data.json)"
+                                    value={gitlabConfig.filename}
+                                    onChange={(e) => setGitlabConfig({...gitlabConfig, filename: e.target.value})}
+                                    className="w-full bg-white border border-emerald-100 rounded-xl py-2.5 pl-4 pr-14 text-[11px] font-bold text-emerald-800 outline-none focus:ring-2 focus:ring-emerald-500/10 placeholder:text-emerald-300"
+                                 />
+                                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[9px] font-bold text-emerald-300 pointer-events-none">etimer/</span>
+                              </div>
+                           </div>
+                           <p className="px-1 text-[9px] font-bold text-emerald-400 italic">Note: Files are stored in the <span className="text-emerald-500">etimer/</span> folder automatically.</p>
+                        </div>
+                     ) : (
+                        <div className="space-y-2.5">
+                           <div className="flex items-center justify-between mb-1 px-1">
+                              <span className="text-[10px] font-bold text-emerald-800 tracking-tight flex items-center gap-1.5"><Globe size={11}/> Connection Configuration</span>
+                              <button 
+                                 disabled={isSyncing}
+                                 onClick={verifySyncConfig}
+                                 className="text-[10px] font-bold text-emerald-600 hover:text-emerald-700 flex items-center gap-1 bg-emerald-50 px-2 py-1 rounded-lg transition-all active:scale-95 disabled:opacity-50"
+                              >
+                                 <Check size={11} strokeWidth={3}/> Verify Server
+                              </button>
+                           </div>
+                           <div className="relative">
+                              <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-emerald-400"><Globe size={13} /></div>
+                              <input 
+                                 type="text" 
+                                 placeholder="WebDAV Host URL"
+                                 value={webdavConfig.url}
+                                 onChange={(e) => setWebdavConfig({...webdavConfig, url: e.target.value})}
+                                 className="w-full bg-white border border-emerald-100 rounded-xl py-3 pl-10 pr-4 text-[11px] font-bold text-emerald-900 outline-none focus:ring-2 focus:ring-emerald-500/10 placeholder:text-emerald-300"
+                              />
+                           </div>
+                           <div className="relative">
+                              <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-emerald-400"><User size={13} /></div>
+                              <input 
+                                 type="text" 
+                                 placeholder="Username"
+                                 value={webdavConfig.username}
+                                 onChange={(e) => setWebdavConfig({...webdavConfig, username: e.target.value})}
+                                 className="w-full bg-white border border-emerald-100 rounded-xl py-3 pl-10 pr-4 text-[11px] font-bold text-emerald-900 outline-none focus:ring-2 focus:ring-emerald-500/10 placeholder:text-emerald-300"
+                              />
+                           </div>
+                           <div className="relative">
+                              <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-emerald-400"><Key size={13} /></div>
+                              <input 
+                                 type="password" 
+                                 placeholder="Password"
+                                 value={webdavConfig.password}
+                                 onChange={(e) => setWebdavConfig({...webdavConfig, password: e.target.value})}
+                                 className="w-full bg-white border border-emerald-100 rounded-xl py-3 pl-10 pr-4 text-[11px] font-bold text-emerald-900 outline-none focus:ring-2 focus:ring-emerald-500/10 placeholder:text-emerald-300"
+                              />
+                           </div>
+                           <div className="relative">
+                              <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-emerald-400"><Database size={13} /></div>
+                              <input 
+                                 type="text" 
+                                 placeholder="Filename (e.g. data.json)"
+                                 value={webdavConfig.filename}
+                                 onChange={(e) => setWebdavConfig({...webdavConfig, filename: e.target.value})}
+                                 className="w-full bg-white border border-emerald-100 rounded-xl py-3 pl-10 pr-14 text-[11px] font-bold text-emerald-900 outline-none focus:ring-2 focus:ring-emerald-500/10 placeholder:text-emerald-300"
+                              />
+                              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[9px] font-bold text-emerald-300 pointer-events-none">etimer/</span>
+                           </div>
+                           <p className="px-1 text-[9px] font-bold text-emerald-400 italic">Note: Files are stored in the <span className="text-emerald-500">etimer/</span> folder automatically.</p>
+                        </div>
+                     )}
                      
                      <div className="grid grid-cols-2 gap-3">
                         <button 
                           disabled={isSyncing}
-                          onClick={syncFromGitLab}
+                          onClick={syncMethod === 'gitlab' ? syncFromGitLab : syncFromWebDAV}
                           className="bg-white p-4 rounded-[1.2rem] shadow-sm border border-emerald-50 flex flex-col items-center gap-2 hover:bg-emerald-50 transition-all active:scale-95 group disabled:opacity-50"
                         >
                            <div className="p-2.5 bg-emerald-50 text-emerald-600 rounded-lg group-hover:bg-emerald-100">
@@ -327,7 +429,7 @@ const SetupModal: React.FC<SetupModalProps> = ({
                         </button>
                         <button 
                           disabled={isSyncing}
-                          onClick={syncToGitLab}
+                          onClick={syncMethod === 'gitlab' ? syncToGitLab : syncToWebDAV}
                           className="bg-white p-4 rounded-[1.2rem] shadow-sm border border-emerald-50 flex flex-col items-center gap-2 hover:bg-emerald-50 transition-all active:scale-95 group disabled:opacity-50"
                         >
                            <div className="p-2.5 bg-emerald-50 text-emerald-600 rounded-lg group-hover:bg-emerald-100">
@@ -339,7 +441,7 @@ const SetupModal: React.FC<SetupModalProps> = ({
                      
                      {lastSyncedAt && (
                        <p className="text-[10px] font-bold text-emerald-600 tracking-tight text-center mt-1">
-                         Last Cloud Sync: {lastSyncedAt}
+                         Last {syncMethod === 'gitlab' ? 'GitLab' : 'WebDAV'} Sync: {lastSyncedAt}
                        </p>
                      )}
                   </div>
@@ -400,14 +502,13 @@ const SetupModal: React.FC<SetupModalProps> = ({
            </div>
 
            {(isPage || !isPage) && (
-              <div className={`${isPage ? 'w-full pt-4 pb-20' : 'mt-8'} w-full transition-all`}>
+              <div className={`${isPage ? 'w-full pt-2 pb-8' : 'mt-8'} w-full transition-all`}>
                  <button 
                    onClick={handleApplySettings} 
-                   className="w-full py-4 bg-emerald-600 text-white rounded-2xl font-bold tracking-tight shadow-lg shadow-emerald-100 active:scale-[0.97] transition-all text-sm flex items-center justify-center gap-2 hover:bg-emerald-700"
+                   className="w-full py-2.5 bg-emerald-600 text-white rounded-2xl font-bold tracking-tight shadow-lg shadow-emerald-100 active:scale-[0.97] transition-all text-sm flex items-center justify-center gap-2 hover:bg-emerald-700"
                  >
                    <CheckCircle2 size={16}/> Save Preferences
                  </button>
-                 {isPage && <div className="h-10 w-full" />} {/* Extra breathing room for the tab layout */}
               </div>
            )}
          </div>

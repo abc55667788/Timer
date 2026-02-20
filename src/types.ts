@@ -85,6 +85,13 @@ export interface GitLabConfig {
   url: string;
 }
 
+export interface WebDAVConfig {
+  url: string;
+  username: string;
+  password?: string;
+  filename: string;
+}
+
 export interface Task {
   category: Category;
   description: string;

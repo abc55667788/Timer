@@ -41,7 +41,7 @@ const TimerBoard: React.FC<TimerBoardProps> = ({
   setIsJournalOpen,
 }) => {
   return (
-    <div className="flex flex-col items-center justify-start lg:justify-center w-full h-full animate-in fade-in duration-500 relative scrollbar-none overflow-y-auto px-4 py-4 md:py-12">
+    <div className="flex flex-col items-center justify-center w-full min-h-full animate-in fade-in duration-500 relative scrollbar-none px-4 py-8">
       {!isJournalOpen && (
         <div className="absolute top-4 right-4 md:top-10 md:right-10 z-[60]">
           <button 
@@ -54,7 +54,7 @@ const TimerBoard: React.FC<TimerBoardProps> = ({
         </div>
       )}
 
-      <div className="flex flex-col items-center gap-6 md:gap-12 w-full max-w-lg">
+      <div className="flex flex-col items-center gap-6 md:gap-12 w-full max-w-lg py-4">
         <div className="flex flex-col items-center gap-4 md:gap-8 mt-2 md:mt-0">
           <div className="flex items-center gap-2 px-5 py-2 bg-emerald-50 rounded-full border border-emerald-100/50">
             <div className={`w-2 h-2 rounded-full ${phase === 'work' ? 'bg-emerald-500' : 'bg-emerald-400'} ${isActive ? 'animate-pulse' : ''}`} />

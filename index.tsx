@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Capacitor } from '@capacitor/core';
+import { App } from '@capacitor/app';
 import { LocalNotifications } from '@capacitor/local-notifications';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
 import './index.css';
@@ -77,7 +78,7 @@ function EmeraldTimer() {
   const [isEditMode, setIsEditMode] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   
-  const [statsView, setStatsView] = useState<StatsView>('week');
+  const [statsView, setStatsView] = useState<StatsView>('day');
 
   // --- Edit time fields for viewingLog ---
   const [editStartDate, setEditStartDate] = useState('');
@@ -87,16 +88,25 @@ function EmeraldTimer() {
   const [editTimeError, setEditTimeError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('charts');
   const [selectedStatsDate, setSelectedStatsDate] = useState(formatDate(Date.now()));
-  const [isCalendarCollapsed, setIsCalendarCollapsed] = useState(false);
+  const [isCalendarCollapsed, setIsCalendarCollapsed] = useState(true);
   const [dayViewMode, setDayViewMode] = useState<'timeline' | 'stats'>('timeline');
   const [timelineZoom, setTimelineZoom] = useState(0.4); 
   const [isZoomInputActive, setIsZoomInputActive] = useState(false);
   const [wasMiniModeBeforeModal, setWasMiniModeBeforeModal] = useState(false);
+  const lastBackPressTimeRef = useRef<number>(0);
   const [notificationPermission, setNotificationPermission] = useState<NotificationStatus>(() => {
     if (typeof window === 'undefined') return 'default';
     if (!('Notification' in window)) return 'unsupported';
     return Notification.permission;
   });
+
+  const mainScrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (mainScrollRef.current) {
+      mainScrollRef.current.scrollTo(0, 0);
+    }
+  }, [activeTab, statsView, dayViewMode]);
   const [hasShownPreview, setHasShownPreview] = useState(() => {
     if (typeof window === 'undefined') return false;
     try {
@@ -263,7 +273,32 @@ function EmeraldTimer() {
 
   const [gitlabConfig, setGitlabConfig] = useState(() => {
     const saved = localStorage.getItem('emerald-gitlab-config');
-    return saved ? JSON.parse(saved) : { token: '', projectId: '', branch: 'main', filename: 'emerald-timer-data.json', url: 'https://gitlab.com' };
+    const defaults = { token: '', projectId: '', branch: 'main', filename: 'etimer/emerald-timer-data.json', url: 'https://gitlab.com' };
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      // Automatically migrate to etimer folder if not already there
+      if (parsed.filename && !parsed.filename.startsWith('etimer/')) {
+        parsed.filename = `etimer/${parsed.filename}`;
+      }
+      return { ...defaults, ...parsed };
+    }
+    return defaults;
+  });
+  const [webdavConfig, setWebdavConfig] = useState(() => {
+    const saved = localStorage.getItem('emerald-webdav-config');
+    const defaults = { url: '', username: '', password: '', filename: 'etimer/emerald-timer-data.json' };
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      // Automatically migrate to etimer folder if not already there
+      if (parsed.filename && !parsed.filename.startsWith('etimer/')) {
+        parsed.filename = `etimer/${parsed.filename}`;
+      }
+      return { ...defaults, ...parsed };
+    }
+    return defaults;
+  });
+  const [syncMethod, setSyncMethod] = useState<'gitlab' | 'webdav'>(() => {
+    return (localStorage.getItem('emerald-sync-method') as 'gitlab' | 'webdav') || 'gitlab';
   });
   const [isSyncing, setIsSyncing] = useState(false);
   const [lastSyncedAt, setLastSyncedAt] = useState(() => localStorage.getItem('emerald-last-synced') || '');
@@ -272,9 +307,9 @@ function EmeraldTimer() {
     const saved = localStorage.getItem('emerald-ui-scale');
     if (saved) return parseFloat(saved);
     
-    // PC version defaults to 130% (1.3), Mobile defaults to 100% (1.0)
+    // PC version defaults to 120% (1.2), Mobile defaults to 100% (1.0)
     const isMobile = Capacitor.getPlatform() === 'android' || /Android/i.test(navigator.userAgent);
-    return isMobile ? 1.0 : 1.3;
+    return isMobile ? 1.0 : 1.2;
   });
 
   const [noticeMessage, setNoticeMessage] = useState('');
@@ -295,7 +330,7 @@ function EmeraldTimer() {
       // Prevent browser default touch behaviors on mobile that might zoom in/out
       document.documentElement.style.touchAction = 'pan-x pan-y';
     } else {
-      (document.body.style as any).zoom = isMiniMode ? 1.0 : uiScale;
+      (document.body.style as any).zoom = 1.0;
       // Force background to be transparent in Mini Mode to prevent corner bleed
       if (isMiniMode) {
         document.body.style.backgroundColor = 'transparent';
@@ -377,6 +412,14 @@ function EmeraldTimer() {
   useEffect(() => {
     localStorage.setItem('emerald-gitlab-config', JSON.stringify(gitlabConfig));
   }, [gitlabConfig]);
+
+  useEffect(() => {
+    localStorage.setItem('emerald-webdav-config', JSON.stringify(webdavConfig));
+  }, [webdavConfig]);
+
+  useEffect(() => {
+    localStorage.setItem('emerald-sync-method', syncMethod);
+  }, [syncMethod]);
 
   useEffect(() => {
     const handleGlobalScroll = (e: Event) => {
@@ -548,6 +591,51 @@ function EmeraldTimer() {
       if (isAndroid) LocalNotifications.cancel({ notifications: [{ id: 999 }] }).catch(() => {});
     };
   }, [isActive, phase, displayTime, isOvertime, overtimeSeconds, isAndroid]);
+
+  // Handle Android Hardware Back Button
+  useEffect(() => {
+    if (!isAndroid) return;
+    
+    const setupBackButton = async () => {
+      const backHandler = await App.addListener('backButton', ({ canGoBack }) => {
+        // Priority: Image Preview -> Log View -> Modals -> Switch to Timer Tab
+        if (previewImage) { setPreviewImage(null); return; }
+        if (viewingLog) { setViewingLog(null); setIsEditMode(false); return; }
+        if (showManualModal) { setShowManualModal(false); return; }
+        if (showLoggingModal) { setShowLoggingModal(false); return; }
+        if (showConfirmModal) { setShowConfirmModal(null); return; }
+        if (showLogContinuationPrompt) { setShowLogContinuationPrompt(false); return; }
+        if (phasePrompt) { setPhasePrompt(null); return; }
+        if (pendingSettingsChange) { setPendingSettingsChange(null); return; }
+        if (showInspirationModal) { setShowInspirationModal(false); return; }
+        
+        if (activeTab !== 'timer') {
+          setActiveTab('timer');
+        } else {
+          // Swipe twice to exit Logic
+          const now = Date.now();
+          if (now - lastBackPressTimeRef.current < 2000) {
+            App.exitApp();
+          } else {
+            lastBackPressTimeRef.current = now;
+            // Provide a small hint on the second attempt
+            // (Standard Android UX would show a toast here)
+          }
+        }
+      });
+      return backHandler;
+    };
+
+    const handlerPromise = setupBackButton();
+
+    return () => {
+      handlerPromise.then(h => h.remove());
+    };
+  }, [
+    isAndroid, previewImage, viewingLog, showManualModal, showLoggingModal, 
+    showConfirmModal, showLogContinuationPrompt, phasePrompt, 
+    pendingSettingsChange, showInspirationModal, activeTab
+  ]);
 
   const handleStopClick = () => {
     triggerHaptic(ImpactStyle.Heavy);
@@ -1301,6 +1389,143 @@ function EmeraldTimer() {
     }
   };
 
+  const syncToWebDAV = async () => {
+    if (!webdavConfig.url || !webdavConfig.username) {
+      alert('Please configure WebDAV settings first.');
+      return;
+    }
+    setIsSyncing(true);
+    try {
+      const data = JSON.stringify({ 
+        logs, 
+        settings, 
+        categories, 
+        goals, 
+        inspirations,
+        lastSynced: new Date().toISOString()
+      }, null, 2);
+      
+      const baseUrl = webdavConfig.url.endsWith('/') ? webdavConfig.url : `${webdavConfig.url}/`;
+      const authHeader = `Basic ${btoa(`${webdavConfig.username}:${webdavConfig.password || ''}`)}`;
+
+      // Automatically create etimer folder if needed (WebDAV 101: MKCOL)
+      const folderUrl = `${baseUrl}etimer/`;
+      const checkFolder = await fetch(folderUrl, {
+        method: 'PROPFIND',
+        headers: {
+          'Authorization': authHeader,
+          'Depth': '0'
+        }
+      });
+      if (checkFolder.status === 404) {
+        await fetch(folderUrl, {
+          method: 'MKCOL',
+          headers: { 'Authorization': authHeader }
+        });
+      }
+
+      const fileUrl = `${baseUrl}${webdavConfig.filename}`;
+      const res = await fetch(fileUrl, {
+        method: 'PUT',
+        headers: {
+          'Authorization': authHeader,
+          'Content-Type': 'application/json'
+        },
+        body: data
+      });
+
+      if (!res.ok) {
+        throw new Error(`Failed to upload to WebDAV: ${res.statusText} (${res.status})`);
+      }
+
+      const now = new Date().toLocaleString();
+      setLastSyncedAt(now);
+      localStorage.setItem('emerald-last-synced', now);
+      alert('Synced to WebDAV successfully!');
+    } catch (err: any) {
+      alert(`WebDAV Sync failed: ${err.message}`);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  const syncFromWebDAV = async () => {
+    if (!webdavConfig.url || !webdavConfig.username) {
+      alert('Please configure WebDAV settings first.');
+      return;
+    }
+    setIsSyncing(true);
+    try {
+      const baseUrl = webdavConfig.url.endsWith('/') ? webdavConfig.url : `${webdavConfig.url}/`;
+      const fileUrl = `${baseUrl}${webdavConfig.filename}`;
+      const authHeader = `Basic ${btoa(`${webdavConfig.username}:${webdavConfig.password || ''}`)}`;
+      
+      const res = await fetch(fileUrl, {
+        headers: { 'Authorization': authHeader }
+      });
+
+      if (!res.ok) {
+        if (res.status === 404) throw new Error('Sync file not found on WebDAV server.');
+        throw new Error(`Failed to fetch from WebDAV: ${res.statusText} (${res.status})`);
+      }
+
+      const text = await res.text();
+      // Import into local states using the simplified logic
+      const parsed = JSON.parse(text);
+      if (parsed.logs) setLogs(parsed.logs);
+      if (parsed.settings) setSettings(parsed.settings);
+      if (parsed.categories) {
+        setCategories(parsed.categories);
+      } else if (parsed.categoryColors) {
+        const migrated = DEFAULT_CATEGORIES.map(def => ({
+          ...def,
+          color: parsed.categoryColors[def.name] || def.color
+        }));
+        setCategories(migrated);
+      }
+      if (parsed.goals) setGoals(parsed.goals);
+      if (parsed.inspirations) setInspirations(parsed.inspirations);
+      
+      const now = new Date().toLocaleString();
+      setLastSyncedAt(now);
+      localStorage.setItem('emerald-last-synced', now);
+      alert('Data restored from WebDAV successfully!');
+    } catch (err: any) {
+      alert(`WebDAV Restore failed: ${err.message}`);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  const verifySyncConfig = async () => {
+    setIsSyncing(true);
+    try {
+      if (syncMethod === 'gitlab') {
+        if (!gitlabConfig.token || !gitlabConfig.projectId) throw new Error('GitLab config incomplete.');
+        const baseUrl = gitlabConfig.url.endsWith('/') ? gitlabConfig.url : `${gitlabConfig.url}/`;
+        const apiUrl = `${baseUrl}api/v4/projects/${encodeURIComponent(gitlabConfig.projectId)}`;
+        const res = await fetch(apiUrl, { headers: { 'PRIVATE-TOKEN': gitlabConfig.token } });
+        if (!res.ok) throw new Error(`GitLab validation failed: ${res.statusText}`);
+        alert('GitLab connection verified successfully!');
+      } else {
+        if (!webdavConfig.url || !webdavConfig.username) throw new Error('WebDAV config incomplete.');
+        const baseUrl = webdavConfig.url.endsWith('/') ? webdavConfig.url : `${webdavConfig.url}/`;
+        const authHeader = `Basic ${btoa(`${webdavConfig.username}:${webdavConfig.password || ''}`)}`;
+        // Try to PROPFIND the base URL to check credentials
+        const res = await fetch(baseUrl, {
+          method: 'PROPFIND',
+          headers: { 'Authorization': authHeader, 'Depth': '0' }
+        });
+        if (!res.ok) throw new Error(`WebDAV validation failed: ${res.statusText} (${res.status})`);
+        alert('WebDAV connection verified successfully!');
+      }
+    } catch (err: any) {
+      alert(`Verification failed: ${err.message}`);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
   const {
     relevantLogs,
     statsData,
@@ -1376,6 +1601,38 @@ function EmeraldTimer() {
     }, 1200);
   }, []);
 
+  // background persistent notification handler for Android
+  useEffect(() => {
+    if (!isAndroid) return;
+    
+    // Add background state listener
+    const listener = App.addListener('appStateChange', ({ isActive: isForeground }) => {
+      if (!isForeground && isActive) {
+        // App backgrounded, timer running -> show sticky notification
+        LocalNotifications.schedule({
+          notifications: [
+            {
+              id: 888,
+              title: phase === 'work' ? 'Focusing...' : 'Resting...',
+              body: `Remaining: ${formatTime(displayTime)} - ${currentTask.category}`,
+              ongoing: true,
+              autoCancel: false,
+              smallIcon: 'res://icon',
+              actionTypeId: 'OPEN_APP'
+            }
+          ]
+        }).catch(e => console.error(e));
+      } else if (isForeground) {
+        // App foregrounded -> clear sticky notification
+        LocalNotifications.cancel({ notifications: [{ id: 888 }] }).catch(() => {});
+      }
+    });
+
+    return () => {
+      listener.then(l => l.remove());
+    };
+  }, [isAndroid, isActive, phase, displayTime, currentTask.category]);
+
   if (isInitialLoading) {
     return (
       <div className="fixed inset-0 bg-[#f0f9f0] flex flex-col items-center justify-center z-[500] animate-in fade-in duration-300">
@@ -1400,19 +1657,9 @@ function EmeraldTimer() {
 
   return (
     <div 
-      className={` ${(isMiniMode || wasMiniModeBeforeModal) ? 'bg-transparent' : 'bg-white'} text-emerald-900 flex flex-col overflow-hidden`}
-      style={isMiniMode ? { 
-        height: '100%', 
-        width: '100%', 
-        display: 'flex', 
-        alignItems: 'center', 
-        justifyContent: 'center', 
-        padding: '0', // Full screen padding should be 0 for MiniMode to prevent background artifacts
-        background: 'transparent'
-      } : { 
-        height: `${(1 / uiScale) * 100}%`, 
-        width: `${(1 / uiScale) * 100}%`,
-        transformOrigin: 'top left' 
+      className={` ${(isMiniMode || wasMiniModeBeforeModal) ? 'bg-transparent' : 'bg-white'} text-emerald-900 flex flex-col h-screen w-full overflow-hidden`}
+      style={{
+        background: (isMiniMode || wasMiniModeBeforeModal) ? 'transparent' : 'white'
       }}
     >
       <style>{`
@@ -1441,49 +1688,49 @@ function EmeraldTimer() {
       )}
 
       {!isMiniMode && !wasMiniModeBeforeModal && !isAndroid && (
-        <header className="w-full h-16 flex justify-between items-center px-6 flex-shrink-0 bg-[#f0f9f0]/40 backdrop-blur-sm border-b border-emerald-50/50 animate-in fade-in slide-in-from-top-12 duration-500 ease-out" style={{ WebkitAppRegion: 'drag' } as any}>
-          <div className="flex items-center gap-3">
-            <div className={`w-10 h-10 flex items-center justify-center overflow-hidden`}>
+        <header 
+          className="w-full h-12 flex justify-between items-center px-4 flex-shrink-0 bg-[#f0f9f0]/40 backdrop-blur-md border-b border-emerald-50/50 relative z-[60] animate-in fade-in slide-in-from-top-12 duration-500 ease-out" 
+          style={{ WebkitAppRegion: 'drag', transform: 'translateZ(0)' } as any}
+        >
+          <div className="flex items-center gap-2 pointer-events-none">
+            <div className={`w-8 h-8 flex items-center justify-center overflow-hidden`}>
               <img src={APP_LOGO} alt="Emerald Timer Logo" className="w-full h-full object-contain filter drop-shadow-sm" />
             </div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-lg font-black text-emerald-800 tracking-tight">Emerald Timer</h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-sm font-black text-emerald-800 tracking-tight">Emerald Timer</h1>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <button onClick={handleSetupClick} className="p-2 bg-white rounded-xl border border-emerald-100 hover:bg-emerald-50 text-emerald-600 shadow-sm transition-all active:scale-95" style={{ WebkitAppRegion: 'no-drag' } as any} title="Settings">
-              <Settings size={18} />
+          <div className="flex items-center gap-1.5" style={{ WebkitAppRegion: 'no-drag' } as any}>
+            <button onClick={handleSetupClick} className="p-1.5 bg-white rounded-lg border border-emerald-100 hover:bg-emerald-50 text-emerald-600 shadow-sm transition-all active:scale-95" title="Settings">
+              <Settings size={15} />
             </button>
-            <button onClick={() => setIsMiniMode(true)} className="p-2 bg-white rounded-xl border border-emerald-100 hover:bg-emerald-50 text-emerald-600 flex items-center gap-2 text-sm font-bold shadow-sm transition-all active:scale-95" style={{ WebkitAppRegion: 'no-drag' } as any}>
-              <Minimize2 size={16} /> <span className="hidden sm:inline">Mini Mode</span>
+            <button onClick={() => setIsMiniMode(true)} className="p-1.5 bg-white rounded-lg border border-emerald-100 hover:bg-emerald-50 text-emerald-600 flex items-center gap-2 text-xs font-bold shadow-sm transition-all active:scale-95">
+              <Minimize2 size={14} /> <span className="hidden lg:inline">Mini Mode</span>
             </button>
 
             {/* Window Controls Group - Hide on Android */}
             {!isAndroid && (
-              <div className="flex items-center gap-0.5 ml-2 pl-4 border-l border-emerald-100/30">
+              <div className="flex items-center gap-0.5 ml-1 pl-3 border-l border-emerald-100/30">
                 <button 
                   onClick={() => handleWindowControl('minimize')} 
-                  className="p-2.5 text-emerald-400 hover:bg-emerald-50 hover:text-emerald-700 transition-all rounded-xl" 
-                  style={{ WebkitAppRegion: 'no-drag' } as any} 
+                  className="p-1.5 text-emerald-400 hover:bg-emerald-50 hover:text-emerald-700 transition-all rounded-lg" 
                   title="Minimize"
                 >
-                  <Minus size={18} />
+                  <Minus size={15} />
                 </button>
                 <button 
                   onClick={() => handleWindowControl('maximize')} 
-                  className="p-2.5 text-emerald-400 hover:bg-emerald-50 hover:text-emerald-700 transition-all rounded-xl" 
-                  style={{ WebkitAppRegion: 'no-drag' } as any} 
+                  className="p-1.5 text-emerald-400 hover:bg-emerald-50 hover:text-emerald-700 transition-all rounded-lg" 
                   title="Maximize"
                 >
-                  <Copy size={16} strokeWidth={2.5} />
+                  <Copy size={13} strokeWidth={2.5} />
                 </button>
                 <button 
                   onClick={() => handleWindowControl('close')} 
-                  className="p-2.5 text-emerald-300 hover:bg-red-500 hover:text-white transition-all rounded-xl ml-1" 
-                  style={{ WebkitAppRegion: 'no-drag' } as any} 
+                  className="p-1.5 text-emerald-300 hover:bg-red-500 hover:text-white transition-all rounded-lg ml-0.5" 
                   title="Close"
                 >
-                  <X size={18} />
+                  <X size={15} />
                 </button>
               </div>
             )}
@@ -1514,36 +1761,15 @@ function EmeraldTimer() {
       )}
 
       {!hideShellForMiniPrompt && !isMiniMode && !wasMiniModeBeforeModal && (
-        <main className={`w-full bg-white flex flex-col flex-1 overflow-hidden animate-in fade-in slide-in-from-bottom-2 zoom-in-95 duration-500 ease-out ${isAndroid ? 'pt-[env(safe-area-inset-top,20px)]' : ''}`}>
-          {/* Top navigation for desktop, bottom for mobile/android */}
-          {!isAndroid && (
-            <nav className="flex border-b border-emerald-50 bg-emerald-50/20 px-4 flex-shrink-0 z-50">
-              {[
-                { id: 'timer', icon: Play, label: 'Focus' },
-                { id: 'stats', icon: BarChart3, label: 'Analytics' },
-                { id: 'logs', icon: Clock, label: 'History' },
-                { id: 'settings', icon: Settings, label: 'Settings' }
-              ].map(tab => (
-                <button 
-                  key={tab.id} 
-                  onClick={() => setActiveTab(tab.id as any)} 
-                  className={`flex-1 py-4 flex flex-col items-center justify-center gap-1 text-[11px] font-bold tracking-tight relative transition-all duration-300 ${activeTab === tab.id ? 'text-emerald-700' : 'text-emerald-300 hover:text-emerald-500'}`}
-                >
-                  <div className={`p-1 rounded-lg transition-all duration-300 ${activeTab === tab.id ? 'bg-emerald-100 scale-110 shadow-sm' : ''}`}>
-                    <tab.icon size={18} />
-                  </div>
-                  <span className="hidden sm:inline">{tab.label}</span>
-                  {activeTab === tab.id && (
-                    <div className="absolute bottom-0 left-6 right-6 h-0.5 bg-emerald-600 rounded-full shadow-[0_-4px_12px_rgba(5,150,105,0.4)] animate-in fade-in duration-300" />
-                  )}
-                </button>
-              ))}
-            </nav>
-          )}
-
-          <div className="flex-1 overflow-hidden relative">
+        <main className={`w-full bg-white flex flex-col flex-1 overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-500 ease-out ${isAndroid ? 'pt-[env(safe-area-inset-top,20px)]' : ''}`}>
+          
+          <div 
+            ref={mainScrollRef}
+            className="flex-1 overflow-y-auto scrollbar-none relative flex flex-col"
+            style={{ zoom: (isMiniMode || isAndroid) ? 1.0 : uiScale } as any}
+          >
             {activeTab === 'timer' && (
-              <div className="flex h-full w-full overflow-hidden relative animate-in fade-in duration-200">
+              <div className="flex flex-1 w-full overflow-hidden relative animate-in fade-in duration-200">
                 <div className={`flex-1 transition-all duration-500 ease-in-out ${isJournalOpen ? 'md:mr-[400px]' : 'mr-0'}`}>
                   <TimerBoard 
                     phase={phase}
@@ -1584,7 +1810,7 @@ function EmeraldTimer() {
             )}
 
             {activeTab === 'stats' && (
-              <div className="flex-1 p-4 md:p-6 h-full overflow-y-auto scrollbar-none animate-in fade-in duration-200">
+              <div className="flex-1 px-4 md:px-6 pb-4 md:pb-6 scrollbar-none animate-in fade-in duration-200">
                 <StatsBoard 
                   logs={logs}
                   statsView={statsView}
@@ -1624,12 +1850,13 @@ function EmeraldTimer() {
                   MIN_ZOOM={MIN_ZOOM}
                   MAX_ZOOM={MAX_ZOOM}
                   restTimeTotal={restTimeTotal}
+                  isAndroid={isAndroid}
                 />
               </div>
             )}
 
             {activeTab === 'logs' && (
-              <div className="flex-1 p-4 md:p-6 h-full overflow-y-auto scrollbar-none animate-in fade-in duration-200">
+              <div className="flex-1 p-4 md:p-6 scrollbar-none animate-in fade-in duration-200">
                 <LogsBoard 
                   filteredLogs={filteredLogs}
                   showFilters={showFilters}
@@ -1651,7 +1878,7 @@ function EmeraldTimer() {
             )}
 
             {activeTab === 'settings' && (
-              <div className="flex-1 h-full animate-in fade-in duration-200">
+              <div className="flex-1 overflow-y-visible animate-in fade-in duration-200">
                 <SetupModal 
                   wasMiniModeBeforeModal={false}
                   isMiniMode={false}
@@ -1665,9 +1892,16 @@ function EmeraldTimer() {
                   requestNotificationPermission={requestNotificationPermission}
                   gitlabConfig={gitlabConfig}
                   setGitlabConfig={setGitlabConfig}
+                  webdavConfig={webdavConfig}
+                  setWebdavConfig={setWebdavConfig}
+                  syncMethod={syncMethod}
+                  setSyncMethod={setSyncMethod}
                   isSyncing={isSyncing}
+                  verifySyncConfig={verifySyncConfig}
                   syncFromGitLab={syncFromGitLab}
                   syncToGitLab={syncToGitLab}
+                  syncFromWebDAV={syncFromWebDAV}
+                  syncToWebDAV={syncToWebDAV}
                   lastSyncedAt={lastSyncedAt}
                   exportData={exportData}
                   importData={importData}
@@ -1681,31 +1915,51 @@ function EmeraldTimer() {
             )}
           </div>
 
-          {/* Bottom navigation for Android/Mobile */}
-          {isAndroid && (
-            <nav className="flex border-t border-emerald-50 bg-emerald-50 items-center justify-around px-2 z-50 pb-[env(safe-area-inset-bottom,12px)] pt-3 transition-colors duration-300">
-              {[
-                { id: 'timer', icon: Play, label: 'Focus' },
-                { id: 'stats', icon: BarChart3, label: 'Analytics' },
-                { id: 'logs', icon: Clock, label: 'History' },
-                { id: 'settings', icon: Settings, label: 'Settings' }
-              ].map(tab => (
-                <button 
-                  key={tab.id} 
-                  onClick={() => setActiveTab(tab.id as any)} 
-                  className={`flex-1 flex flex-col items-center justify-center gap-1.5 py-1 tracking-tight relative transition-all duration-300 ${activeTab === tab.id ? 'text-emerald-700' : 'text-emerald-300'}`}
+          {/* Navigation - Always at the bottom for both Android and PC to save vertical space and improve habit consistency */}
+          <nav className={`flex border-t border-emerald-50 bg-[#f8fcf8] items-stretch justify-around px-2 z-50 transition-all duration-300 ease-in-out
+            ${isAndroid 
+              ? 'pb-[env(safe-area-inset-bottom,12px)] pt-3 h-auto' 
+              : 'h-18 py-0 shadow-[0_-5px_15px_rgba(0,0,0,0.02)] group/nav'
+            }`}
+          >
+            {[
+              { id: 'timer', icon: Play, label: 'Focus' },
+              { id: 'stats', icon: BarChart3, label: 'Analytics' },
+              { id: 'logs', icon: Clock, label: 'History' },
+              { id: 'settings', icon: Settings, label: 'Settings' }
+            ].map(tab => (
+              <button 
+                key={tab.id} 
+                onClick={() => setActiveTab(tab.id as any)} 
+                className={`flex-1 flex flex-col items-center justify-center tracking-tight relative transition-all duration-300 h-full
+                  ${activeTab === tab.id ? 'text-emerald-600' : 'text-emerald-400 group-hover/nav:text-emerald-500 hover:text-emerald-600'}`}
+              >
+                <div className={`transition-all duration-300 flex items-center justify-center px-4 py-1.5 rounded-full
+                  ${activeTab === tab.id 
+                    ? 'bg-emerald-100/80 text-emerald-600 scale-105 shadow-sm' 
+                    : 'bg-transparent hover:bg-emerald-50/80'
+                  }`}
                 >
-                  <div className={`p-1.5 rounded-xl transition-all duration-300 ${activeTab === tab.id ? 'bg-emerald-100/80 scale-110 shadow-sm' : ''}`}>
-                    <tab.icon size={22} strokeWidth={activeTab === tab.id ? 2.5 : 2} />
-                  </div>
-                  <span className="text-[10px] font-bold">{tab.label}</span>
-                  {activeTab === tab.id && (
-                    <div className="absolute -bottom-[2px] left-8 right-8 h-1 bg-emerald-600 rounded-full shadow-[0_-4px_12px_rgba(5,150,105,0.4)] animate-in fade-in duration-500" />
-                  )}
-                </button>
-              ))}
-            </nav>
-          )}
+                  <tab.icon 
+                    size={22} 
+                    strokeWidth={activeTab === tab.id ? 2.5 : 2} 
+                    fill={activeTab === tab.id ? "currentColor" : "none"}
+                    fillOpacity={activeTab === tab.id ? 0.15 : 0}
+                  />
+                </div>
+                
+                <span className={`font-bold transition-all duration-300 overflow-hidden text-center
+                  ${isAndroid 
+                    ? 'text-[10px] mt-1 line-clamp-1' 
+                    : 'text-[9px] max-h-0 opacity-0 group-hover/nav:max-h-4 group-hover/nav:opacity-100 group-hover/nav:mt-1'
+                  }`}
+                  style={!isAndroid ? { width: '100%' } : {}}
+                >
+                  {tab.label}
+                </span>
+              </button>
+            ))}
+          </nav>
         </main>
       )}
 

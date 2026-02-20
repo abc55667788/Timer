@@ -1,6 +1,8 @@
 ﻿import React from 'react';
 import { X, Plus, Calendar, Clock, Edit3 } from 'lucide-react';
 import { Category, CategoryData, CATEGORY_ICONS } from '../../types';
+import TimePicker from '../TimePicker';
+import DatePicker from '../DatePicker';
 
 interface ManualLogModalProps {
   wasMiniModeBeforeModal: boolean;
@@ -86,19 +88,25 @@ const ManualLogModal: React.FC<ManualLogModalProps> = ({
               <div className="grid grid-cols-1 gap-4">
                 <section>
                   <label className="text-[11px] font-bold tracking-tight text-emerald-600 block mb-2 pl-1">Date</label>
-                  <div className="relative">
-                    <Calendar size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-emerald-400 pointer-events-none" />
-                    <input type="date" value={manualLog.date} onChange={(e) => setManualLog({...manualLog, date: e.target.value})} className="w-full bg-emerald-50/50 border border-emerald-50 rounded-2xl p-3 pl-11 pr-4 text-sm font-bold text-emerald-900 tracking-tight focus:outline-none focus:ring-2 focus:ring-emerald-500/10 transition-all" />
-                  </div>
+                  <DatePicker 
+                    value={manualLog.date} 
+                    onChange={(val) => setManualLog({...manualLog, date: val})} 
+                  />
                 </section>
                 <section className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="text-[11px] font-bold tracking-tight text-emerald-600 block mb-2 pl-1">Start</label>
-                    <input type="time" value={manualLog.startTime} onChange={(e) => setManualLog({...manualLog, startTime: e.target.value})} className="w-full bg-emerald-50/50 border border-emerald-50 rounded-2xl p-3 px-3 text-sm font-bold text-emerald-900 tracking-tight focus:outline-none focus:ring-2 focus:ring-emerald-500/10 transition-all" />
+                    <TimePicker 
+                      value={manualLog.startTime} 
+                      onChange={(val) => setManualLog({...manualLog, startTime: val})} 
+                    />
                   </div>
                   <div>
                     <label className="text-[11px] font-bold tracking-tight text-emerald-600 block mb-2 pl-1">End</label>
-                    <input type="time" value={manualLog.endTime} onChange={(e) => setManualLog({...manualLog, endTime: e.target.value})} className="w-full bg-emerald-50/50 border border-emerald-50 rounded-2xl p-3 px-3 text-sm font-bold text-emerald-900 tracking-tight focus:outline-none focus:ring-2 focus:ring-emerald-500/10 transition-all" />
+                    <TimePicker 
+                      value={manualLog.endTime} 
+                      onChange={(val) => setManualLog({...manualLog, endTime: val})} 
+                    />
                   </div>
                 </section>
               </div>

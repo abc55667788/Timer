@@ -50,6 +50,7 @@ interface StatsBoardProps {
   MIN_ZOOM: number;
   MAX_ZOOM: number;
   restTimeTotal: number;
+  isAndroid?: boolean;
 }
 
 const StatsBoard: React.FC<StatsBoardProps> = ({
@@ -90,29 +91,63 @@ const StatsBoard: React.FC<StatsBoardProps> = ({
   timelineRef,
   MIN_ZOOM,
   MAX_ZOOM,
-  restTimeTotal
+  restTimeTotal,
+  isAndroid
 }) => {
   const getTimelineWidth = (zoom: number) => {
     return Math.max(800, ((timelineRange.end - timelineRange.start) / 60000) * 1.5 * zoom + 120);
   };
 
   return (
-    <div className="flex flex-col lg:flex-row gap-6 lg:gap-10 items-start h-full animate-in fade-in slide-in-from-right-4 duration-500 overflow-hidden">
-      {!isCalendarCollapsed && (
-        <div className="w-full lg:w-auto flex-shrink-0 sticky top-0 z-20">
-          <MiniCalendar 
-            logs={logs} 
-            selectedDate={selectedStatsDate} 
-            onSelectDate={setSelectedStatsDate} 
-            viewType={statsView} 
-          />
-        </div>
+    <div className="flex flex-col lg:flex-row gap-6 lg:gap-10 items-start h-full animate-in fade-in slide-in-from-right-4 duration-500 overflow-visible relative pt-4 md:pt-6">
+      {/* Calendar Side Drawer for Android */}
+      {isAndroid ? (
+        <>
+          {/* Overlay */}
+          {!isCalendarCollapsed && (
+            <div 
+              className="fixed inset-0 bg-black/20 backdrop-blur-[1px] z-40 animate-in fade-in duration-300" 
+              onClick={() => setIsCalendarCollapsed(true)}
+            />
+          )}
+          {/* Sidebar Drawer */}
+          <div className={`fixed top-0 left-0 bottom-0 w-[280px] bg-white z-50 shadow-2xl transform transition-transform duration-300 ease-in-out border-r border-emerald-50 ${isCalendarCollapsed ? '-translate-x-full' : 'translate-x-0'}`}>
+            <div className="h-full overflow-y-auto p-4 scrollbar-none">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-lg font-black text-emerald-950 tracking-tighter pl-2">Timeline Calendar</h3>
+                <button onClick={() => setIsCalendarCollapsed(true)} className="p-2 text-emerald-400 hover:text-emerald-600">
+                  <PanelLeftClose size={20} />
+                </button>
+              </div>
+              <div className="scale-[0.9] origin-top-left">
+                <MiniCalendar 
+                  logs={logs} 
+                  selectedDate={selectedStatsDate} 
+                  onSelectDate={setSelectedStatsDate} 
+                  viewType={statsView} 
+                />
+              </div>
+            </div>
+          </div>
+        </>
+      ) : (
+        !isCalendarCollapsed && (
+          <div className="w-full lg:w-auto flex-shrink-0 sticky top-0 z-20">
+            <MiniCalendar 
+              logs={logs} 
+              selectedDate={selectedStatsDate} 
+              onSelectDate={setSelectedStatsDate} 
+              viewType={statsView} 
+            />
+          </div>
+        )
       )}
-      <div className="flex-1 space-y-6 w-full h-full flex flex-col overflow-hidden">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between bg-emerald-50/40 p-2 sm:p-1.5 rounded-[2rem] flex-shrink-0 border border-emerald-100/50 gap-2">
-           <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none pb-1 sm:pb-0">
-             <button onClick={() => setIsCalendarCollapsed(!isCalendarCollapsed)} className="p-2.5 text-emerald-600 hover:bg-white rounded-2xl transition-all shadow-sm flex-shrink-0">
-               {isCalendarCollapsed ? <PanelLeftOpen size={18}/> : <PanelLeftClose size={18}/>}
+
+      <div className="flex-1 space-y-4 w-full h-full flex flex-col overflow-visible">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between bg-white backdrop-blur-md p-1.5 sm:p-1 rounded-2xl flex-shrink-0 border border-emerald-100/50 gap-2 sticky top-0 z-30">
+           <div className="flex items-center gap-1 overflow-x-auto scrollbar-none pb-0.5 sm:pb-0">
+             <button onClick={() => setIsCalendarCollapsed(!isCalendarCollapsed)} className="p-2 text-emerald-600 hover:bg-white rounded-xl transition-all shadow-sm flex-shrink-0">
+               {isCalendarCollapsed ? <PanelLeftOpen size={16}/> : <PanelLeftClose size={16}/>}
              </button>
              {([
                { id: 'day', label: 'Day' },
@@ -120,7 +155,7 @@ const StatsBoard: React.FC<StatsBoardProps> = ({
                { id: 'month', label: 'Month' },
                { id: 'year', label: 'Year' }
              ] as { id: StatsView, label: string }[]).map(v => (
-               <button key={v.id} onClick={() => setStatsView(v.id)} className={`px-4 sm:px-5 py-2.5 rounded-2xl text-[11px] sm:text-xs font-bold tracking-tight transition-all flex-shrink-0 ${statsView === v.id ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-200' : 'text-emerald-500 hover:bg-emerald-100'}`}>{v.label}</button>
+               <button key={v.id} onClick={() => setStatsView(v.id)} className={`px-4 py-2 rounded-xl text-[10px] sm:text-[11px] font-bold tracking-tight transition-all flex-shrink-0 ${statsView === v.id ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-200' : 'text-emerald-500 hover:bg-emerald-100'}`}>{v.label}</button>
              ))}
            </div>
            <div className="flex items-center justify-between sm:justify-end gap-3 px-2 sm:px-0">
@@ -134,7 +169,7 @@ const StatsBoard: React.FC<StatsBoardProps> = ({
            </div>
         </div>
         
-        <div className="flex-1 overflow-y-auto pr-2 space-y-4 scrollbar-none pb-20">
+        <div className="flex-1 pr-2 space-y-4 scrollbar-none pb-20">
           {statsView === 'day' && (
             <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
                {dayViewMode === 'timeline' ? (
@@ -162,9 +197,12 @@ const StatsBoard: React.FC<StatsBoardProps> = ({
                         <div className="h-full relative py-14 px-10" style={{ width: `${getTimelineWidth(timelineZoom)}px` }}>
                           {Array.from({ length: Math.ceil((timelineRange.end - timelineRange.start) / 3600000) + 1 }).map((_, i) => {
                             const hourDate = new Date(timelineRange.start + i * 3600000);
+                            const hourStr = hourDate.getHours().toString().padStart(2, '0');
                             return (
                               <div key={i} className="absolute top-0 bottom-0 border-l border-emerald-100/30" style={{ left: `${i * 60 * 1.5 * timelineZoom + 40}px` }}>
-                                <span className="absolute bottom-4 -left-4 text-xs font-black text-emerald-200 tracking-tighter">{formatClock(hourDate.getTime(), timelineZoom)}</span>
+                                <span className="absolute bottom-4 -left-4 text-[10px] font-black text-emerald-300 tracking-tighter select-none">
+                                  {hourStr}
+                                </span>
                               </div>
                             );
                           })}

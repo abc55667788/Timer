@@ -4,6 +4,8 @@ import {
   Trash2, Calendar, Clock 
 } from 'lucide-react';
 import { LogEntry, Category, CategoryData, CATEGORY_ICONS } from '../../types';
+import TimePicker from '../TimePicker';
+import DatePicker from '../DatePicker';
 
 interface ViewLogModalProps {
   wasMiniModeBeforeModal: boolean;
@@ -239,33 +241,34 @@ const ViewLogModal: React.FC<ViewLogModalProps> = ({
                     </div>
                   </section>
 
-                  <section className="bg-emerald-50/20 p-6 rounded-[2.5rem] border border-emerald-50/80 space-y-5">
+                  <section className="bg-emerald-50/20 p-6 rounded-[2.5rem] border border-emerald-50/80 space-y-6">
+                    <div className="space-y-3">
+                      <label className="text-[10px] font-bold text-emerald-400 tracking-tight pl-2">Session Date</label>
+                      <DatePicker 
+                        value={editStartDate} 
+                        onChange={(val) => {
+                          setEditStartDate(val);
+                          setEditEndDate(val);
+                        }} 
+                      />
+                    </div>
+                    
                     <div className="grid grid-cols-2 gap-5">
                       <div className="space-y-3">
-                        <label className="text-[10px] font-bold text-emerald-400 tracking-tight pl-2">Start Time</label>
-                        <div className="flex flex-col gap-2">
-                          <div className="relative">
-                            <Calendar size={12} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-emerald-300 pointer-events-none" />
-                            <input type="date" value={editStartDate} onChange={(e) => setEditStartDate(e.target.value)} className="w-full bg-white border border-emerald-100 rounded-xl py-2.5 pl-9 pr-3 text-[11px] font-bold text-emerald-800 outline-none focus:ring-4 focus:ring-emerald-500/5 transition-all" />
-                          </div>
-                          <div className="relative">
-                            <Clock size={12} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-emerald-300 pointer-events-none" />
-                            <input type="time" value={editStartTime} onChange={(e) => setEditStartTime(e.target.value)} className="w-full bg-white border border-emerald-100 rounded-xl py-2.5 pl-9 pr-3 text-[11px] font-bold text-emerald-800 outline-none focus:ring-4 focus:ring-emerald-500/5 transition-all" />
-                          </div>
-                        </div>
+                        <label className="text-[10px] font-bold text-emerald-400 tracking-tight pl-2">Start</label>
+                        <TimePicker 
+                          value={editStartTime} 
+                          onChange={setEditStartTime} 
+                          className="text-[11px]"
+                        />
                       </div>
                       <div className="space-y-3">
-                        <label className="text-[10px] font-bold text-emerald-400 tracking-tight pl-2">End Time</label>
-                        <div className="flex flex-col gap-2">
-                          <div className="relative">
-                            <Calendar size={12} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-emerald-300 pointer-events-none" />
-                            <input type="date" value={editEndDate} onChange={(e) => setEditEndDate(e.target.value)} className="w-full bg-white border border-emerald-100 rounded-xl py-2.5 pl-9 pr-3 text-[11px] font-bold text-emerald-800 outline-none focus:ring-4 focus:ring-emerald-500/5 transition-all" />
-                          </div>
-                          <div className="relative">
-                            <Clock size={12} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-emerald-300 pointer-events-none" />
-                            <input type="time" value={editEndTime} onChange={(e) => setEditEndTime(e.target.value)} className="w-full bg-white border border-emerald-100 rounded-xl py-2.5 pl-9 pr-3 text-[11px] font-bold text-emerald-800 outline-none focus:ring-4 focus:ring-emerald-500/5 transition-all" />
-                          </div>
-                        </div>
+                        <label className="text-[10px] font-bold text-emerald-400 tracking-tight pl-2">End</label>
+                        <TimePicker 
+                          value={editEndTime} 
+                          onChange={setEditEndTime} 
+                          className="text-[11px]"
+                        />
                       </div>
                     </div>
                     {editTimeError && <div className="text-[10px] text-red-500 font-bold text-center bg-red-50/50 py-2.5 rounded-xl border border-red-50">{editTimeError}</div>}

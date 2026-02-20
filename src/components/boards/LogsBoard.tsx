@@ -3,6 +3,7 @@ import { Clock, Filter as FilterIcon, Plus, Search } from 'lucide-react';
 import { LogEntry, Category, CategoryData } from '../../types';
 import { formatTime, formatDisplayDate } from '../../utils/time';
 import { Image as ImageIcon } from 'lucide-react';
+import DatePicker from '../DatePicker';
 
 interface LogsBoardProps {
   filteredLogs: LogEntry[];
@@ -40,24 +41,24 @@ const LogsBoard: React.FC<LogsBoardProps> = ({
   categories
 }) => {
   return (
-    <div className="space-y-8 w-full pb-10">
-      <div className="flex justify-between items-center py-6 border-b border-emerald-50 px-4">
-        <div className="flex items-center gap-4">
-          <h3 className="text-sm font-bold tracking-tight text-emerald-900 flex items-center gap-3">
-            <Clock size={20} className="text-emerald-500" /> History Logs
+    <div className="space-y-6 w-full pb-6">
+      <div className="flex justify-between items-center py-4 border-b border-emerald-50 px-2 lg:px-4">
+        <div className="flex items-center gap-2 lg:gap-4">
+          <h3 className="text-sm font-bold tracking-tight text-emerald-900 flex items-center gap-2 lg:gap-3">
+            <Clock size={16} className="text-emerald-500" /> History Logs
           </h3>
           <button 
             onClick={() => setShowFilters(!showFilters)} 
-            className={`flex items-center gap-2 px-3 py-2 rounded-md text-xs font-bold transition-all ${showFilters ? 'bg-emerald-600 text-white' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'}`}
+            className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-[10px] font-bold transition-all ${showFilters ? 'bg-emerald-600 text-white' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'}`}
           >
-            <FilterIcon size={14}/> Filters
+            <FilterIcon size={12}/> Filter
           </button>
         </div>
         <button 
           onClick={() => setShowManualModal(true)} 
-          className="flex items-center gap-2.5 px-6 py-3 bg-emerald-600 text-white rounded-[1.5rem] text-xs font-bold tracking-tight shadow-xl shadow-emerald-200 active:scale-95 transition-all"
+          className="flex items-center gap-2 px-4 py-2 lg:px-6 lg:py-3 bg-emerald-600 text-white rounded-[1.2rem] lg:rounded-[1.5rem] text-[10px] lg:text-xs font-bold tracking-tight shadow-lg hover:shadow-emerald-200 active:scale-95 transition-all"
         >
-          <Plus size={16} /> Add Entry
+          <Plus size={14} /> Add Entry
         </button>
       </div>
 
@@ -92,27 +93,17 @@ const LogsBoard: React.FC<LogsBoardProps> = ({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <div className="space-y-3">
                 <label className="text-[11px] font-bold text-emerald-400 tracking-tight ml-1">From Date</label>
-                <div className="relative group">
-                  <div className="absolute left-4 top-1/2 -translate-y-1/2 w-1 h-4 bg-emerald-200 rounded-full transition-all group-focus-within:bg-emerald-500" />
-                  <input 
-                    type="date" 
-                    value={filterStartDate} 
-                    onChange={(e) => setFilterStartDate(e.target.value)} 
-                    className="w-full bg-white border border-emerald-100 rounded-2xl py-3 pl-8 pr-4 text-xs font-bold text-emerald-900 outline-none focus:ring-4 focus:ring-emerald-500/5 transition-all" 
-                  />
-                </div>
+                <DatePicker 
+                  value={filterStartDate} 
+                  onChange={setFilterStartDate} 
+                />
               </div>
               <div className="space-y-3">
                 <label className="text-[11px] font-bold text-emerald-400 tracking-tight ml-1">To Date</label>
-                <div className="relative group">
-                  <div className="absolute left-4 top-1/2 -translate-y-1/2 w-1 h-4 bg-emerald-200 rounded-full transition-all group-focus-within:bg-emerald-500" />
-                  <input 
-                    type="date" 
-                    value={filterEndDate} 
-                    onChange={(e) => setFilterEndDate(e.target.value)} 
-                    className="w-full bg-white border border-emerald-100 rounded-2xl py-3 pl-8 pr-4 text-xs font-bold text-emerald-900 outline-none focus:ring-4 focus:ring-emerald-500/5 transition-all" 
-                  />
-                </div>
+                <DatePicker 
+                  value={filterEndDate} 
+                  onChange={setFilterEndDate} 
+                />
               </div>
             </div>
           </div>

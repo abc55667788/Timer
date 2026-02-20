@@ -58,10 +58,10 @@ const MiniMode: React.FC<MiniModeProps> = ({
               <button 
                 style={{ WebkitAppRegion: 'no-drag' } as any}
                 onClick={() => setIsMiniMode(false)} 
-                className="p-1.5 hover:bg-emerald-100 rounded-full text-emerald-800 transition-all duration-300 ease-in-out active:scale-90" 
+                className="p-3 -m-1.5 hover:bg-emerald-100 rounded-full text-emerald-800 transition-all duration-300 ease-in-out active:scale-90" 
                 title="Maximize"
               >
-                <Maximize2 size={12} />
+                <Maximize2 size={13} strokeWidth={2.5} />
               </button>
             </div>
               <div className="flex items-baseline gap-1">

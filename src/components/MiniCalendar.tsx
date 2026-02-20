@@ -13,12 +13,22 @@ interface MiniCalendarProps {
 
 function MiniCalendar({ logs, selectedDate, onSelectDate, viewType, compact = false }: MiniCalendarProps) {
   const [viewDate, setViewDate] = useState(new Date(selectedDate));
+  const [openDropdown, setOpenDropdown] = useState<'month' | 'year' | null>(null);
+
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   const recordedDays = useMemo(() => new Set(logs.map((l) => formatDate(l.startTime))), [logs]);
 
   const currentMonth = viewDate.getMonth();
   const currentYear = viewDate.getFullYear();
   const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
   const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+
+  const years = useMemo(() => {
+    const current = new Date().getFullYear();
+    const arr = [];
+    for (let i = current - 5; i <= current + 5; i++) arr.push(i);
+    return arr;
+  }, []);
 
   const calendarDays = useMemo(() => {
     const arr: Array<number | null> = [];
@@ -41,42 +51,81 @@ function MiniCalendar({ logs, selectedDate, onSelectDate, viewType, compact = fa
   };
 
   return (
-    <div className={`bg-white ${compact ? 'p-4 rounded-[1.5rem]' : 'p-4 sm:p-6 rounded-[2rem] sm:rounded-[2.5rem]'} border border-emerald-50 shadow-sm w-full ${compact ? 'max-w-full sm:max-w-[240px]' : 'max-w-full sm:max-w-[280px]'} animate-in slide-in-from-left duration-500 ring-1 ring-emerald-50/50`}>
-      <div className={`flex justify-between items-center ${compact ? 'mb-4 px-3 py-2' : 'mb-6 px-4 py-3'} bg-emerald-50 rounded-[1rem] border border-emerald-100`}>
-        <div className={`flex ${compact ? 'gap-2' : 'gap-4'}`}>
-          <div className="relative group">
-            <select
-              value={currentMonth}
-              onChange={(e) => setViewDate(new Date(currentYear, parseInt(e.target.value, 10), 1))}
-              className={`bg-transparent ${compact ? 'text-[10px]' : 'text-xs'} font-black text-emerald-900 outline-none cursor-pointer hover:text-emerald-600 appearance-none pr-3 transition-colors z-10`}
+    <div className={`bg-white relative ${compact ? 'p-4 rounded-[1.5rem]' : 'p-4 sm:p-6 rounded-[2rem] sm:rounded-[2.5rem]'} border border-emerald-50 shadow-sm w-full ${compact ? 'max-w-full sm:max-w-[240px]' : 'max-w-full sm:max-w-[280px]'} animate-in slide-in-from-left duration-500 ring-1 ring-emerald-50/50`}>
+      {/* Click-out overlay */}
+      {openDropdown && (
+        <div 
+          className="fixed inset-0 z-40 bg-black/0" 
+          onClick={() => setOpenDropdown(null)}
+        />
+      )}
+
+      <div className={`flex justify-between items-center ${compact ? 'mb-3 px-2 py-1.5' : 'mb-5 px-3 py-2.5'} bg-emerald-50/50 rounded-2xl border border-emerald-100/50`}>
+        <div className={`flex items-center ${compact ? 'gap-1' : 'gap-3'}`}>
+          <div className="relative">
+            <button
+               onClick={() => setOpenDropdown(openDropdown === 'month' ? null : 'month')}
+               className={`flex items-center gap-1 bg-white/40 hover:bg-white px-2 py-1 rounded-lg transition-all ${compact ? 'text-[10px]' : 'text-xs'} font-black text-emerald-950 border border-emerald-100/50 shadow-sm overflow-visible z-50 relative`}
             >
-              {["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"].map((m, i) => (
-                <option key={m} value={i}>{m}</option>
-              ))}
-            </select>
-            <ChevronDown size={compact ? 10 : 12} className="absolute right-0 top-1/2 -translate-y-1/2 text-emerald-300 pointer-events-none group-hover:text-emerald-500 transition-colors" />
+              {months[currentMonth]}
+              <ChevronDown size={compact ? 10 : 12} className={`text-emerald-400 transition-transform ${openDropdown === 'month' ? 'rotate-180' : ''}`} />
+            </button>
+            
+            {openDropdown === 'month' && (
+              <div className="absolute top-full left-0 mt-2 w-28 bg-white rounded-2xl shadow-2xl border border-emerald-50 p-2 z-[60] animate-in fade-in zoom-in-95 grid grid-cols-2 gap-1 overflow-visible h-fit origin-top">
+                {months.map((m, i) => (
+                  <button
+                    key={m}
+                    onClick={() => {
+                      setViewDate(new Date(currentYear, i, 1));
+                      setOpenDropdown(null);
+                    }}
+                    className={`p-2 rounded-xl text-[10px] font-bold transition-all ${currentMonth === i ? 'bg-emerald-600 text-white shadow-md shadow-emerald-200' : 'text-emerald-800 hover:bg-emerald-50'}`}
+                  >
+                    {m}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
-          <div className="relative group">
-            <select
-              value={currentYear}
-              onChange={(e) => setViewDate(new Date(parseInt(e.target.value, 10), currentMonth, 1))}
-              className={`bg-transparent ${compact ? 'text-[10px]' : 'text-xs'} font-black text-emerald-900 outline-none cursor-pointer hover:text-emerald-600 appearance-none pr-3 transition-colors z-10`}
+
+          <div className="h-3 w-[1px] bg-emerald-100/80 mx-1" />
+          
+          <div className="relative">
+             <button
+               onClick={() => setOpenDropdown(openDropdown === 'year' ? null : 'year')}
+               className={`flex items-center gap-1 bg-white/40 hover:bg-white px-2 py-1 rounded-lg transition-all ${compact ? 'text-[10px]' : 'text-xs'} font-black text-emerald-950 border border-emerald-100/50 shadow-sm overflow-visible z-50 relative`}
             >
-              {[currentYear - 1, currentYear, currentYear + 1].map((y) => (
-                <option key={y} value={y}>{y}</option>
-              ))}
-            </select>
-            <ChevronDown size={compact ? 10 : 12} className="absolute right-0 top-1/2 -translate-y-1/2 text-emerald-300 pointer-events-none group-hover:text-emerald-500 transition-colors" />
+              {currentYear}
+              <ChevronDown size={compact ? 10 : 12} className={`text-emerald-400 transition-transform ${openDropdown === 'year' ? 'rotate-180' : ''}`} />
+            </button>
+
+            {openDropdown === 'year' && (
+              <div className="absolute top-full left-0 mt-2 w-36 bg-white rounded-2xl shadow-2xl border border-emerald-50 p-2 z-[60] animate-in fade-in zoom-in-95 grid grid-cols-2 gap-1 overflow-visible max-h-48 overflow-y-auto scrollbar-none h-fit origin-top">
+                {years.map((y) => (
+                  <button
+                    key={y}
+                    onClick={() => {
+                      setViewDate(new Date(y, currentMonth, 1));
+                      setOpenDropdown(null);
+                    }}
+                    className={`p-2 rounded-xl text-[11px] font-bold transition-all ${currentYear === y ? 'bg-emerald-600 text-white shadow-md shadow-emerald-200' : 'text-emerald-800 hover:bg-emerald-50'}`}
+                  >
+                    {y}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
-        <div className="flex gap-1">
-          <button onClick={() => setViewDate(new Date(currentYear, currentMonth - 1, 1))} className={`${compact ? 'p-1' : 'p-1.5'} bg-white rounded shadow-sm text-emerald-300 hover:text-emerald-600 border border-emerald-50 transition-all active:scale-90`}><ChevronLeft size={compact ? 12 : 16} /></button>
-          <button onClick={() => setViewDate(new Date(currentYear, currentMonth + 1, 1))} className={`${compact ? 'p-1' : 'p-1.5'} bg-white rounded shadow-sm text-emerald-300 hover:text-emerald-600 border border-emerald-50 transition-all active:scale-90`}><ChevronRight size={compact ? 12 : 16} /></button>
+        <div className="flex gap-1.5">
+          <button onClick={() => setViewDate(new Date(currentYear, currentMonth - 1, 1))} className={`${compact ? 'p-1' : 'p-1.5'} bg-white/90 rounded-xl shadow-sm text-emerald-500 hover:text-emerald-700 border border-emerald-100/50 transition-all active:scale-90`}><ChevronLeft size={compact ? 12 : 16} /></button>
+          <button onClick={() => setViewDate(new Date(currentYear, currentMonth + 1, 1))} className={`${compact ? 'p-1' : 'p-1.5'} bg-white/90 rounded-xl shadow-sm text-emerald-500 hover:text-emerald-700 border border-emerald-100/50 transition-all active:scale-90`}><ChevronRight size={compact ? 12 : 16} /></button>
         </div>
       </div>
-      <div className={`grid grid-cols-7 gap-1 text-center ${compact ? 'mb-4' : 'mb-6'}`}>
+      <div className={`grid grid-cols-7 gap-x-1 gap-y-0.5 text-center ${compact ? 'mb-3' : 'mb-5'}`}>
         {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, idx) => (
-          <div key={`${d}-${idx}`} className={`${compact ? 'text-[10px]' : 'text-xs'} font-bold text-emerald-500`}>
+          <div key={`${d}-${idx}`} className={`${compact ? 'text-[9px]' : 'text-[10px]'} font-bold text-emerald-300 uppercase tracking-widest`}>
             {d}
           </div>
         ))}
@@ -91,12 +140,12 @@ function MiniCalendar({ logs, selectedDate, onSelectDate, viewType, compact = fa
             <button
               key={dateStr}
               onClick={() => onSelectDate(dateStr)}
-              className={`relative ${compact ? 'h-7 w-7' : 'h-9 w-9'} rounded-lg ${compact ? 'text-[10px]' : 'text-xs'} font-bold transition-all flex items-center justify-center
-                ${isSelected ? 'bg-emerald-600 text-white shadow-lg' :
-                  isInWeek ? 'bg-emerald-100 text-emerald-700' : 'hover:bg-emerald-50 text-emerald-800'}`}
+              className={`relative ${compact ? 'h-7 w-7' : 'h-8 w-8'} m-auto rounded-[0.75rem] ${compact ? 'text-[10px]' : 'text-xs'} font-bold transition-all flex items-center justify-center
+                ${isSelected ? 'bg-emerald-600 text-white shadow-md shadow-emerald-100 ring-2 ring-emerald-100 ring-offset-1' :
+                  isInWeek ? 'bg-emerald-50 text-emerald-800' : 'hover:bg-emerald-50 text-emerald-900'}`}
             >
               {d}
-              {hasRecord && !isSelected && <div className={`absolute ${compact ? 'bottom-0.5 w-1 h-1' : 'bottom-1 w-1.5 h-1.5'} bg-emerald-400 rounded-full`} />}
+              {hasRecord && !isSelected && <div className={`absolute ${compact ? 'bottom-0.5 w-1 h-1' : 'bottom-1 w-1 h-1'} bg-emerald-400 rounded-full ring-1 ring-white`} />}
             </button>
           );
         })}
@@ -107,9 +156,9 @@ function MiniCalendar({ logs, selectedDate, onSelectDate, viewType, compact = fa
           setViewDate(new Date());
           onSelectDate(today);
         }}
-        className={`w-full ${compact ? 'py-2' : 'py-3'} bg-emerald-50 text-emerald-600 rounded-[0.75rem] ${compact ? 'text-[10px]' : 'text-xs'} font-bold tracking-tight hover:bg-emerald-100 transition-colors flex items-center justify-center gap-2 overflow-hidden`}
+        className={`w-full ${compact ? 'py-2.5' : 'py-3'} bg-emerald-600/5 text-emerald-600 rounded-2xl ${compact ? 'text-[10px]' : 'text-xs'} font-black tracking-tight hover:bg-emerald-600/10 transition-all flex items-center justify-center gap-2 border border-emerald-100/50`}
       >
-        <CalendarDays size={compact ? 14 : 16} /> Today
+        <CalendarDays size={compact ? 12 : 14} className="opacity-60" /> Today
       </button>
     </div>
   );
