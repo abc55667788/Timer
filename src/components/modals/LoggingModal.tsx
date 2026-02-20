@@ -66,7 +66,14 @@ const LoggingModal: React.FC<LoggingModalProps> = ({
     <div className={`fixed inset-0 ${(wasMiniModeBeforeModal || isMiniMode) ? 'bg-transparent' : 'bg-emerald-900/60 backdrop-blur-xl'} flex items-center justify-center p-6 z-[170] animate-in fade-in duration-300`}>
       <div className="bg-white rounded-[3rem] p-7 max-w-sm w-full shadow-2xl relative ring-1 ring-emerald-100/50" style={{ WebkitAppRegion: 'drag' } as any}>
          <div style={{ WebkitAppRegion: 'no-drag' } as any}>
-           <button onClick={() => setShowLoggingModal(false)} className="absolute top-5 right-5 p-2 bg-emerald-50 rounded-full text-emerald-300 hover:text-emerald-600 transition-all active:scale-90 z-50"><X size={18} /></button>
+           <button 
+             onClick={() => setShowLoggingModal(false)} 
+             className="absolute top-5 right-5 p-2 bg-emerald-50 rounded-full text-emerald-300 hover:text-emerald-600 transition-all active:scale-95 z-50 flex items-center justify-center cursor-pointer"
+             style={{ WebkitAppRegion: 'no-drag' } as any}
+             title="Close"
+           >
+             <X size={18} />
+           </button>
            <h2 className="text-xl font-bold text-emerald-950 mb-5 tracking-tight">Session Detail</h2>
            <div className="space-y-4">
               <section className="bg-emerald-50/20 p-5 rounded-[2.5rem] border border-emerald-50/50">

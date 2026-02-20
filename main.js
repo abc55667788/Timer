@@ -14,6 +14,8 @@ function createWindow() {
     icon: path.join(__dirname, 'public/logo.png'),
     frame: false, // Hide native title bar
     transparent: true, // Allow transparent background for rounded corners
+    backgroundColor: "#00000000",
+    hasShadow: false, // Disable native OS shadow for transparent window to prevent artifacts
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,

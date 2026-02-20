@@ -295,6 +295,11 @@ function EmeraldTimer() {
       document.documentElement.style.touchAction = 'pan-x pan-y';
     } else {
       (document.body.style as any).zoom = isMiniMode ? 1.0 : uiScale;
+      // Force background to be transparent in Mini Mode to prevent corner bleed
+      if (isMiniMode) {
+        document.body.style.backgroundColor = 'transparent';
+        if (document.getElementById('root')) (document.getElementById('root') as any).style.backgroundColor = 'transparent';
+      }
     }
   }, [uiScale, isMiniMode, isAndroid]);
 
@@ -1372,7 +1377,7 @@ function EmeraldTimer() {
         display: 'flex', 
         alignItems: 'center', 
         justifyContent: 'center', 
-        padding: isAndroid ? '20px' : '0',
+        padding: '0', // Full screen padding should be 0 for MiniMode to prevent background artifacts
         background: 'transparent'
       } : { 
         height: `${(1 / uiScale) * 100}vh`, 

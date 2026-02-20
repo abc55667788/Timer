@@ -97,7 +97,16 @@ const SetupModal: React.FC<SetupModalProps> = ({
     <div className={containerClasses}>
       <div className={contentClasses} style={!isPage ? { WebkitAppRegion: 'drag' } as any : {}}>
          <div style={{ WebkitAppRegion: 'no-drag' } as any} className={isPage ? "w-full" : "scrollbar-none overflow-y-auto max-h-[80vh]"}>
-           {!isPage && <button onClick={closeSettingsWithoutSaving} className="absolute top-4 right-4 p-2 bg-emerald-50 rounded-full text-emerald-300 hover:text-emerald-600 transition-all active:scale-90 z-50"><X size={18} /></button>}
+           {!isPage && (
+              <button 
+                onClick={closeSettingsWithoutSaving} 
+                className="absolute top-4 right-4 p-2 bg-emerald-50 rounded-full text-emerald-300 hover:text-emerald-600 transition-all active:scale-95 z-50 flex items-center justify-center cursor-pointer"
+                style={{ WebkitAppRegion: 'no-drag' } as any}
+                title="Close"
+              >
+                <X size={18} />
+              </button>
+           )}
            
            <div className={`grid ${isPage ? 'grid-cols-1 md:grid-cols-2 gap-x-12' : ''} space-y-6`}>
               <div className="space-y-6">

@@ -61,8 +61,12 @@ const InspirationModal: React.FC<InspirationModalProps> = ({
         <div style={{ WebkitAppRegion: 'no-drag' } as any} className="scrollbar-none overflow-y-auto max-h-[85vh]">
           <button 
             onClick={() => setShowInspirationModal(false)} 
-            className="absolute top-4 right-4 p-2 bg-emerald-50 rounded-full text-emerald-300 hover:text-emerald-600 transition-all active:scale-90 z-50"
-          ><X size={18} /></button>
+            className="absolute top-4 right-4 p-2 bg-emerald-50 rounded-full text-emerald-300 hover:text-emerald-600 transition-all active:scale-95 z-50 flex items-center justify-center cursor-pointer"
+            style={{ WebkitAppRegion: 'no-drag' } as any}
+            title="Close"
+          >
+            <X size={18} />
+          </button>
           
           <div className="flex items-center gap-4 mb-8">
             <div className="w-12 h-12 bg-emerald-50 rounded-[1.5rem] flex items-center justify-center text-emerald-600 shadow-sm">

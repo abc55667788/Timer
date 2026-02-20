@@ -174,7 +174,13 @@ const ViewLogModal: React.FC<ViewLogModalProps> = ({
              <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 pb-2">
                 <div className="flex items-center justify-between mb-4">
                     <h2 className="text-xl font-bold text-emerald-950 tracking-tight">Edit Session</h2>
-                    <button onClick={() => { setIsEditMode(false); setPhaseEditTouched(false); }} className="p-2 bg-emerald-50 rounded-full text-emerald-300 hover:text-emerald-600 transition-all"><X size={18} /></button>
+                    <button 
+                      onClick={() => { setIsEditMode(false); setPhaseEditTouched(false); }} 
+                      className="w-9 h-9 flex items-center justify-center bg-emerald-50 rounded-full text-emerald-300 hover:text-emerald-600 transition-all cursor-pointer"
+                      style={{ WebkitAppRegion: "no-drag" } as any}
+                    >
+                      <X size={18} />
+                    </button>
                 </div>
 
                 <div className="space-y-5">

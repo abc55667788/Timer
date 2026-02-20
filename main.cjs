@@ -87,6 +87,8 @@ ipcMain.on('toggle-mini-mode', (event, isMini) => {
       const miniWidth = 360; // 调宽一点
       const miniHeight = 110; 
       
+      mainWindow.setBackgroundColor('#00000000');
+      
       // Order of operations for better Linux/ARM compatibility
       mainWindow.setResizable(true);
       
