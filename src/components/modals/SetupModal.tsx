@@ -66,12 +66,12 @@ const SetupModal: React.FC<SetupModalProps> = ({
   }, [uiScale]);
 
   const containerClasses = isPage 
-    ? "w-full h-full flex flex-col bg-main overflow-hidden animate-in fade-in duration-500"
-    : `fixed inset-0 ${(wasMiniModeBeforeModal || isMiniMode) ? 'bg-transparent' : 'bg-black/60 backdrop-blur-xl'} flex items-center justify-center p-6 z-[170] animate-in fade-in duration-300`;
+    ? "w-full h-full flex flex-col bg-white overflow-hidden animate-in fade-in duration-500"
+    : `fixed inset-0 ${(wasMiniModeBeforeModal || isMiniMode) ? 'bg-transparent' : 'bg-emerald-900/60 backdrop-blur-xl'} flex items-center justify-center p-6 z-[170] animate-in fade-in duration-300`;
 
   const contentClasses = isPage
     ? "flex-1 flex flex-col w-full mx-auto p-4 md:p-12 overflow-y-auto scrollbar-none"
-    : "bg-surface rounded-[2rem] p-7 max-w-sm w-full shadow-2xl relative ring-1 ring-white/5";
+    : "bg-white rounded-[2rem] p-7 max-w-sm w-full shadow-2xl relative ring-1 ring-emerald-100/50";
 
   const handleAddCategory = () => {
     const newCat: CategoryData = {

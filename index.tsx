@@ -1400,18 +1400,18 @@ function EmeraldTimer() {
 
   return (
     <div 
-      className={` ${(isMiniMode || wasMiniModeBeforeModal) ? 'bg-transparent' : 'bg-main'} text-primary flex flex-col overflow-hidden`}
+      className={` ${(isMiniMode || wasMiniModeBeforeModal) ? 'bg-transparent' : 'bg-white'} text-emerald-900 flex flex-col overflow-hidden`}
       style={isMiniMode ? { 
-        height: '100vh', 
-        width: '100vw', 
+        height: '100%', 
+        width: '100%', 
         display: 'flex', 
         alignItems: 'center', 
         justifyContent: 'center', 
-        padding: '0', 
+        padding: '0', // Full screen padding should be 0 for MiniMode to prevent background artifacts
         background: 'transparent'
       } : { 
-        height: `${(1 / uiScale) * 100}vh`, 
-        width: `${(1 / uiScale) * 100}vw`,
+        height: `${(1 / uiScale) * 100}%`, 
+        width: `${(1 / uiScale) * 100}%`,
         transformOrigin: 'top left' 
       }}
     >
@@ -1441,29 +1441,29 @@ function EmeraldTimer() {
       )}
 
       {!isMiniMode && !wasMiniModeBeforeModal && !isAndroid && (
-        <header className="w-full h-16 flex justify-between items-center px-6 flex-shrink-0 bg-surface/80 backdrop-blur-xl border-b border-white/5 animate-in fade-in slide-in-from-top-12 duration-500 ease-out" style={{ WebkitAppRegion: 'drag' } as any}>
+        <header className="w-full h-16 flex justify-between items-center px-6 flex-shrink-0 bg-[#f0f9f0]/40 backdrop-blur-sm border-b border-emerald-50/50 animate-in fade-in slide-in-from-top-12 duration-500 ease-out" style={{ WebkitAppRegion: 'drag' } as any}>
           <div className="flex items-center gap-3">
             <div className={`w-10 h-10 flex items-center justify-center overflow-hidden`}>
               <img src={APP_LOGO} alt="Emerald Timer Logo" className="w-full h-full object-contain filter drop-shadow-sm" />
             </div>
             <div className="flex items-center gap-3">
-              <h1 className="text-lg font-black text-emerald-main tracking-tight">Emerald Timer</h1>
+              <h1 className="text-lg font-black text-emerald-800 tracking-tight">Emerald Timer</h1>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <button onClick={handleSetupClick} className="p-2 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 text-emerald-main shadow-sm transition-all active:scale-95" style={{ WebkitAppRegion: 'no-drag' } as any} title="Settings">
+            <button onClick={handleSetupClick} className="p-2 bg-white rounded-xl border border-emerald-100 hover:bg-emerald-50 text-emerald-600 shadow-sm transition-all active:scale-95" style={{ WebkitAppRegion: 'no-drag' } as any} title="Settings">
               <Settings size={18} />
             </button>
-            <button onClick={() => setIsMiniMode(true)} className="p-2 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 text-emerald-main flex items-center gap-2 text-sm font-bold shadow-sm transition-all active:scale-95" style={{ WebkitAppRegion: 'no-drag' } as any}>
+            <button onClick={() => setIsMiniMode(true)} className="p-2 bg-white rounded-xl border border-emerald-100 hover:bg-emerald-50 text-emerald-600 flex items-center gap-2 text-sm font-bold shadow-sm transition-all active:scale-95" style={{ WebkitAppRegion: 'no-drag' } as any}>
               <Minimize2 size={16} /> <span className="hidden sm:inline">Mini Mode</span>
             </button>
 
             {/* Window Controls Group - Hide on Android */}
             {!isAndroid && (
-              <div className="flex items-center gap-0.5 ml-2 pl-4 border-l border-white/5">
+              <div className="flex items-center gap-0.5 ml-2 pl-4 border-l border-emerald-100/30">
                 <button 
                   onClick={() => handleWindowControl('minimize')} 
-                  className="p-2.5 text-white/40 hover:bg-white/5 hover:text-white transition-all rounded-xl" 
+                  className="p-2.5 text-emerald-400 hover:bg-emerald-50 hover:text-emerald-700 transition-all rounded-xl" 
                   style={{ WebkitAppRegion: 'no-drag' } as any} 
                   title="Minimize"
                 >
@@ -1471,7 +1471,7 @@ function EmeraldTimer() {
                 </button>
                 <button 
                   onClick={() => handleWindowControl('maximize')} 
-                  className="p-2.5 text-white/40 hover:bg-white/5 hover:text-white transition-all rounded-xl" 
+                  className="p-2.5 text-emerald-400 hover:bg-emerald-50 hover:text-emerald-700 transition-all rounded-xl" 
                   style={{ WebkitAppRegion: 'no-drag' } as any} 
                   title="Maximize"
                 >
@@ -1479,7 +1479,7 @@ function EmeraldTimer() {
                 </button>
                 <button 
                   onClick={() => handleWindowControl('close')} 
-                  className="p-2.5 text-white/30 hover:bg-red-500/80 hover:text-white transition-all rounded-xl ml-1" 
+                  className="p-2.5 text-emerald-300 hover:bg-red-500 hover:text-white transition-all rounded-xl ml-1" 
                   style={{ WebkitAppRegion: 'no-drag' } as any} 
                   title="Close"
                 >
@@ -1514,31 +1514,34 @@ function EmeraldTimer() {
       )}
 
       {!hideShellForMiniPrompt && !isMiniMode && !wasMiniModeBeforeModal && (
-        <main className={`w-full bg-main flex ${isAndroid ? 'flex-col-reverse' : 'flex-col'} flex-1 overflow-hidden animate-in fade-in slide-in-from-bottom-2 zoom-in-95 duration-500 ease-out`}>
-          <nav className={`flex ${isAndroid ? 'border-t border-white/5 pb-[env(safe-area-inset-bottom,12px)]' : 'border-b border-white/5'} bg-surface/80 backdrop-blur-xl px-4 flex-shrink-0 z-50`}>
-            {[
-              { id: 'timer', icon: Play, label: 'Focus' },
-              { id: 'stats', icon: BarChart3, label: 'Analytics' },
-              { id: 'logs', icon: Clock, label: 'History' },
-              { id: 'settings', icon: Settings, label: 'Settings' }
-            ].map(tab => (
-              <button 
-                key={tab.id} 
-                onClick={() => setActiveTab(tab.id as any)} 
-                className={`flex-1 py-4 flex flex-col items-center justify-center gap-1 text-[11px] font-bold tracking-tight relative transition-all duration-300 ${activeTab === tab.id ? 'text-emerald-main' : 'text-white/30 hover:text-white/60'}`}
-              >
-                <div className={`p-1 rounded-lg transition-all duration-300 ${activeTab === tab.id ? 'bg-emerald-main/20 scale-110 shadow-sm' : ''}`}>
-                  <tab.icon size={18} />
-                </div>
-                <span className={`${isAndroid ? '' : 'hidden sm:inline'}`}>{tab.label}</span>
-                {activeTab === tab.id && (
-                  <div className={`absolute ${isAndroid ? 'top-0' : 'bottom-0'} left-6 right-6 h-0.5 bg-emerald-main rounded-full shadow-[0_-4px_12px_rgba(16,185,129,0.4)] animate-in fade-in duration-300`} />
-                )}
-              </button>
-            ))}
-          </nav>
+        <main className={`w-full bg-white flex flex-col flex-1 overflow-hidden animate-in fade-in slide-in-from-bottom-2 zoom-in-95 duration-500 ease-out ${isAndroid ? 'pt-[env(safe-area-inset-top,20px)]' : ''}`}>
+          {/* Top navigation for desktop, bottom for mobile/android */}
+          {!isAndroid && (
+            <nav className="flex border-b border-emerald-50 bg-emerald-50/20 px-4 flex-shrink-0 z-50">
+              {[
+                { id: 'timer', icon: Play, label: 'Focus' },
+                { id: 'stats', icon: BarChart3, label: 'Analytics' },
+                { id: 'logs', icon: Clock, label: 'History' },
+                { id: 'settings', icon: Settings, label: 'Settings' }
+              ].map(tab => (
+                <button 
+                  key={tab.id} 
+                  onClick={() => setActiveTab(tab.id as any)} 
+                  className={`flex-1 py-4 flex flex-col items-center justify-center gap-1 text-[11px] font-bold tracking-tight relative transition-all duration-300 ${activeTab === tab.id ? 'text-emerald-700' : 'text-emerald-300 hover:text-emerald-500'}`}
+                >
+                  <div className={`p-1 rounded-lg transition-all duration-300 ${activeTab === tab.id ? 'bg-emerald-100 scale-110 shadow-sm' : ''}`}>
+                    <tab.icon size={18} />
+                  </div>
+                  <span className="hidden sm:inline">{tab.label}</span>
+                  {activeTab === tab.id && (
+                    <div className="absolute bottom-0 left-6 right-6 h-0.5 bg-emerald-600 rounded-full shadow-[0_-4px_12px_rgba(5,150,105,0.4)] animate-in fade-in duration-300" />
+                  )}
+                </button>
+              ))}
+            </nav>
+          )}
 
-          <div className={`flex-1 overflow-hidden relative ${isAndroid ? 'pt-[env(safe-area-inset-top,20px)]' : ''}`}>
+          <div className="flex-1 overflow-hidden relative">
             {activeTab === 'timer' && (
               <div className="flex h-full w-full overflow-hidden relative animate-in fade-in duration-200">
                 <div className={`flex-1 transition-all duration-500 ease-in-out ${isJournalOpen ? 'md:mr-[400px]' : 'mr-0'}`}>
@@ -1677,6 +1680,32 @@ function EmeraldTimer() {
               </div>
             )}
           </div>
+
+          {/* Bottom navigation for Android/Mobile */}
+          {isAndroid && (
+            <nav className="flex border-t border-emerald-50 bg-emerald-50 items-center justify-around px-2 z-50 pb-[env(safe-area-inset-bottom,12px)] pt-3 transition-colors duration-300">
+              {[
+                { id: 'timer', icon: Play, label: 'Focus' },
+                { id: 'stats', icon: BarChart3, label: 'Analytics' },
+                { id: 'logs', icon: Clock, label: 'History' },
+                { id: 'settings', icon: Settings, label: 'Settings' }
+              ].map(tab => (
+                <button 
+                  key={tab.id} 
+                  onClick={() => setActiveTab(tab.id as any)} 
+                  className={`flex-1 flex flex-col items-center justify-center gap-1.5 py-1 tracking-tight relative transition-all duration-300 ${activeTab === tab.id ? 'text-emerald-700' : 'text-emerald-300'}`}
+                >
+                  <div className={`p-1.5 rounded-xl transition-all duration-300 ${activeTab === tab.id ? 'bg-emerald-100/80 scale-110 shadow-sm' : ''}`}>
+                    <tab.icon size={22} strokeWidth={activeTab === tab.id ? 2.5 : 2} />
+                  </div>
+                  <span className="text-[10px] font-bold">{tab.label}</span>
+                  {activeTab === tab.id && (
+                    <div className="absolute -bottom-[2px] left-8 right-8 h-1 bg-emerald-600 rounded-full shadow-[0_-4px_12px_rgba(5,150,105,0.4)] animate-in fade-in duration-500" />
+                  )}
+                </button>
+              ))}
+            </nav>
+          )}
         </main>
       )}
 
