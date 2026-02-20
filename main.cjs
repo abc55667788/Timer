@@ -5,13 +5,18 @@ const path = require('path');
 let mainWindow;
 
 function createWindow() {
+  const isDev = !app.isPackaged;
+  const iconPath = isDev 
+    ? path.join(__dirname, 'public/logo.png') 
+    : path.join(__dirname, 'dist/logo.png');
+
   mainWindow = new BrowserWindow({
     width: 1440,
     height: 900,
     minWidth: 320, // Reduced to allow mini mode on Linux
     minHeight: 80,  // Reduced to allow mini mode on Linux
     title: "Emerald Timer",
-    icon: path.join(__dirname, 'public/logo.png'),
+    icon: iconPath,
     frame: false, 
     transparent: true, 
     // Do not set backgroundColor here as it can sometimes conflict with transparency on Windows

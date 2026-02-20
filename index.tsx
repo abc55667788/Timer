@@ -53,6 +53,7 @@ const triggerHaptic = async (style: ImpactStyle = ImpactStyle.Light) => {
 
 // --- Main App Component ---
 function EmeraldTimer() {
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [isMiniMode, setIsMiniMode] = useState(false);
   const [activeTab, setActiveTab] = useState<'timer' | 'stats' | 'logs' | 'settings'>('timer');
   const [isJournalOpen, setIsJournalOpen] = useState(false);
@@ -1368,6 +1369,35 @@ function EmeraldTimer() {
       ? 'Starting a new log resets the accumulated totals before the upcoming rest break.'
       : 'Starting a new log resets the accumulated work/rest totals for the next block.';
 
+  useEffect(() => {
+    // Show splash briefly to mask OS window creation
+    setTimeout(() => {
+      setIsInitialLoading(false);
+    }, 1200);
+  }, []);
+
+  if (isInitialLoading) {
+    return (
+      <div className="fixed inset-0 bg-[#f0f9f0] flex flex-col items-center justify-center z-[500] animate-in fade-in duration-300">
+        <div className="w-24 h-24 bg-white rounded-[2.5rem] flex items-center justify-center shadow-2xl shadow-emerald-200/50 mb-8 scale-110 animate-pulse border-4 border-emerald-50">
+          <img src={APP_LOGO} alt="Emerald Timer" className="w-14 h-14 object-contain" />
+        </div>
+        <div className="flex flex-col items-center gap-2">
+           <h2 className="text-xl font-black text-emerald-800 tracking-tighter">Emerald Timer</h2>
+           <div className="w-16 h-1.5 bg-emerald-100 rounded-full overflow-hidden">
+             <div className="h-full bg-emerald-500 rounded-full" style={{ animation: 'loading 1.2s infinite ease-in-out' }} />
+           </div>
+        </div>
+        <style>{`
+          @keyframes loading {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+          }
+        `}</style>
+      </div>
+    );
+  }
+
   return (
     <div 
       className={` ${(isMiniMode || wasMiniModeBeforeModal) ? 'bg-transparent' : 'bg-white'} text-emerald-900 flex flex-col overflow-hidden`}
@@ -1414,7 +1444,7 @@ function EmeraldTimer() {
         <header className="w-full h-16 flex justify-between items-center px-6 flex-shrink-0 bg-[#f0f9f0]/40 backdrop-blur-sm border-b border-emerald-50/50 animate-in fade-in slide-in-from-top-12 duration-500 ease-out" style={{ WebkitAppRegion: 'drag' } as any}>
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-white rounded-xl flex items-center justify-center shadow-lg shadow-emerald-100 overflow-hidden border border-emerald-50">
-              <img src={APP_LOGO} alt="Emerald Timer Logo" className="w-full h-full object-cover p-1" />
+              <img src={APP_LOGO} alt="Emerald Timer Logo" className="w-full h-full object-cover" />
             </div>
             <div className="flex items-center gap-3">
               <h1 className="text-lg font-black text-emerald-800 tracking-tight">Emerald Timer</h1>
