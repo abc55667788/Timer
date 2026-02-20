@@ -1365,8 +1365,16 @@ function EmeraldTimer() {
 
   return (
     <div 
-      className={` ${(isMiniMode || wasMiniModeBeforeModal) ? 'bg-transparent' : 'bg-white'} text-emerald-900 flex flex-col overflow-hidden transition-all duration-500 ease-in-out`}
-      style={isMiniMode ? { height: '100vh', width: '100vw', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: isAndroid ? '20px' : '0' } : { 
+      className={` ${(isMiniMode || wasMiniModeBeforeModal) ? 'bg-transparent' : 'bg-white'} text-emerald-900 flex flex-col overflow-hidden`}
+      style={isMiniMode ? { 
+        height: '100vh', 
+        width: '100vw', 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center', 
+        padding: isAndroid ? '20px' : '0',
+        background: 'transparent'
+      } : { 
         height: `${(1 / uiScale) * 100}vh`, 
         width: `${(1 / uiScale) * 100}vw`,
         transformOrigin: 'top left' 
