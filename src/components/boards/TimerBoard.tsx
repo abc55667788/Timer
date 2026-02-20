@@ -41,12 +41,12 @@ const TimerBoard: React.FC<TimerBoardProps> = ({
   setIsJournalOpen,
 }) => {
   return (
-    <div className="flex flex-col items-center justify-center w-full h-full animate-in fade-in duration-500 relative scrollbar-none overflow-y-auto px-4 py-8 md:py-12">
+    <div className="flex flex-col items-center justify-start lg:justify-center w-full h-full animate-in fade-in duration-500 relative scrollbar-none overflow-y-auto px-4 py-4 md:py-12">
       {!isJournalOpen && (
-        <div className="absolute top-4 right-4 md:top-10 md:right-10 z-50">
+        <div className="absolute top-4 right-4 md:top-10 md:right-10 z-[60]">
           <button 
             onClick={() => setIsJournalOpen(true)} 
-            className="p-3 md:p-4 rounded-xl md:rounded-[1.5rem] bg-white text-emerald-600 shadow-xl border border-emerald-50 hover:shadow-emerald-500/10 transition-all duration-300 active:scale-95 group"
+            className="p-3 md:p-4 rounded-xl md:rounded-[1.5rem] bg-white/90 backdrop-blur-sm text-emerald-600 shadow-xl border border-emerald-50 hover:shadow-emerald-500/10 transition-all duration-300 active:scale-95 group"
             title="Open Journal"
           >
             <BookOpen size={20} className="md:w-6 md:h-6 group-hover:scale-110 transition-transform"/>
@@ -54,8 +54,8 @@ const TimerBoard: React.FC<TimerBoardProps> = ({
         </div>
       )}
 
-      <div className="flex flex-col items-center gap-8 md:gap-12 w-full max-w-lg">
-        <div className="flex flex-col items-center gap-6 md:gap-8">
+      <div className="flex flex-col items-center gap-6 md:gap-12 w-full max-w-lg">
+        <div className="flex flex-col items-center gap-4 md:gap-8 mt-2 md:mt-0">
           <div className="flex items-center gap-2 px-5 py-2 bg-emerald-50 rounded-full border border-emerald-100/50">
             <div className={`w-2 h-2 rounded-full ${phase === 'work' ? 'bg-emerald-500' : 'bg-emerald-400'} ${isActive ? 'animate-pulse' : ''}`} />
             <span className="text-[10px] font-black uppercase tracking-[0.1em] text-emerald-700">{isActive ? (phase === 'work' ? 'Focusing' : 'Resting') : 'Idle'}</span>
@@ -63,7 +63,7 @@ const TimerBoard: React.FC<TimerBoardProps> = ({
 
           <div onClick={() => setShowLoggingModal(true)} className="relative group cursor-pointer active:scale-[0.98] transition-all">
             <div className="absolute inset-0 bg-emerald-100 rounded-full blur-[80px] opacity-10 group-hover:opacity-30 transition-opacity"></div>
-            <svg className="w-64 h-64 md:w-80 md:h-80 -rotate-90" viewBox="0 0 300 300">
+            <svg className="w-56 h-56 sm:w-64 sm:h-64 md:w-80 md:h-80 -rotate-90" viewBox="0 0 300 300">
               <circle cx="150" cy="150" r={135} stroke="currentColor" strokeWidth="6" fill="transparent" className="text-emerald-50" />
               <circle cx="150" cy="150" r={135} stroke="currentColor" strokeWidth="8" fill="transparent" 
                 strokeDasharray={2 * Math.PI * 135} strokeDashoffset={(2 * Math.PI * 135) - ((timeLeft / (phase === 'work' ? settings.workDuration : settings.restDuration)) * 2 * Math.PI * 135)}
@@ -71,26 +71,26 @@ const TimerBoard: React.FC<TimerBoardProps> = ({
                 strokeLinecap="round"
               />
             </svg>
-            <div className="absolute inset-0 flex flex-col items-center justify-center bg-white rounded-full m-4 md:m-5 shadow-2xl border border-emerald-50 overflow-hidden ring-1 ring-emerald-50/50">
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-white rounded-full m-3.5 md:m-5 shadow-2xl border border-emerald-50 overflow-hidden ring-1 ring-emerald-50/50">
               <div className="absolute inset-0 rounded-full bg-emerald-50/0 group-hover:bg-emerald-50/90 flex flex-col items-center justify-center transition-all opacity-0 group-hover:opacity-100 backdrop-blur-[2px] z-20">
                 <Edit3 size={32} className="text-emerald-600 mb-3" />
                 <span className="text-[10px] md:text-[11px] font-black text-emerald-600 uppercase tracking-widest">Edit Session</span>
               </div>
               
-              <span className="text-4xl md:text-6xl font-mono font-bold tabular-nums z-10 tracking-tighter">{formatTime(displayTime)}</span>
-              {isOvertime && <span className="text-orange-500 font-bold text-xs animate-pulse mt-1 font-mono z-10">+{formatTime(overtimeSeconds)}</span>}
-              <div className="mt-4 px-3 py-1 bg-emerald-50/50 rounded-lg text-[9px] font-black text-emerald-600 uppercase tracking-[0.15em] truncate max-w-[120px] md:max-w-[160px] z-10">
+              <span className="text-3xl md:text-6xl font-mono font-bold tabular-nums z-10 tracking-tighter">{formatTime(displayTime)}</span>
+              {isOvertime && <span className="text-orange-500 font-bold text-xs animate-pulse mt-0.5 font-mono z-10">+{formatTime(overtimeSeconds)}</span>}
+              <div className="mt-3 px-3 py-1 bg-emerald-50/50 rounded-lg text-[9px] font-black text-emerald-600 uppercase tracking-[0.15em] truncate max-w-[110px] md:max-w-[160px] z-10">
                 {currentTask.category}
               </div>
             </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-4 md:gap-6">
+        <div className="flex items-center gap-4 md:gap-6 mb-8 md:mb-0">
           {isCurrentlyRecording && (
             <button 
               onClick={handleStopClick} 
-              className="w-11 h-11 md:w-13 md:h-13 rounded-full bg-emerald-50 text-emerald-600 hover:bg-red-50 hover:text-red-500 transition-all duration-300 ease-in-out shadow-sm border border-emerald-100 flex items-center justify-center group active:scale-90 animate-in fade-in slide-in-from-right-8 duration-500"
+              className="w-10 h-10 md:w-13 md:h-13 rounded-full bg-emerald-50 text-emerald-600 hover:bg-red-50 hover:text-red-500 transition-all duration-300 ease-in-out shadow-sm border border-emerald-100 flex items-center justify-center group active:scale-90 animate-in fade-in slide-in-from-right-8 duration-500"
             >
               <Square size={16} fill="currentColor" className="group-hover:scale-90 transition-transform"/>
             </button>

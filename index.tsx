@@ -1440,11 +1440,11 @@ function EmeraldTimer() {
         />
       )}
 
-      {!isMiniMode && !wasMiniModeBeforeModal && (
+      {!isMiniMode && !wasMiniModeBeforeModal && !isAndroid && (
         <header className="w-full h-16 flex justify-between items-center px-6 flex-shrink-0 bg-[#f0f9f0]/40 backdrop-blur-sm border-b border-emerald-50/50 animate-in fade-in slide-in-from-top-12 duration-500 ease-out" style={{ WebkitAppRegion: 'drag' } as any}>
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-white rounded-xl flex items-center justify-center shadow-lg shadow-emerald-100 overflow-hidden border border-emerald-50">
-              <img src={APP_LOGO} alt="Emerald Timer Logo" className="w-full h-full object-cover" />
+            <div className={`w-8 h-8 bg-white rounded-[10px] flex items-center justify-center shadow-lg shadow-emerald-100 overflow-hidden border border-emerald-50`}>
+              <img src={APP_LOGO} alt="Emerald Timer Logo" className="w-[85%] h-[85%] object-contain" />
             </div>
             <div className="flex items-center gap-3">
               <h1 className="text-lg font-black text-emerald-800 tracking-tight">Emerald Timer</h1>
@@ -1514,8 +1514,8 @@ function EmeraldTimer() {
       )}
 
       {!hideShellForMiniPrompt && !isMiniMode && !wasMiniModeBeforeModal && (
-        <main className="w-full bg-white flex flex-col flex-1 overflow-hidden animate-in fade-in slide-in-from-bottom-2 zoom-in-95 duration-500 ease-out">
-          <nav className="flex border-b border-emerald-50 bg-emerald-50/20 px-4 flex-shrink-0">
+        <main className={`w-full bg-white flex ${isAndroid ? 'flex-col-reverse pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top,20px)]' : 'flex-col'} flex-1 overflow-hidden animate-in fade-in slide-in-from-bottom-2 zoom-in-95 duration-500 ease-out`}>
+          <nav className={`flex ${isAndroid ? 'border-t' : 'border-b'} border-emerald-50 bg-emerald-50/20 px-4 flex-shrink-0 z-50`}>
             {[
               { id: 'timer', icon: Play, label: 'Focus' },
               { id: 'stats', icon: BarChart3, label: 'Analytics' },
@@ -1530,15 +1530,15 @@ function EmeraldTimer() {
                 <div className={`p-1 rounded-lg transition-all duration-300 ${activeTab === tab.id ? 'bg-emerald-100 scale-110 shadow-sm' : ''}`}>
                   <tab.icon size={18} />
                 </div>
-                <span className="hidden sm:inline">{tab.label}</span>
+                <span className={`${isAndroid ? '' : 'hidden sm:inline'}`}>{tab.label}</span>
                 {activeTab === tab.id && (
-                  <div className="absolute bottom-0 left-6 right-6 h-0.5 bg-emerald-600 rounded-t-full shadow-[0_-4px_12px_rgba(5,150,105,0.4)] animate-in fade-in duration-300" />
+                  <div className={`absolute ${isAndroid ? 'top-0' : 'bottom-0'} left-6 right-6 h-0.5 bg-emerald-600 rounded-full shadow-[0_-4px_12px_rgba(5,150,105,0.4)] animate-in fade-in duration-300`} />
                 )}
               </button>
             ))}
           </nav>
 
-          <div className="flex-1 overflow-hidden">
+          <div className="flex-1 overflow-hidden relative">
             {activeTab === 'timer' && (
               <div className="flex h-full w-full overflow-hidden relative animate-in fade-in duration-200">
                 <div className={`flex-1 transition-all duration-500 ease-in-out ${isJournalOpen ? 'md:mr-[400px]' : 'mr-0'}`}>
