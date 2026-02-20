@@ -4,6 +4,14 @@
   --font-sans: "Inter", "sans-serif";
   --font-mono: "JetBrains Mono", "monospace";
 
+  --color-main: #000000;
+  --color-surface: #121212;
+  --color-border-main: rgba(255, 255, 255, 0.05);
+  --color-text-primary: #ffffff;
+  --color-text-secondary: #a1a1aa;
+  --color-emerald-main: #10b981;
+  --color-emerald-surface: rgba(16, 185, 129, 0.1);
+
   --color-emerald-50: #ecfdf5;
   --color-emerald-100: #d1fae5;
   --color-emerald-200: #a7f3d0;
@@ -25,11 +33,6 @@
     overflow: hidden;
     width: 100%;
     height: 100%;
-    /* Handle mobile safe area for notched devices */
-    padding-top: env(safe-area-inset-top, 0px);
-    padding-bottom: env(safe-area-inset-bottom, 0px);
-    padding-left: env(safe-area-inset-left, 0px);
-    padding-right: env(safe-area-inset-right, 0px);
   }
 }
 
