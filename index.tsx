@@ -269,7 +269,11 @@ function EmeraldTimer() {
 
   const [uiScale, setUiScale] = useState(() => {
     const saved = localStorage.getItem('emerald-ui-scale');
-    return saved ? parseFloat(saved) : 1.0;
+    if (saved) return parseFloat(saved);
+    
+    // PC version defaults to 130% (1.3), Mobile defaults to 100% (1.0)
+    const isMobile = Capacitor.getPlatform() === 'android' || /Android/i.test(navigator.userAgent);
+    return isMobile ? 1.0 : 1.3;
   });
 
   const [noticeMessage, setNoticeMessage] = useState('');

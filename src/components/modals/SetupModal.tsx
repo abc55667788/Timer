@@ -241,7 +241,7 @@ const SetupModal: React.FC<SetupModalProps> = ({
                       
                       <div className="flex justify-between px-1">
                         <span className="text-[10px] font-semibold text-emerald-400 tracking-tight">Min: 50%</span>
-                        <span className="text-[10px] font-semibold text-emerald-600 tracking-tight">Default: 100%</span>
+                        <span className="text-[10px] font-semibold text-emerald-600 tracking-tight">Default: 130%</span>
                         <span className="text-[10px] font-semibold text-emerald-400 tracking-tight">Max: 200%</span>
                       </div>
                       <p className="text-[11px] font-medium text-emerald-600/70 leading-relaxed">

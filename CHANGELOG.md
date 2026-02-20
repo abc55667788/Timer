@@ -2,12 +2,18 @@
 
 All notable changes to the Emerald Timer project will be documented in this file.
 
+## [1.3.5] - 2026-02-20
+
+### Changed
+- **Default Scaling**: Set the initial UI scale for PC releases to **130%** (1.3) to provide better accessibility and utilization of high-resolution monitors.
+
 ## [1.3.4] - 2026-02-20
 
 ### Added
 - **Global Design Refinement**: Implemented a unified "Mature Bold Tight" typography system (`font-bold tracking-tight`) across all components (Setting, Stats, Log Viewers).
 - **Settings Architecture**: Swapped the positions of "Display Zoom" (now on the primary left column) and "Notifications" (now secondary bottom-right) for better ergonomic flow.
 - **Visual Smoothness**: Fixed "invisible" entry animations and restored transition speeds to 500ms (Window) and 200ms (Tabs) for a snappier, more professional feel.
+- **Android Support**: Integrated the Android build (APK) into the official release cycle.
 
 ### Changed
 - **Stats Unification**: Standardized the Month and Week view layouts to use the high-density grid pattern from the Year view, maximizing screen utility on wide monitors.
