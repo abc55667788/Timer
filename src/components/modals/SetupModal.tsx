@@ -38,6 +38,7 @@ interface SetupModalProps {
   uiScale: number;
   setUiScale: (val: number | ((prev: number) => number)) => void;
   isPage?: boolean;
+  isAndroid?: boolean;
 }
 
 const SetupModal: React.FC<SetupModalProps> = ({
@@ -71,6 +72,7 @@ const SetupModal: React.FC<SetupModalProps> = ({
   uiScale,
   setUiScale,
   isPage = false,
+  isAndroid = false,
 }) => {
   const [editingIconIndex, setEditingIconIndex] = useState<number | null>(null);
   const [scaleInputValue, setScaleInputValue] = useState((uiScale * 100).toFixed(0));
@@ -208,71 +210,73 @@ const SetupModal: React.FC<SetupModalProps> = ({
                   </div>
                 )}
 
-                <section>
-                  <h3 className="text-sm font-bold tracking-tight text-emerald-800 mb-4 flex items-center gap-2"><Maximize2 size={14}/> Display Zoom</h3>
-                  <div className="bg-emerald-50/30 p-5 rounded-[1.8rem] border border-emerald-50">
-                    <div className="bg-white p-5 rounded-xl shadow-sm border border-emerald-50 flex flex-col gap-4">
-                      <div className="flex items-center justify-between gap-4">
-                         <span className="text-[12px] font-bold text-emerald-950 tracking-tight leading-none">Global UI Scale</span>
-                         
-                         <div className="flex items-center gap-2.5 p-1.5 bg-emerald-50/50 rounded-xl">
-                            <button 
-                              onClick={() => setUiScale(prev => Math.max(0.5, Math.round((prev - 0.05) * 100) / 100))}
-                              className="p-1 px-2.5 bg-white text-emerald-600 rounded-lg shadow-sm hover:bg-emerald-600 hover:text-white transition-all active:scale-90"
-                            >
-                              <Minus size={12} strokeWidth={4} />
-                            </button>
-                            
-                            <div className="relative">
-                               <input 
-                                  type="number"
-                                  value={scaleInputValue}
-                                  onChange={(e) => setScaleInputValue(e.target.value)}
-                                  onKeyDown={(e) => {
-                                    if (e.key === 'Enter') {
+                {!isAndroid && (
+                  <section>
+                    <h3 className="text-sm font-bold tracking-tight text-emerald-800 mb-4 flex items-center gap-2"><Maximize2 size={14}/> Display Zoom</h3>
+                    <div className="bg-emerald-50/30 p-5 rounded-[1.8rem] border border-emerald-50">
+                      <div className="bg-white p-5 rounded-xl shadow-sm border border-emerald-50 flex flex-col gap-4">
+                        <div className="flex items-center justify-between gap-4">
+                           <span className="text-[12px] font-bold text-emerald-950 tracking-tight leading-none">Global UI Scale</span>
+                           
+                           <div className="flex items-center gap-2.5 p-1.5 bg-emerald-50/50 rounded-xl">
+                              <button 
+                                onClick={() => setUiScale(prev => Math.max(0.5, Math.round((prev - 0.05) * 100) / 100))}
+                                className="p-1 px-2.5 bg-white text-emerald-600 rounded-lg shadow-sm hover:bg-emerald-600 hover:text-white transition-all active:scale-90"
+                              >
+                                <Minus size={12} strokeWidth={4} />
+                              </button>
+                              
+                              <div className="relative">
+                                 <input 
+                                    type="number"
+                                    value={scaleInputValue}
+                                    onChange={(e) => setScaleInputValue(e.target.value)}
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter') {
+                                        const val = parseInt(scaleInputValue);
+                                        if (!isNaN(val)) {
+                                          const scale = Math.min(2.0, Math.max(0.5, val / 100));
+                                          setUiScale(scale);
+                                          setScaleInputValue((scale * 100).toFixed(0));
+                                        }
+                                      }
+                                    }}
+                                    onBlur={() => {
                                       const val = parseInt(scaleInputValue);
                                       if (!isNaN(val)) {
                                         const scale = Math.min(2.0, Math.max(0.5, val / 100));
                                         setUiScale(scale);
                                         setScaleInputValue((scale * 100).toFixed(0));
+                                      } else {
+                                        setScaleInputValue((uiScale * 100).toFixed(0));
                                       }
-                                    }
-                                  }}
-                                  onBlur={() => {
-                                    const val = parseInt(scaleInputValue);
-                                    if (!isNaN(val)) {
-                                      const scale = Math.min(2.0, Math.max(0.5, val / 100));
-                                      setUiScale(scale);
-                                      setScaleInputValue((scale * 100).toFixed(0));
-                                    } else {
-                                      setScaleInputValue((uiScale * 100).toFixed(0));
-                                    }
-                                  }}
-                                  className="w-16 bg-white border border-emerald-200 rounded-lg py-1.5 px-2 text-center text-[11px] font-bold text-emerald-950 outline-none focus:ring-2 focus:ring-emerald-500/10 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                               />
-                               <span className="absolute right-1 top-1/2 -translate-y-1/2 text-[10px] font-bold text-emerald-400 pointer-events-none">%</span>
-                            </div>
+                                    }}
+                                    className="w-16 bg-white border border-emerald-200 rounded-lg py-1.5 px-2 text-center text-[11px] font-bold text-emerald-950 outline-none focus:ring-2 focus:ring-emerald-500/10 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                 />
+                                 <span className="absolute right-1 top-1/2 -translate-y-1/2 text-[10px] font-bold text-emerald-400 pointer-events-none">%</span>
+                              </div>
 
-                            <button 
-                              onClick={() => setUiScale(prev => Math.min(2.0, Math.round((prev + 0.05) * 100) / 100))}
-                              className="p-1 px-2.5 bg-white text-emerald-600 rounded-lg shadow-sm hover:bg-emerald-600 hover:text-white transition-all active:scale-90"
-                            >
-                              <Plus size={12} strokeWidth={4} />
-                            </button>
-                         </div>
+                              <button 
+                                onClick={() => setUiScale(prev => Math.min(2.0, Math.round((prev + 0.05) * 100) / 100))}
+                                className="p-1 px-2.5 bg-white text-emerald-600 rounded-lg shadow-sm hover:bg-emerald-600 hover:text-white transition-all active:scale-90"
+                              >
+                                <Plus size={12} strokeWidth={4} />
+                              </button>
+                           </div>
+                        </div>
+                        
+                        <div className="flex justify-between px-1">
+                          <span className="text-[10px] font-semibold text-emerald-400 tracking-tight">Min: 50%</span>
+                          <span className="text-[10px] font-semibold text-emerald-600 tracking-tight">Default: 130%</span>
+                          <span className="text-[10px] font-semibold text-emerald-400 tracking-tight">Max: 200%</span>
+                        </div>
+                        <p className="text-[11px] font-medium text-emerald-600/70 leading-relaxed">
+                          Tip: You can also use <span className="text-emerald-700 font-bold">Ctrl + Scroll Wheel</span> to zoom anywhere.
+                        </p>
                       </div>
-                      
-                      <div className="flex justify-between px-1">
-                        <span className="text-[10px] font-semibold text-emerald-400 tracking-tight">Min: 50%</span>
-                        <span className="text-[10px] font-semibold text-emerald-600 tracking-tight">Default: 130%</span>
-                        <span className="text-[10px] font-semibold text-emerald-400 tracking-tight">Max: 200%</span>
-                      </div>
-                      <p className="text-[11px] font-medium text-emerald-600/70 leading-relaxed">
-                        Tip: You can also use <span className="text-emerald-700 font-bold">Ctrl + Scroll Wheel</span> to zoom anywhere.
-                      </p>
                     </div>
-                  </div>
-                </section>
+                  </section>
+                )}
               </div>
 
               <div className="space-y-6">

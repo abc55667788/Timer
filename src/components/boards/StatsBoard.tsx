@@ -31,6 +31,9 @@ interface StatsBoardProps {
   handleTimelineMouseDown: (e: React.MouseEvent) => void;
   handleTimelineMouseMove: (e: React.MouseEvent) => void;
   handleTimelineMouseUpLeave: () => void;
+  handleTimelineTouchStart: (e: React.TouchEvent) => void;
+  handleTimelineTouchMove: (e: React.TouchEvent) => void;
+  handleTimelineTouchEnd: () => void;
   handleViewLog: (log: LogEntry) => void;
   getCategoryColor: (cat: Category) => string;
   getCategoryIcon: (cat: Category) => any;
@@ -73,6 +76,9 @@ const StatsBoard: React.FC<StatsBoardProps> = ({
   handleTimelineMouseDown,
   handleTimelineMouseMove,
   handleTimelineMouseUpLeave,
+  handleTimelineTouchStart,
+  handleTimelineTouchMove,
+  handleTimelineTouchEnd,
   handleViewLog,
   getCategoryColor,
   getCategoryIcon,
@@ -188,10 +194,13 @@ const StatsBoard: React.FC<StatsBoardProps> = ({
                         onMouseMove={handleTimelineMouseMove}
                         onMouseUp={handleTimelineMouseUpLeave}
                         onMouseLeave={handleTimelineMouseUpLeave}
+                        onTouchStart={handleTimelineTouchStart}
+                        onTouchMove={handleTimelineTouchMove}
+                        onTouchEnd={handleTimelineTouchEnd}
                         onKeyDown={(e) => { if ((e as any).key === '+' || (e as any).key === '=' ) { e.preventDefault(); zoomIn(); } else if ((e as any).key === '-') { e.preventDefault(); zoomOut(); } }} 
                         tabIndex={0} 
                         title="Drag to scroll | Shift + Wheel to zoom, +/- to zoom" 
-                        style={{ touchAction: 'pan-y' }} 
+                        style={{ touchAction: 'pan-y auto' } as any} 
                         className="absolute inset-0 overflow-x-auto overscroll-contain scrollbar-none focus:outline-none cursor-grab"
                       >
                         <div className="h-full relative py-14 px-10" style={{ width: `${getTimelineWidth(timelineZoom)}px` }}>

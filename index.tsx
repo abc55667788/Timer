@@ -5,6 +5,7 @@ import { Capacitor } from '@capacitor/core';
 import { App } from '@capacitor/app';
 import { LocalNotifications } from '@capacitor/local-notifications';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
+import { StatusBar, StatusBarStyle } from '@capacitor/status-bar';
 import './index.css';
 import { 
   Play, BarChart3, Clock, BookOpen, 
@@ -107,6 +108,18 @@ function EmeraldTimer() {
       mainScrollRef.current.scrollTo(0, 0);
     }
   }, [activeTab, statsView, dayViewMode]);
+
+  useEffect(() => {
+    if (Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android') {
+      try {
+        StatusBar.setBackgroundColor({ color: '#ffffff' }).catch(() => {});
+        StatusBar.setStyle({ style: StatusBarStyle.Light }).catch(() => {});
+        StatusBar.setOverlaysWebView({ overlay: false }).catch(() => {});
+      } catch (e) {
+        /* ignore */
+      }
+    }
+  }, []);
   const [hasShownPreview, setHasShownPreview] = useState(() => {
     if (typeof window === 'undefined') return false;
     try {
@@ -321,6 +334,12 @@ function EmeraldTimer() {
   const isAndroid = useMemo(() => {
     return Capacitor.getPlatform() === 'android' || /Android/i.test(navigator.userAgent);
   }, []);
+
+  useEffect(() => {
+    if (activeTab === 'stats' && isAndroid) {
+      setIsCalendarCollapsed(true);
+    }
+  }, [activeTab, isAndroid, setIsCalendarCollapsed]);
 
   useEffect(() => {
     localStorage.setItem('emerald-ui-scale', uiScale.toString());
@@ -1132,6 +1151,14 @@ function EmeraldTimer() {
     timelineRef.current.style.cursor = 'grabbing';
   };
 
+  const handleTimelineTouchStart = (e: React.TouchEvent) => {
+    if (!timelineRef.current) return;
+    setIsTimelineDragging(true);
+    setTimelineDragMoved(false);
+    setTimelineStartX(e.touches[0].pageX - timelineRef.current.offsetLeft);
+    setTimelineScrollLeft(timelineRef.current.scrollLeft);
+  };
+
   const handleTimelineMouseMove = (e: React.MouseEvent) => {
     if (!isTimelineDragging || !timelineRef.current) return;
     e.preventDefault();
@@ -1141,10 +1168,24 @@ function EmeraldTimer() {
     timelineRef.current.scrollLeft = timelineScrollLeft - walk;
   };
 
+  const handleTimelineTouchMove = (e: React.TouchEvent) => {
+    if (!isTimelineDragging || !timelineRef.current) return;
+    const x = e.touches[0].pageX - timelineRef.current.offsetLeft;
+    const walk = (x - timelineStartX);
+    if (Math.abs(walk) > 5) setTimelineDragMoved(true);
+    timelineRef.current.scrollLeft = timelineScrollLeft - walk;
+  };
+
   const handleTimelineMouseUpLeave = () => {
     if (isTimelineDragging && timelineRef.current) {
       setIsTimelineDragging(false);
       timelineRef.current.style.cursor = 'grab';
+    }
+  };
+
+  const handleTimelineTouchEnd = () => {
+    if (isTimelineDragging) {
+      setIsTimelineDragging(false);
     }
   };
 
@@ -1757,6 +1798,7 @@ function EmeraldTimer() {
           isActive={isActive}
           timeLeft={timeLeft}
           settings={settings}
+          isAndroid={isAndroid}
         />
       )}
 
@@ -1770,7 +1812,7 @@ function EmeraldTimer() {
           >
             {activeTab === 'timer' && (
               <div className="flex flex-1 w-full overflow-hidden relative animate-in fade-in duration-200">
-                <div className={`flex-1 transition-all duration-500 ease-in-out ${isJournalOpen ? 'md:mr-[400px]' : 'mr-0'}`}>
+                <div className={`flex-1 flex flex-col items-center justify-center transition-all duration-500 ease-in-out ${isJournalOpen ? 'md:mr-[400px]' : 'mr-0'}`}>
                   <TimerBoard 
                     phase={phase}
                     isActive={isActive}
@@ -1788,11 +1830,12 @@ function EmeraldTimer() {
                     setShowLoggingModal={setShowLoggingModal}
                     isJournalOpen={isJournalOpen}
                     setIsJournalOpen={setIsJournalOpen}
+                    isAndroid={isAndroid}
                   />
                 </div>
                 
                 {/* Journal Sidebar Overlay for Timer View */}
-                <div className={`absolute top-0 right-0 h-full z-40 transition-all duration-500 ease-in-out ${isJournalOpen ? 'translate-x-0 w-full sm:w-[400px] opacity-100' : 'translate-x-[100%] w-full sm:w-[400px] opacity-0 pointer-events-none'}`}>
+                <div className={`absolute top-0 right-0 h-full z-40 transition-all duration-500 ease-in-out ${isJournalOpen ? 'translate-x-0 w-full sm:w-[500px] opacity-100' : 'translate-x-[100%] w-full sm:w-[400px] opacity-0 pointer-events-none'}`}>
                   <JournalBoard 
                     goals={goals}
                     setGoals={setGoals}
@@ -1804,6 +1847,7 @@ function EmeraldTimer() {
                     setShowInspirationModal={setShowInspirationModal}
                     setPreviewImage={setPreviewImage}
                     onClose={() => setIsJournalOpen(false)}
+                    isAndroid={isAndroid}
                   />
                 </div>
               </div>
@@ -1831,6 +1875,9 @@ function EmeraldTimer() {
                   handleTimelineMouseDown={handleTimelineMouseDown}
                   handleTimelineMouseMove={handleTimelineMouseMove}
                   handleTimelineMouseUpLeave={handleTimelineMouseUpLeave}
+                  handleTimelineTouchStart={handleTimelineTouchStart}
+                  handleTimelineTouchMove={handleTimelineTouchMove}
+                  handleTimelineTouchEnd={handleTimelineTouchEnd}
                   handleViewLog={handleViewLog}
                   getCategoryColor={getCategoryColor}
                   getCategoryIcon={getCategoryIcon}
@@ -1910,6 +1957,7 @@ function EmeraldTimer() {
                   uiScale={uiScale}
                   setUiScale={setUiScale}
                   isPage={true}
+                  isAndroid={isAndroid}
                 />
               </div>
             )}
@@ -1918,7 +1966,7 @@ function EmeraldTimer() {
           {/* Navigation - Always at the bottom for both Android and PC to save vertical space and improve habit consistency */}
           <nav className={`flex border-t border-emerald-50 bg-[#f8fcf8] items-stretch justify-around px-2 z-50 transition-all duration-300 ease-in-out
             ${isAndroid 
-              ? 'pb-[env(safe-area-inset-bottom,12px)] pt-3 h-auto' 
+              ? 'pb-[env(safe-area-inset-bottom,16px)] pt-3 h-[76px] shadow-[0_-10px_30px_rgba(0,0,0,0.03)]' 
               : 'h-18 py-0 shadow-[0_-5px_15px_rgba(0,0,0,0.02)] group/nav'
             }`}
           >
@@ -1930,33 +1978,42 @@ function EmeraldTimer() {
             ].map(tab => (
               <button 
                 key={tab.id} 
-                onClick={() => setActiveTab(tab.id as any)} 
+                onClick={() => {
+                  setActiveTab(tab.id as any);
+                  if (activeTab !== tab.id) triggerHaptic(ImpactStyle.Light);
+                }} 
                 className={`flex-1 flex flex-col items-center justify-center tracking-tight relative transition-all duration-300 h-full
-                  ${activeTab === tab.id ? 'text-emerald-600' : 'text-emerald-400 group-hover/nav:text-emerald-500 hover:text-emerald-600'}`}
-              >
-                <div className={`transition-all duration-300 flex items-center justify-center px-4 py-1.5 rounded-full
                   ${activeTab === tab.id 
-                    ? 'bg-emerald-100/80 text-emerald-600 scale-105 shadow-sm' 
-                    : 'bg-transparent hover:bg-emerald-50/80'
+                    ? (isAndroid ? 'text-emerald-700' : 'text-emerald-600') 
+                    : 'text-emerald-400 group-hover/nav:text-emerald-500 hover:text-emerald-600'}`}
+              >
+                <div className={`transition-all duration-300 flex items-center justify-center
+                  ${isAndroid 
+                    ? `px-6 py-1.5 rounded-2xl ${activeTab === tab.id ? 'bg-emerald-600/10 text-emerald-700 scale-110 shadow-sm' : 'bg-transparent'}`
+                    : `px-4 py-1.5 rounded-full ${activeTab === tab.id ? 'bg-emerald-100/80 text-emerald-600 scale-105 shadow-sm' : 'bg-transparent hover:bg-emerald-50/80'}`
                   }`}
                 >
                   <tab.icon 
-                    size={22} 
+                    size={isAndroid ? 24 : 22} 
                     strokeWidth={activeTab === tab.id ? 2.5 : 2} 
                     fill={activeTab === tab.id ? "currentColor" : "none"}
-                    fillOpacity={activeTab === tab.id ? 0.15 : 0}
+                    fillOpacity={activeTab === tab.id ? (isAndroid ? 0.2 : 0.15) : 0}
                   />
                 </div>
                 
-                <span className={`font-bold transition-all duration-300 overflow-hidden text-center
+                <span className={`font-bold transition-all duration-400 overflow-hidden text-center
                   ${isAndroid 
-                    ? 'text-[10px] mt-1 line-clamp-1' 
+                    ? `text-[10px] mt-1.5 line-clamp-1 ${activeTab === tab.id ? 'opacity-100 transform translate-y-0' : 'opacity-60 transform translate-y-0.5'}` 
                     : 'text-[9px] max-h-0 opacity-0 group-hover/nav:max-h-4 group-hover/nav:opacity-100 group-hover/nav:mt-1'
                   }`}
                   style={!isAndroid ? { width: '100%' } : {}}
                 >
                   {tab.label}
                 </span>
+                
+                {isAndroid && activeTab === tab.id && (
+                  <div className="absolute bottom-1 w-1 h-1 bg-emerald-500 rounded-full" />
+                )}
               </button>
             ))}
           </nav>
