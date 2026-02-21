@@ -13,6 +13,7 @@ jobs:
     name: Build (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         os: [windows-latest, ubuntu-latest]
     
@@ -127,22 +128,22 @@ jobs:
       - name: Create GitHub Release and upload artifacts
         uses: ncipollo/release-action@v1
         with:
-          name: "Emerald Timer ${{ github.ref_name }}"
+          name: "Emerald Timer v1.4.0 - Professional Design"
           body: |
-            ## 💎 Emerald Timer ${{ github.ref_name }} 正式版 
-            此版本包含 UI 性能优化、大比例缩放支持、统计网格并列布局。
+            ## 💎 Emerald Timer v1.4.0 正式版
+            此版本包含了全新的 **Professional Edition (Dark Mode)** 设计，从底层重构了视觉体感。
 
-            ### 🌟 新特性 (New Features)
-            * **动态缩放控制**：支持 10%-300% 范围内的精准 UI 缩放。
-            * **并列布局优化**：月统计图表在大屏下自动分栏，消除空白空间。
-            * **矩形周视图**：周视图采用更舒展的长方形卡片设计，提升信息密度。
-            * **UI 响应性**：调大统计网格日期和时长文字，视距更清晰。
-            
-            ### 🔧 平台稳定性 (Fixes & Improvements)
-            * **图标清晰度**：修复了 PC 端的模糊图标问题，并优化了运行时加载路径。
-            * **加载体感**：新增 React 加载屏 (Splash Screen)，掩盖系统级渲染延迟。
-            * **界面残留修复**：彻底解决了 MiniMode 悬浮窗四周的直角阴影/背景伪影问题。
-            * **全平台构建同步**：包含 Windows (x64), Linux (ARM64) 以及 Android APK 构建。
+            ### 🌟 核心更新 (Core Updates)
+            * **暗黑模式支持 (Added Dark Mode)**：全面适配 Zinc-950 深色体系，减少用眼疲劳。
+            * **专业视觉重构**：采用全新的 Zinc 色彩策略，更沉稳、更专注的设计语言。
+            * **辉光效果优化**：重新设计的计时器辉光，更均匀且不突兀。
+            * **响应式统计网格**：优化了统计页面的响应式布局。
+            * **生产环境清理**：移除了所有内置的 Demo 数据，现在是一款纯净的记录工具。
+
+            ### 📦 包含构建 (Included Builds)
+            * **Windows x64**: 安装版与便携版 (.exe)
+            * **Linux ARM64**: AppImage 镜像
+            * **Android**: 原生 APK 安装包
 
             ---
             *本版本由 GitHub Actions 自动构建发布。*
