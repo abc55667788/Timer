@@ -212,66 +212,61 @@ const SetupModal: React.FC<SetupModalProps> = ({
 
                 {!isAndroid && (
                   <section>
-                    <h3 className="text-sm font-bold tracking-tight text-emerald-800 mb-4 flex items-center gap-2"><Maximize2 size={14}/> Display Zoom</h3>
+                    <h3 className="text-[15px] font-black tracking-tight text-emerald-800 mb-4 flex items-center gap-2.5"><Maximize2 size={16}/> Interface & Content Zoom</h3>
                     <div className="bg-emerald-50/30 p-5 rounded-[1.8rem] border border-emerald-50">
-                      <div className="bg-white p-5 rounded-xl shadow-sm border border-emerald-50 flex flex-col gap-4">
-                        <div className="flex items-center justify-between gap-4">
-                           <span className="text-[12px] font-bold text-emerald-950 tracking-tight leading-none">Global UI Scale</span>
+                      <div className="bg-white p-6 rounded-2xl shadow-sm border border-emerald-100 flex flex-col gap-6">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+                           <div className="space-y-1.5 border-l-4 border-emerald-500 pl-4 py-1">
+                             <span className="text-lg font-black text-emerald-950 tracking-tighter leading-none block">UI Scale</span>
+                             <p className="text-[10px] font-bold text-emerald-500/60 uppercase tracking-[0.15em] leading-none">Overall size & density</p>
+                           </div>
                            
-                           <div className="flex items-center gap-2.5 p-1.5 bg-emerald-50/50 rounded-xl">
+                           <div className="flex items-center gap-3 p-2.5 bg-emerald-50/50 rounded-2xl border border-emerald-100/50 shadow-inner">
                               <button 
                                 onClick={() => setUiScale(prev => Math.max(0.5, Math.round((prev - 0.05) * 100) / 100))}
-                                className="p-1 px-2.5 bg-white text-emerald-600 rounded-lg shadow-sm hover:bg-emerald-600 hover:text-white transition-all active:scale-90"
+                                className="p-2.5 bg-white text-emerald-600 rounded-xl shadow-sm border border-emerald-100 hover:bg-emerald-600 hover:text-white transition-all active:scale-90"
                               >
-                                <Minus size={12} strokeWidth={4} />
+                                <Minus size={14} strokeWidth={4} />
                               </button>
                               
-                              <div className="relative">
+                              <div className="relative group flex flex-col items-center justify-center min-w-[70px]">
                                  <input 
                                     type="number"
                                     value={scaleInputValue}
                                     onChange={(e) => setScaleInputValue(e.target.value)}
-                                    onKeyDown={(e) => {
-                                      if (e.key === 'Enter') {
-                                        const val = parseInt(scaleInputValue);
-                                        if (!isNaN(val)) {
-                                          const scale = Math.min(2.0, Math.max(0.5, val / 100));
-                                          setUiScale(scale);
-                                          setScaleInputValue((scale * 100).toFixed(0));
-                                        }
-                                      }
-                                    }}
-                                    onBlur={() => {
-                                      const val = parseInt(scaleInputValue);
-                                      if (!isNaN(val)) {
-                                        const scale = Math.min(2.0, Math.max(0.5, val / 100));
-                                        setUiScale(scale);
-                                        setScaleInputValue((scale * 100).toFixed(0));
-                                      } else {
-                                        setScaleInputValue((uiScale * 100).toFixed(0));
-                                      }
-                                    }}
-                                    className="w-16 bg-white border border-emerald-200 rounded-lg py-1.5 px-2 text-center text-[11px] font-bold text-emerald-950 outline-none focus:ring-2 focus:ring-emerald-500/10 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                    className="w-full bg-transparent border-none text-center text-lg font-black text-emerald-950 outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                  />
-                                 <span className="absolute right-1 top-1/2 -translate-y-1/2 text-[10px] font-bold text-emerald-400 pointer-events-none">%</span>
+                                 <span className="text-[9px] font-black text-emerald-300 uppercase tracking-widest -mt-1">PERCENT</span>
                               </div>
 
                               <button 
-                                onClick={() => setUiScale(prev => Math.min(2.0, Math.round((prev + 0.05) * 100) / 100))}
-                                className="p-1 px-2.5 bg-white text-emerald-600 rounded-lg shadow-sm hover:bg-emerald-600 hover:text-white transition-all active:scale-90"
+                                onClick={() => setUiScale(prev => Math.min(3.0, Math.round((prev + 0.05) * 100) / 100))}
+                                className="p-2.5 bg-white text-emerald-600 rounded-xl shadow-sm border border-emerald-100 hover:bg-emerald-600 hover:text-white transition-all active:scale-90"
                               >
-                                <Plus size={12} strokeWidth={4} />
+                                <Plus size={14} strokeWidth={4} />
                               </button>
                            </div>
                         </div>
                         
-                        <div className="flex justify-between px-1">
-                          <span className="text-[10px] font-semibold text-emerald-400 tracking-tight">Min: 50%</span>
-                          <span className="text-[10px] font-semibold text-emerald-600 tracking-tight">Default: 130%</span>
-                          <span className="text-[10px] font-semibold text-emerald-400 tracking-tight">Max: 200%</span>
+                        <div className="space-y-3">
+                          <input 
+                            type="range" 
+                            min="0.5" 
+                            max="3" 
+                            step="0.05" 
+                            value={uiScale} 
+                            onChange={(e) => setUiScale(parseFloat(e.target.value))}
+                            className="w-full h-2 bg-emerald-100 rounded-full appearance-none cursor-pointer accent-emerald-600"
+                          />
+                          <div className="flex justify-between px-1 text-[10px] font-black text-emerald-400 uppercase tracking-widest">
+                            <span>S (50%)</span>
+                            <span className="text-emerald-600">Default (130%)</span>
+                            <span>XL (300%)</span>
+                          </div>
                         </div>
-                        <p className="text-[11px] font-medium text-emerald-600/70 leading-relaxed">
-                          Tip: You can also use <span className="text-emerald-700 font-bold">Ctrl + Scroll Wheel</span> to zoom anywhere.
+
+                        <p className="text-[12px] font-bold text-emerald-600/80 leading-relaxed bg-emerald-50/50 p-4 rounded-xl border border-dashed border-emerald-200">
+                          💡 <span className="text-emerald-800">Pro Tip:</span> You can also use <span className="text-emerald-700 font-black">Ctrl + Scroll Wheel</span> anywhere in the app to quickly adjust the font size and layout.
                         </p>
                       </div>
                     </div>

@@ -33,28 +33,28 @@ const LogContinuationModal: React.FC<LogContinuationModalProps> = ({
             <FileText size={20} />
           </div>
           <div className="text-center">
-            <p className="text-[10px] font-bold tracking-tight text-emerald-400 mb-1">Log Decision</p>
-            <h3 className="text-xl font-bold text-emerald-950 leading-tight tracking-tight">Carry over this log?</h3>
+            <p className="text-[12px] font-bold tracking-tight text-emerald-400 mb-1">Log Decision</p>
+            <h3 className="text-2xl font-black text-emerald-950 leading-tight tracking-tight">Carry over this log?</h3>
           </div>
-          <p className="text-xs text-emerald-500/80 text-center leading-relaxed px-2">
+          <p className="text-sm text-emerald-600/80 text-center leading-relaxed px-2 font-bold">
             {continuationDescription}
           </p>
         </div>
-        <div className="space-y-2.5 pt-2">
+        <div className="space-y-3 pt-2">
           <button 
             onClick={handleContinueCurrentLog} 
-            className="w-full py-3.5 bg-emerald-600 text-white text-[11px] font-bold tracking-tight rounded-2xl shadow-lg shadow-emerald-200 hover:bg-emerald-700 transition-all active:scale-[0.97]"
+            className="w-full py-4 bg-emerald-600 text-white text-xs font-black tracking-tight rounded-2xl shadow-lg shadow-emerald-200 hover:bg-emerald-700 transition-all active:scale-[0.97]"
           >
             {continueButtonLabel}
           </button>
           <button 
             onClick={handleStartNewLog} 
-            className="w-full py-3.5 bg-white border border-emerald-100 text-emerald-700 text-[11px] font-bold tracking-tight rounded-2xl hover:bg-emerald-50 transition-all active:scale-[0.97]"
+            className="w-full py-4 bg-white border border-emerald-100 text-emerald-700 text-xs font-black tracking-tight rounded-2xl hover:bg-emerald-50 transition-all active:scale-[0.97]"
           >
             {startNewButtonLabel}
           </button>
         </div>
-        <div className="mt-2 text-[10px] font-bold text-emerald-400/80 text-center px-4 leading-normal italic">
+        <div className="mt-2 text-[11px] font-bold text-emerald-400/80 text-center px-4 leading-normal italic">
           {continuationNote}
         </div>
       </div>

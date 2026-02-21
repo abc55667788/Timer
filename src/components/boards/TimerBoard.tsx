@@ -1,5 +1,5 @@
 import React from 'react';
-import { Play, Pause, Square, Coffee, Briefcase, RotateCcw, Settings, Edit3, BookOpen } from 'lucide-react';
+import { Play, Pause, Square, Coffee, Briefcase, RotateCcw, Settings, Edit3, Library } from 'lucide-react';
 import { Category, TimerPhase, Task } from '../../types';
 import { formatTime } from '../../utils/time';
 
@@ -48,10 +48,10 @@ const TimerBoard: React.FC<TimerBoardProps> = ({
         <div className={`absolute ${isAndroid ? 'top-2 right-2' : 'top-4 right-4 md:top-10 md:right-10'} z-[60]`}>
           <button 
             onClick={() => setIsJournalOpen(true)} 
-            className={`${isAndroid ? 'p-2.5 rounded-2xl' : 'p-3 md:p-4 rounded-xl md:rounded-[1.5rem]'} bg-white/90 backdrop-blur-sm text-emerald-600 shadow-xl border border-emerald-50 hover:shadow-emerald-500/10 transition-all duration-300 active:scale-95 group`}
+            className={`${isAndroid ? 'p-3 rounded-2xl' : 'p-3.5 md:p-5 rounded-2xl md:rounded-[1.5rem]'} bg-white/95 backdrop-blur-sm text-emerald-600 shadow-[0_12px_44px_-8px_rgba(0,0,0,0.15)] border border-emerald-50 hover:shadow-emerald-500/20 transition-all duration-300 active:scale-95 group`}
             title="Open Journal"
           >
-            <BookOpen size={isAndroid ? 18 : 20} className="md:w-6 md:h-6 group-hover:scale-110 transition-transform"/>
+            <Library size={isAndroid ? 18 : 22} className="group-hover:rotate-6 transition-transform"/>
           </button>
         </div>
       )}

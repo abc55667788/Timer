@@ -267,96 +267,106 @@ const StatsBoard: React.FC<StatsBoardProps> = ({
                       </div>
                    </div>
 
-                   <div className="space-y-12 pt-4">
-                     <div className="flex items-center justify-between border-b border-white/20 pb-8">
-                       <div className="flex items-center gap-5">
-                         <div className="p-4 bg-emerald-600 text-white rounded-[2.25rem] shadow-xl shadow-emerald-200">
-                           <History size={26}/>
+                   <div className="space-y-6 pt-2">
+                     <div className="flex items-center justify-between border-b border-white/10 pb-5">
+                       <div className="flex items-center gap-4">
+                         <div className="p-3 bg-emerald-600 text-white rounded-2xl shadow-lg shadow-emerald-200/40 transition-transform">
+                           <History size={24}/>
                          </div>
                          <div>
-                           <h4 className="text-xl font-bold text-emerald-950 tracking-tight">Life Timeline</h4>
-                           <p className="text-[11px] font-bold text-emerald-400 tracking-tight mt-1">{formatDisplayDateString(selectedStatsDate)}</p>
+                           <h4 className="text-xl font-black text-emerald-950 tracking-tight">Life Timeline</h4>
+                           <p className="text-[10px] font-black text-emerald-400/50 uppercase tracking-widest mt-1">{formatDisplayDateString(selectedStatsDate)}</p>
                          </div>
                        </div>
                        <button 
                          onClick={() => setActiveTab('logs')} 
-                         className="px-6 py-3 bg-white/40 backdrop-blur-md text-emerald-600 rounded-2xl text-[11px] font-bold tracking-tight hover:bg-white/60 transition-all flex items-center gap-2 shadow-sm border border-white/20"
+                         className="px-5 py-2.5 bg-white/60 backdrop-blur-md text-emerald-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-600 hover:text-white transition-all flex items-center gap-2 shadow-sm border border-white hover:shadow-md hover:-translate-y-0.5"
                        >
-                         Historical Logs <ExternalLink size={14}/>
+                         History <ExternalLink size={12} strokeWidth={3}/>
                        </button>
                      </div>
 
-                     <div className="space-y-4 pl-6 border-l-2 border-white/20 ml-6 mr-4 flex-1 min-w-0">
+                     <div className="space-y-4 flex-1 min-w-0">
                        {selectedDayLogs.map((log, idx) => (
-                         <div key={log.id} className="relative animate-in slide-in-from-left duration-500" style={{ animationDelay: `${idx * 80}ms` }}>
-                           <div className="absolute -left-[31px] top-3 w-5 h-5 rounded-full flex items-center justify-center ring-4 ring-white/30 z-10" style={{ backgroundColor: getCategoryColor(log.category) }}>
+                         <div key={log.id} className="relative animate-in slide-in-from-left duration-700 ml-10" style={{ animationDelay: `${idx * 80}ms` }}>
+                           <div className="absolute -left-[30px] top-6 w-4 h-4 rounded-full flex items-center justify-center ring-4 ring-white/50 z-10 shadow-sm" style={{ backgroundColor: getCategoryColor(log.category) }}>
                               <div className="w-1.5 h-1.5 bg-white rounded-full"/>
                            </div>
+                           
+                           {/* Connecting Line */}
+                           {idx < selectedDayLogs.length - 1 && (
+                             <div className="absolute -left-[22.5px] top-10 bottom-[-24px] w-0.5 bg-white/30" />
+                           )}
 
                            <div
                              role="button"
                              tabIndex={0}
                              onClick={() => handleViewLog(log)}
-                             className="bg-white/40 backdrop-blur-xl p-5 rounded-[2.5rem] border border-white/20 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-200 cursor-pointer group flex gap-4 pr-6" 
-                             style={{ borderLeft: `10px solid ${getCategoryColor(log.category)}` }}
+                             className="bg-white/70 backdrop-blur-xl p-3.5 rounded-2xl border border-white/60 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-100 cursor-pointer group flex gap-5 relative overflow-hidden" 
                            >
-                              <div className="flex-1 min-w-0">
-                                {/* Category Header */}
-                                <div className="flex items-center justify-between mb-3">
-                                  <div className="flex items-center gap-1.5 px-3 py-1 bg-white/50 rounded-full border border-white/20">
-                                    <div className="text-emerald-600">
-                                      {React.createElement(getCategoryIcon(log.category), {size: 14})}
+                              {/* Left Side Accent */}
+                              <div 
+                                className="absolute left-0 top-0 bottom-0 w-1.5 opacity-60 group-hover:opacity-100 transition-opacity"
+                                style={{ backgroundColor: getCategoryColor(log.category) }}
+                              />
+
+                              <div className="flex-1 min-w-0 flex flex-col justify-between ml-1.5">
+                                {/* Top Content: Title and Duration */}
+                                <div className="flex items-start justify-between gap-4 mb-2">
+                                  <div className="space-y-1">
+                                    <div className="flex items-center gap-2">
+                                      <div 
+                                        className="p-1 rounded-md"
+                                        style={{ backgroundColor: `${getCategoryColor(log.category)}15`, color: getCategoryColor(log.category) }}
+                                      >
+                                        {React.createElement(getCategoryIcon(log.category), {size: 10})}
+                                      </div>
+                                      <span className="text-[9px] font-black text-emerald-900/40 uppercase tracking-widest">{log.category}</span>
                                     </div>
-                                    <span className="text-[10px] font-black text-emerald-700 tracking-tight uppercase">
-                                      {log.category}
-                                    </span>
+                                    <h4 className="text-[14px] font-black text-emerald-950 tracking-tight leading-tight group-hover:text-emerald-700 transition-colors line-clamp-1">
+                                      {log.description || 'Focus Session'}
+                                    </h4>
                                   </div>
-                                  <div className="text-[10px] font-black text-emerald-300 tracking-tighter tabular-nums text-right">
-                                    {formatClock(log.startTime)} — {log.endTime ? formatClock(log.endTime) : 'NOW'}
+                                  <div className="bg-white/60 backdrop-blur-md px-2 py-1 rounded-lg text-[11px] font-black text-emerald-600 tracking-tighter tabular-nums border border-white/20 shadow-sm">
+                                    {formatTime(resolvePhaseTotals(log).total)}
                                   </div>
                                 </div>
 
-                                {/* Content Row */}
-                                <div className="flex flex-col gap-1 pr-2">
-                                  <h4 className="text-sm font-black text-emerald-950 tracking-tight leading-tight line-clamp-2">
-                                    {log.description || 'Focus Session'}
-                                  </h4>
-                                  <div className="text-[10px] font-bold text-emerald-500">
-                                    Duration: {formatTime(resolvePhaseTotals(log).total)}
+                                {/* Bottom Info Row */}
+                                <div className="flex items-center justify-between pt-1 border-t border-emerald-50/50">
+                                  <div className="text-[10px] font-bold text-emerald-400 tracking-tighter tabular-nums opacity-60">
+                                    {formatClock(log.startTime)} — {log.endTime ? formatClock(log.endTime) : 'NOW'}
+                                  </div>
+
+                                  <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                                    {log.images.length > 0 && (
+                                      <div className="flex -space-x-1.5">
+                                        {log.images.slice(0, 3).map((img, imgIdx) => (
+                                          <div 
+                                            key={imgIdx} 
+                                            className="w-7 h-7 rounded-lg border-2 border-white shadow-sm overflow-hidden hover:scale-110 hover:z-10 transition-all cursor-zoom-in"
+                                            onClick={() => setPreviewImage(img)}
+                                          >
+                                            <img src={img} className="w-full h-full object-cover" />
+                                          </div>
+                                        ))}
+                                      </div>
+                                    )}
+
+                                    {log.link && (
+                                      <a 
+                                        href={log.link.startsWith('http') ? log.link : `https://${log.link}`} 
+                                        target="_blank" 
+                                        rel="noopener noreferrer"
+                                        className="w-7 h-7 bg-emerald-50 text-emerald-500 hover:bg-emerald-600 hover:text-white rounded-lg flex items-center justify-center transition-all border border-emerald-100/50 group/link"
+                                        title={log.link}
+                                      >
+                                        <LinkIcon size={12} className="group-hover/link:rotate-12 transition-transform" />
+                                      </a>
+                                    )}
                                   </div>
                                 </div>
                               </div>
-
-                              {/* Vertical Media Bar */}
-                              {(log.images.length > 0 || log.link) && (
-                                <div className="flex flex-col gap-2 items-center flex-shrink-0 pt-0.5" onClick={(e) => e.stopPropagation()}>
-                                  {log.link && (
-                                    <a 
-                                      href={log.link.startsWith('http') ? log.link : `https://${log.link}`} 
-                                      target="_blank" 
-                                      rel="noopener noreferrer"
-                                      className="w-9 h-9 bg-emerald-50 text-emerald-500 hover:bg-emerald-600 hover:text-white rounded-[1.2rem] flex items-center justify-center transition-all border border-emerald-100 shadow-sm"
-                                      title={log.link}
-                                    >
-                                      <LinkIcon size={14} />
-                                    </a>
-                                  )}
-                                  {log.images.slice(0, 2).map((img, imgIdx) => (
-                                    <div 
-                                      key={imgIdx} 
-                                      className="relative w-9 h-9 rounded-[1.2rem] overflow-hidden border border-emerald-100 shadow-sm hover:scale-110 hover:z-10 transition-transform duration-300 cursor-zoom-in"
-                                      onClick={() => setPreviewImage(img)}
-                                    >
-                                      <img src={img} className="w-full h-full object-cover" />
-                                    </div>
-                                  ))}
-                                  {log.images.length > 2 && (
-                                    <div className="w-9 h-9 rounded-[1.2rem] bg-emerald-50 border border-emerald-100 flex items-center justify-center text-[10px] font-black text-emerald-400">
-                                      +{log.images.length - 2}
-                                    </div>
-                                  )}
-                                </div>
-                              )}
                            </div>
                          </div>
                        ))}

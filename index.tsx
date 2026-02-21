@@ -1791,8 +1791,11 @@ function EmeraldTimer() {
 
   if (isInitialLoading) {
     return (
-      <div className="fixed inset-0 bg-[#f0f9f0] flex flex-col items-center justify-center z-[500] animate-in fade-in duration-300">
-        <div className="w-24 h-24 bg-white rounded-[2.5rem] flex items-center justify-center shadow-2xl shadow-emerald-200/50 mb-8 scale-110 animate-pulse border-4 border-emerald-50">
+      <div className="fixed inset-0 bg-white flex flex-col items-center justify-center z-[500] animate-in fade-in duration-300 rounded-[1.5rem] border border-white/10 ring-1 ring-white/5 overflow-hidden">
+        <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-emerald-200/20 blur-[120px] rounded-full -z-10 animate-pulse" />
+        <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-emerald-300/10 blur-[120px] rounded-full -z-10" />
+        
+        <div className="w-24 h-24 bg-white rounded-[2rem] flex items-center justify-center shadow-2xl shadow-emerald-200/50 mb-8 scale-110 animate-pulse border-4 border-emerald-50">
           <img src={APP_LOGO} alt="Emerald Timer" className="w-14 h-14 object-contain" />
         </div>
         <div className="flex flex-col items-center gap-2">
@@ -1813,13 +1816,17 @@ function EmeraldTimer() {
 
   return (
     <div 
-      className={` ${(isMiniMode || wasMiniModeBeforeModal) ? 'bg-transparent border-0' : 'bg-gradient-to-br from-white/90 via-emerald-50/80 to-white/90 backdrop-blur-3xl rounded-[1.25rem] border border-white/60 shadow-[0_32px_128px_-20px_rgba(0,0,0,0.18)] ring-1 ring-white/20'} text-emerald-900 flex flex-col h-screen w-full overflow-hidden relative transition-all duration-700 ease-in-out`}
+      className={` ${(isMiniMode || wasMiniModeBeforeModal) ? 'bg-transparent border-0' : 'bg-gradient-to-br from-white/95 via-emerald-50/90 to-white/95 border border-white/40 ring-1 ring-white/20'} text-emerald-900 flex flex-col h-screen w-full overflow-hidden rounded-[1.5rem] relative transition-opacity ${isMiniMode ? 'duration-200' : 'duration-700'} ease-in-out`}
       style={{
         background: (isMiniMode || wasMiniModeBeforeModal) ? 'transparent' : undefined
       }}
     >
-      <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-emerald-200/20 blur-[120px] rounded-full -z-10 animate-pulse" />
-      <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-emerald-300/10 blur-[120px] rounded-full -z-10" />
+      {!isMiniMode && !wasMiniModeBeforeModal && (
+        <>
+          <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-emerald-200/20 blur-[120px] rounded-full -z-10 animate-pulse" />
+          <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-emerald-300/10 blur-[120px] rounded-full -z-10" />
+        </>
+      )}
 
       <style>{`
         .scrollbar-none::-webkit-scrollbar {
@@ -1856,7 +1863,7 @@ function EmeraldTimer() {
               <img src={APP_LOGO} alt="Emerald Timer Logo" className="w-full h-full object-contain filter drop-shadow-sm" />
             </div>
             <div className="flex items-center gap-2">
-              <h1 className="text-sm font-black text-emerald-800 tracking-tight">Emerald Timer</h1>
+              <h1 className="text-[15px] font-black text-emerald-800 tracking-tight">Emerald Timer</h1>
             </div>
           </div>
           <div className="flex items-center gap-1.5" style={{ WebkitAppRegion: 'no-drag' } as any}>
@@ -1921,7 +1928,7 @@ function EmeraldTimer() {
       )}
 
       {!hideShellForMiniPrompt && !isMiniMode && !wasMiniModeBeforeModal && (
-        <main className={`w-full bg-white/70 backdrop-blur-2xl flex flex-col flex-1 overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-500 ease-out border border-white/40 shadow-2xl ${isAndroid ? 'pt-[env(safe-area-inset-top,20px)]' : 'rounded-[2rem] overflow-hidden'}`}>
+        <main className={`w-full bg-white/70 backdrop-blur-2xl flex flex-col flex-1 overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-500 ease-out border-t border-white/40 ${isAndroid ? 'pt-[env(safe-area-inset-top,20px)]' : 'overflow-hidden'}`}>
           
           <div 
             ref={mainScrollRef}
@@ -2082,10 +2089,10 @@ function EmeraldTimer() {
           </div>
 
           {/* Navigation - Always at the bottom for both Android and PC to save vertical space and improve habit consistency */}
-          <nav className={`flex border-t border-white/30 bg-white/40 backdrop-blur-xl items-stretch justify-around px-2 z-50 transition-all duration-300 ease-in-out
+          <nav className={`flex border-t border-emerald-50 bg-white/40 items-stretch justify-around px-2 z-50 transition-all duration-300 ease-in-out
             ${isAndroid 
-              ? 'pb-[env(safe-area-inset-bottom,16px)] pt-3 h-[76px] shadow-[0_-10px_30px_rgba(0,0,0,0.03)]' 
-              : 'h-18 py-0 shadow-[0_-5px_15px_rgba(0,0,0,0.02)] group/nav'
+              ? 'pb-[env(safe-area-inset-bottom,16px)] pt-3 h-[76px] shadow-[0_-10px_30px_rgba(0,0,0,0.03)] backdrop-blur-xl' 
+              : 'h-18 py-0 group/nav'
             }`}
           >
             {[
@@ -2122,7 +2129,7 @@ function EmeraldTimer() {
                 <span className={`font-bold transition-all duration-400 overflow-hidden text-center
                   ${isAndroid 
                     ? `text-[10px] mt-1.5 line-clamp-1 ${activeTab === tab.id ? 'opacity-100 transform translate-y-0' : 'opacity-60 transform translate-y-0.5'}` 
-                    : 'text-[9px] max-h-0 opacity-0 group-hover/nav:max-h-4 group-hover/nav:opacity-100 group-hover/nav:mt-1'
+                    : 'text-[11px] max-h-0 opacity-0 group-hover/nav:max-h-4 group-hover/nav:opacity-100 group-hover/nav:mt-1'
                   }`}
                   style={!isAndroid ? { width: '100%' } : {}}
                 >

@@ -131,18 +131,19 @@ const JournalBoard: React.FC<JournalBoardProps> = ({
               <div 
                 key={item.id} 
                 onClick={() => { setSelectedInspiration(item); setShowInspirationModal(true); }}
-                className="bg-emerald-50/20 p-4 rounded-2xl border border-emerald-50/50 hover:bg-emerald-50/40 hover:shadow-md transition-all cursor-pointer group relative overflow-hidden"
+                className="bg-white/40 backdrop-blur-md p-4 rounded-xl border border-white/60 hover:bg-white/80 hover:shadow-lg transition-all cursor-pointer group relative overflow-hidden"
               >
-                <Quote size={12} className="absolute top-3 right-3 text-emerald-100/50 group-hover:text-emerald-200 transition-colors" />
-                <h4 className="text-xs font-black text-emerald-900 mb-1.5 truncate pr-4">{item.title || 'Untitled Thought'}</h4>
-                <p className="text-[10px] text-emerald-600/80 leading-relaxed font-bold line-clamp-2 mb-3">{item.content}</p>
+                <div className="absolute left-0 top-0 bottom-0 w-1 bg-emerald-500 opacity-40 group-hover:opacity-100 transition-opacity" />
+                <Quote size={12} className="absolute top-3 right-3 text-emerald-100 group-hover:text-emerald-300 transition-colors" />
+                <h4 className="text-[11px] font-black text-emerald-950 mb-1.5 truncate pr-6 ml-1">{item.title || 'Untitled Thought'}</h4>
+                <p className="text-[10px] text-emerald-800/60 leading-relaxed font-bold line-clamp-2 mb-3 ml-1">{item.content}</p>
                 
                 {item.images && item.images.length > 0 && (
-                  <div className="flex gap-1 mb-3">
+                  <div className="flex -space-x-1.5 py-1 mb-3 ml-1">
                     {item.images.slice(0, 3).map((img, idx) => (
                       <div 
                         key={idx} 
-                        className="w-10 h-10 rounded-lg overflow-hidden border border-emerald-100 shadow-sm hover:scale-110 transition-transform"
+                        className="w-9 h-9 rounded-lg overflow-hidden border-2 border-white shadow-sm hover:z-10 hover:scale-110 transition-all flex-shrink-0"
                         onClick={(e) => {
                            e.stopPropagation();
                            setPreviewImage?.(img);
@@ -152,21 +153,21 @@ const JournalBoard: React.FC<JournalBoardProps> = ({
                       </div>
                     ))}
                     {item.images.length > 3 && (
-                      <div className="w-10 h-10 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center justify-center text-[8px] font-black text-emerald-400">
+                      <div className="w-9 h-9 rounded-lg bg-white/80 border-2 border-white flex items-center justify-center text-[8px] font-black text-emerald-400 flex-shrink-0 shadow-sm">
                         +{item.images.length - 3}
                       </div>
                     )}
                   </div>
                 )}
 
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between ml-1">
                    <span className="text-[8px] font-black text-emerald-300 uppercase tracking-widest">{new Date(item.date).toLocaleDateString()}</span>
                    {item.url && (
                       <a 
                         href={item.url.startsWith('http') ? item.url : `https://${item.url}`} 
                         target="_blank" 
                         rel="noopener noreferrer"
-                        className="p-1.5 bg-emerald-50 rounded-lg text-emerald-600 hover:bg-emerald-100 transition-all"
+                        className="p-1.5 bg-emerald-50 rounded-lg text-emerald-400 hover:text-emerald-700 hover:bg-emerald-100 transition-all border border-emerald-50 shadow-sm"
                         onClick={(e) => e.stopPropagation()}
                         title={item.url}
                       >

@@ -55,9 +55,9 @@ const LoggingModal: React.FC<LoggingModalProps> = ({
             }`}
           >
             <div className={`p-1.5 rounded-lg mb-1 transition-colors ${isSelected ? 'font-bold' : 'text-gray-400'}`} style={isSelected ? { color: cat.color, backgroundColor: `${cat.color}15` } : {}}>
-              <Icon size={12} />
+              <Icon size={14} />
             </div>
-            <span className={`text-[9px] font-bold tracking-tight transition-colors ${isSelected ? '' : 'text-gray-400'}`} style={isSelected ? { color: cat.color } : {}}>{cat.name}</span>
+            <span className={`text-[10px] font-black tracking-tight transition-colors ${isSelected ? '' : 'text-gray-400'}`} style={isSelected ? { color: cat.color } : {}}>{cat.name}</span>
           </button>
         );
       })}
@@ -76,23 +76,23 @@ const LoggingModal: React.FC<LoggingModalProps> = ({
            >
              <X size={18} />
            </button>
-           <h2 className="text-xl font-bold text-emerald-950 mb-5 tracking-tight">Session Detail</h2>
-           <div className="space-y-4">
-              <section className="bg-emerald-50/20 p-5 rounded-[2.5rem] border border-emerald-50/50">
-                 <h3 className="text-[12px] font-bold tracking-tight text-emerald-600 mb-3 flex items-center gap-2.5"><Clock size={16} className="text-emerald-500"/> Timer Intervals</h3>
+           <h2 className="text-2xl font-black text-emerald-950 mb-6 tracking-tight">Session Detail</h2>
+           <div className="space-y-5">
+              <section className="bg-emerald-50/20 p-5 rounded-[2rem] border border-emerald-50/50">
+                 <h3 className="text-sm font-black tracking-tight text-emerald-600 mb-4 flex items-center gap-2.5"><Clock size={16} className="text-emerald-500"/> Timer Intervals</h3>
                  <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <label className="text-[11px] font-bold text-emerald-600 block tracking-tight pl-1">Focus Mode</label>
+                      <label className="text-xs font-black text-emerald-600 block tracking-tight pl-1">Focus Mode</label>
                       <div className="relative">
-                        <input type="text" value={tempWorkMin} onChange={(e) => setTempWorkMin(e.target.value.replace(/\D/g,''))} className="w-full bg-white border border-emerald-100 rounded-2xl p-3 pr-10 text-sm font-black text-emerald-900 outline-none font-mono shadow-sm focus:ring-4 focus:ring-emerald-500/5 transition-all" />
-                        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-bold text-emerald-300 tracking-tight">Min</span>
+                        <input type="text" value={tempWorkMin} onChange={(e) => setTempWorkMin(e.target.value.replace(/\D/g,''))} className="w-full bg-white border border-emerald-100 rounded-2xl p-3.5 pr-10 text-[15px] font-black text-emerald-900 outline-none font-mono shadow-sm focus:ring-4 focus:ring-emerald-500/5 transition-all" />
+                        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-bold text-emerald-400 tracking-tight">Min</span>
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <label className="text-[11px] font-bold text-emerald-600 block tracking-tight pl-1">Rest Mode</label>
+                      <label className="text-xs font-black text-emerald-600 block tracking-tight pl-1">Rest Mode</label>
                       <div className="relative">
-                        <input type="text" value={tempRestMin} onChange={(e) => setTempRestMin(e.target.value.replace(/\D/g,''))} className="w-full bg-white border border-emerald-100 rounded-2xl p-3 pr-10 text-sm font-black text-emerald-900 outline-none font-mono shadow-sm focus:ring-4 focus:ring-emerald-500/5 transition-all" />
-                        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-bold text-emerald-300 tracking-tight">Min</span>
+                        <input type="text" value={tempRestMin} onChange={(e) => setTempRestMin(e.target.value.replace(/\D/g,''))} className="w-full bg-white border border-emerald-100 rounded-2xl p-3.5 pr-10 text-[15px] font-black text-emerald-900 outline-none font-mono shadow-sm focus:ring-4 focus:ring-emerald-500/5 transition-all" />
+                        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-bold text-emerald-400 tracking-tight">Min</span>
                       </div>
                     </div>
                  </div>

@@ -2,6 +2,15 @@
 
 All notable changes to the Emerald Timer project will be documented in this file.
 
+## [1.3.9] - 2026-02-21
+
+### Visual & UX Refinements
+- **Window Rendering**: Fixed "black rectangular shadow" artifacts on Windows by removing outermost CSS shadows and background blur from the root container.
+- **Micro-interactions**: Accelerated transition speed to 200ms when entering Mini Mode for an instant "shrinking" feel.
+- **UI Scaling**: Enhanced flexibility with support for up to 300% (3.0) scale for accessibility.
+- **Glassmorphism**: Unified card styles with 1.4rem (24px) corners across Logs, Journal, and Stats boards.
+- **Button Icons**: Replaced complex icons with cleaner alternatives (`Library`) for better clarity at small scales.
+
 ## [1.3.8] - 2026-02-21
 
 ### Optimized (Android specific)
