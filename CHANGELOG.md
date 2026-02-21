@@ -2,6 +2,36 @@
 
 All notable changes to the Emerald Timer project will be documented in this file.
 
+## [1.5.0-beta.1] - 2026-02-21
+
+### Intelligent Insight Engine (Test Beta)
+- **Personalized Insights**: Introduced a dynamic "Whisper Insight" system that provides context-aware greetings, productivity tips, and personal habit analysis.
+- **Data-Driven Analysis**: Summarizes peak focus hours and weekly average focus time directly from local log history.
+- **Muse Reflection**: Randomly surfacing snippets from your "Inspirations" to keep your creative goals top of mind.
+- **Context Awareness**: Heuristic mood detection based on manual log descriptions (e.g., providing care tips when descriptors like "tired" or "stress" are used).
+- **Aesthetic Integration**: Implemented "Ghost Whisper" typography—a minimalist, low-contrast italic font style that floats naturally within the timer's focus area.
+- **Timed Refresh**: Insights now automatically rotate every 30 minutes or upon each app launch to ensure fresh inspiration throughout the day.
+
+## [1.4.0] - 2026-02-21
+
+### Professional Dark Mode Overhaul
+- **Dedicated Dark/Zinc Theme**: Implemented "Deep Dark Zinc" (Zinc-950) as the system default for professional use.
+- **Aesthetic Refinement**: Migrated from "Neon Emerald" to a more focused and reduced eye-strain color palette.
+- **UI Standardized**: Implemented `zinc-950` foundation with `zinc-900` elevated cards and `zinc-800` interactive base.
+- **Shadow System**: Replaced glow effects with deep black shadows (`shadow-black/70`) for professional depth.
+- **Dark Mode Support**: Comprehensive Dark/Zinc mode support with improved backdrop blurs (`backdrop-blur-3xl`).
+- **Glow Optimization**: Refined timer ring glows to be non-obtrusive and more professional.
+- **Clean State**: Removed all demo logging data for production use.
+- **Notification Design**: Overhauled all "Prompt" modals (Phase Complete, Log Decision, etc.) to be borderless with high-contrast button states.
+
+### Interactive & Visual Enhancements
+- **Timer Controls**: Start (Green) and Pause (Orange) buttons are now permanently colored for instant recognition.
+- **Header Optimization**: Removed redundant Settings icon from the top header to prioritize the "Mini Mode" toggle and clean up the interface.
+- **Mini Mode Polishing**: Added high-visibility "White-Highlight" hover states for all mini-buttons.
+- **Edit Mode Feedback**: Redesigned "Save Changes" and "Cancel" buttons with clear semantic color hover states.
+- **Visualization Fixes**: Categorical breakdown tooltips in StatsBoard now have forced high-contrast styling for perfect readability in dark mode.
+- **Global Stylistic Purge**: Removed legacy emerald-based translucent backgrounds and glow effects across all boards.
+
 ## [1.3.9] - 2026-02-21
 
 ### Visual & UX Refinements
