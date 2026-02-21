@@ -1,7 +1,7 @@
 import React from 'react';
 import { 
   X, Edit2, ChevronRight, FileText, Image as ImageIcon, Plus, 
-  Trash2, Calendar, Clock 
+  Trash2, Calendar, Clock, Link as LinkIcon, ExternalLink, Copy
 } from 'lucide-react';
 import { LogEntry, Category, CategoryData, CATEGORY_ICONS } from '../../types';
 import TimePicker from '../TimePicker';
@@ -151,8 +151,8 @@ const ViewLogModal: React.FC<ViewLogModalProps> = ({
                )}
 
                {viewingLog.images.length > 0 && (
-                 <div className="mb-8">
-                   <label className="text-[10px] font-bold tracking-tight text-emerald-400 block mb-4 pl-1">Photos ({viewingLog.images.length})</label>
+                 <div className="mb-6">
+                   <label className="text-[10px] font-bold tracking-tight text-emerald-400 block mb-4 pl-1 uppercase">Photos ({viewingLog.images.length})</label>
                    <div className="grid grid-cols-3 gap-3">
                      {viewingLog.images.map((img, idx) => (
                        <div key={idx} className="relative aspect-square rounded-2xl overflow-hidden border-4 border-white shadow-md group">
@@ -162,14 +162,27 @@ const ViewLogModal: React.FC<ViewLogModalProps> = ({
                    </div>
                  </div>
                )}
-               <div className="space-y-3">
-                 <button onClick={() => setIsEditMode(true)} className="w-full py-4.5 bg-emerald-600 text-white rounded-[1.5rem] font-bold tracking-tight shadow-[0_10px_30px_rgba(5,150,105,0.2)] hover:bg-emerald-700 active:scale-[0.98] transition-all flex items-center justify-center gap-3 text-sm">
-                   <Plus size={20} className="rotate-45" /> Update Entry
-                 </button>
-                 <div className="grid grid-cols-2 gap-3">
-                   <button onClick={() => { setViewingLog(null); setIsEditMode(false); setPhaseEditTouched(false); }} className="w-full py-4 bg-emerald-50 text-emerald-600 rounded-[1.5rem] font-bold tracking-tight border border-emerald-100 hover:bg-emerald-100 active:scale-[0.98] transition-all text-[11px]">Close</button>
-                   <button onClick={() => handleDeleteLog(viewingLog.id)} className="w-full py-4 bg-white text-red-400 border border-red-50 rounded-[1.5rem] font-bold tracking-tight hover:bg-red-50 active:scale-[0.98] transition-all text-[11px]">Delete</button>
+
+               {viewingLog.link && (
+                 <div className="mb-8 px-1">
+                    <label className="text-[10px] font-bold tracking-tight text-emerald-400 block mb-3 pl-1 uppercase">Link</label>
+                    <a 
+                      href={viewingLog.link.startsWith('http') ? viewingLog.link : `https://${viewingLog.link}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-3 bg-emerald-50/50 border border-emerald-100/30 rounded-2xl p-4 text-[11px] font-bold text-emerald-600 hover:bg-emerald-100/50 transition-all group"
+                    >
+                      <LinkIcon size={14} className="flex-shrink-0" />
+                      <span className="truncate flex-1">{viewingLog.link}</span>
+                      <ExternalLink size={14} className="flex-shrink-0 opacity-20 group-hover:opacity-100 transition-opacity" />
+                    </a>
                  </div>
+               )}
+
+               <div className="flex gap-3 mt-4">
+                 <button onClick={() => setIsEditMode(true)} className="flex-1 py-4 bg-emerald-50 text-emerald-600 rounded-[1.5rem] font-black tracking-tight border border-emerald-100/50 hover:bg-emerald-600 hover:text-white hover:shadow-lg hover:shadow-emerald-100 active:scale-[0.98] transition-all text-[11px]">Edit</button>
+                 <button onClick={() => { setViewingLog(null); setIsEditMode(false); setPhaseEditTouched(false); }} className="flex-1 py-4 bg-slate-50 text-slate-500 rounded-[1.5rem] font-black tracking-tight border border-slate-100 hover:bg-slate-700 hover:text-white hover:shadow-lg hover:shadow-slate-100 active:scale-[0.98] transition-all text-[11px]">Close</button>
+                 <button onClick={() => handleDeleteLog(viewingLog.id)} className="flex-1 py-4 bg-red-50 text-red-400 rounded-[1.5rem] font-black tracking-tight border border-red-100 hover:bg-red-500 hover:text-white hover:shadow-lg hover:shadow-red-100 active:scale-[0.98] transition-all text-[11px]">Delete</button>
                </div>
              </div>
            ) : (
@@ -187,23 +200,12 @@ const ViewLogModal: React.FC<ViewLogModalProps> = ({
 
                 <div className="space-y-5">
                   <section>
-                    <label className="text-[10px] font-bold text-emerald-400 block mb-3 tracking-tight pl-1">Category</label>
+                    <label className="text-[10px] font-bold text-emerald-400 block mb-3 tracking-tight pl-1 uppercase">Category</label>
                     <CategoryPicker />
-                  </section>
-
-                  <section>
-                    <label className="text-[10px] font-bold text-emerald-400 block mb-3 tracking-tight pl-1">Description</label>
-                    <textarea 
-                      rows={2} 
-                      placeholder="What did you achieve?"
-                      value={viewingLog.description} 
-                      onChange={(e) => setViewingLog({...viewingLog, description: e.target.value})} 
-                      className="w-full bg-emerald-50 border border-emerald-100/50 rounded-2xl p-4 text-xs font-bold text-emerald-900 outline-none resize-none shadow-sm focus:ring-2 focus:ring-emerald-500/10 transition-all" 
-                    />
                   </section>
                   
                   <section>
-                    <label className="text-[10px] font-bold text-emerald-400 block mb-3 tracking-tight pl-1">Photos ({viewingLog.images.length})</label>
+                    <label className="text-[10px] font-bold text-emerald-400 block mb-3 tracking-tight pl-1 uppercase">Photos ({viewingLog.images.length})</label>
                     <div className="flex flex-wrap gap-3">
                       {viewingLog.images.map((img, idx) => (
                         <div 
@@ -238,6 +240,22 @@ const ViewLogModal: React.FC<ViewLogModalProps> = ({
                         <Plus size={24} />
                         <input type="file" multiple accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, 'edit')} />
                       </label>
+                    </div>
+                  </section>
+
+                  <section>
+                    <label className="text-[10px] font-bold text-emerald-400 block mb-3 tracking-tight pl-1 uppercase">Link</label>
+                    <div className="relative group/link">
+                      <div className="absolute left-4 top-1/2 -translate-y-1/2 text-emerald-300 group-focus-within/link:text-emerald-500 transition-colors pointer-events-none">
+                        <LinkIcon size={14} />
+                      </div>
+                      <input 
+                        type="url"
+                        placeholder="Paste related link here..." 
+                        value={viewingLog.link || ''} 
+                        onChange={(e) => setViewingLog({...viewingLog, link: e.target.value})} 
+                        className="w-full bg-white border border-emerald-100 rounded-2xl p-4 pl-10 pr-4 text-xs font-bold text-emerald-900 outline-none shadow-sm focus:border-emerald-300 focus:ring-4 focus:ring-emerald-500/5 transition-all truncate" 
+                      />
                     </div>
                   </section>
 

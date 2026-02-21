@@ -2,6 +2,16 @@
 
 All notable changes to the Emerald Timer project will be documented in this file.
 
+## [1.3.8] - 2026-02-21
+
+### Optimized (Android specific)
+- **UI Centering**: Centered the focus timer board vertically on Android for better ergonomics.
+- **Stats Navigation**: Set the timeline calendar to be collapsed by default on Android to maximize space.
+- **Touch Support**: Added native touch and swipe interaction for the horizontal timeline in the Stats view.
+- **Visual Cleanup**: Removed the "Display Zoom" setting on Android as it's not applicable to the native platform.
+- **UI Artifact Fixes**: Fixed a white border issue on the left side of the Stats view when the calendar drawer is collapsed.
+- **Persistent Notification**: Implemented a sticky notification for the Android status bar that updates when the timer is running in the background.
+
 ## [1.3.5] - 2026-02-20
 
 ### Changed

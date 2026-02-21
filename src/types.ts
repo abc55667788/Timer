@@ -64,6 +64,7 @@ export interface LogEntry {
   endTime?: number;
   duration: number; // in seconds
   images: string[];
+  link?: string;
   isLive?: boolean;
   phaseDurations?: {
     work: number;
@@ -96,6 +97,7 @@ export interface Task {
   category: Category;
   description: string;
   images: string[];
+  link?: string;
   liveId: string | null;
 }
 

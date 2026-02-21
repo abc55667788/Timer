@@ -91,7 +91,15 @@ function EmeraldTimer() {
   const [selectedStatsDate, setSelectedStatsDate] = useState(formatDate(Date.now()));
   const [isCalendarCollapsed, setIsCalendarCollapsed] = useState(true);
   const [dayViewMode, setDayViewMode] = useState<'timeline' | 'stats'>('timeline');
-  const [timelineZoom, setTimelineZoom] = useState(0.4); 
+  const [timelineZoom, setTimelineZoom] = useState(() => {
+    if (typeof window === 'undefined') return 0.85;
+    try {
+      const saved = localStorage.getItem('emerald-timeline-zoom');
+      return saved ? parseFloat(saved) : 0.85;
+    } catch (e) {
+      return 0.85;
+    }
+  }); 
   const [isZoomInputActive, setIsZoomInputActive] = useState(false);
   const [wasMiniModeBeforeModal, setWasMiniModeBeforeModal] = useState(false);
   const lastBackPressTimeRef = useRef<number>(0);
@@ -115,6 +123,10 @@ function EmeraldTimer() {
         StatusBar.setBackgroundColor({ color: '#ffffff' }).catch(() => {});
         StatusBar.setStyle({ style: StatusBarStyle.Light }).catch(() => {});
         StatusBar.setOverlaysWebView({ overlay: false }).catch(() => {});
+        // Request notification permissions on startup for Android
+        LocalNotifications.requestPermissions().then(result => {
+          setNotificationPermission(result.display === 'granted' ? 'granted' : 'denied');
+        }).catch(() => {});
       } catch (e) {
         /* ignore */
       }
@@ -131,6 +143,25 @@ function EmeraldTimer() {
   });
   const requestNotificationPermission = useCallback((showPreview = false) => {
     if (typeof window === 'undefined') return;
+    
+    if (Capacitor.isNativePlatform()) {
+      LocalNotifications.requestPermissions().then(result => {
+        setNotificationPermission(result.display === 'granted' ? 'granted' : 'denied');
+        if (result.display === 'granted' && showPreview) {
+          LocalNotifications.schedule({
+            notifications: [{
+              title: 'Emerald Timer',
+              body: 'Notifications are enabled!',
+              id: Date.now()
+            }]
+          }).catch(() => {});
+        }
+      }).catch(err => {
+        console.warn('Capacitor permission request failed', err);
+      });
+      return;
+    }
+
     if (!('Notification' in window)) {
       setNotificationPermission('unsupported');
       return;
@@ -250,6 +281,7 @@ function EmeraldTimer() {
     category: 'Work' as Category,
     description: '',
     images: [] as string[],
+    link: '',
     liveId: null as string | null
   });
 
@@ -259,7 +291,8 @@ function EmeraldTimer() {
     date: formatDate(Date.now()),
     startTime: '09:00',
     endTime: '10:00',
-    images: [] as string[]
+    images: [] as string[],
+    link: ''
   });
 
   const [logs, setLogs] = useState<LogEntry[]>(() => {
@@ -441,6 +474,10 @@ function EmeraldTimer() {
   }, [syncMethod]);
 
   useEffect(() => {
+    localStorage.setItem('emerald-timeline-zoom', timelineZoom.toString());
+  }, [timelineZoom]);
+
+  useEffect(() => {
     const handleGlobalScroll = (e: Event) => {
       let target = e.target as any;
       if (target === document) target = document.documentElement;
@@ -584,18 +621,24 @@ function EmeraldTimer() {
     const updateNotification = async () => {
       try {
         if (isActive) {
-          const body = `Emerald Timer: ${phase === 'work' ? 'Focus' : 'Rest'} — ${formatTime(displayTime)} ${isOvertime ? '+' + formatTime(overtimeSeconds) : ''}`;
+          const body = `${phase === 'work' ? '🔥🔥 Focus' : '🍃 Rest'} — ${formatTime(displayTime)} ${isOvertime ? ' (Overtime: +' + formatTime(overtimeSeconds) + ')' : ''}`;
           await LocalNotifications.schedule({
             notifications: [{
               id: 999,
-              title: "Timer active",
+              title: "Emerald Timer is running",
               body: body,
-              ongoing: true, // This keeps it there
-              smallIcon: 'ic_stat_icon_config_sample'
+              ongoing: true,
+              autoCancel: false,
+              silent: true, // Crucial for repeated updates
+              actionTypeId: 'TIMER_CONTROLS'
             }]
           });
         } else {
-          await LocalNotifications.cancel({ notifications: [{ id: 999 }] });
+          try {
+            await LocalNotifications.cancel({ notifications: [{ id: 999 }] });
+          } catch (e) {
+            /* ignore */
+          }
         }
       } catch (e) {
         console.warn("Failed to update ongoing notification", e);
@@ -1642,37 +1685,56 @@ function EmeraldTimer() {
     }, 1200);
   }, []);
 
-  // background persistent notification handler for Android
+  // request notification permission and cleanup and Android notification setup
   useEffect(() => {
     if (!isAndroid) return;
     
-    // Add background state listener
-    const listener = App.addListener('appStateChange', ({ isActive: isForeground }) => {
-      if (!isForeground && isActive) {
-        // App backgrounded, timer running -> show sticky notification
-        LocalNotifications.schedule({
-          notifications: [
-            {
-              id: 888,
-              title: phase === 'work' ? 'Focusing...' : 'Resting...',
-              body: `Remaining: ${formatTime(displayTime)} - ${currentTask.category}`,
-              ongoing: true,
-              autoCancel: false,
-              smallIcon: 'res://icon',
-              actionTypeId: 'OPEN_APP'
-            }
-          ]
-        }).catch(e => console.error(e));
-      } else if (isForeground) {
-        // App foregrounded -> clear sticky notification
+    // Cleanup if app crashes etc.
+    LocalNotifications.cancel({ notifications: [{ id: 888 }] }).catch(() => {});
+
+    // Listen to backgrounding
+    const listener = App.addListener('appStateChange', async ({ isActive: isForeground }) => {
+      if (isForeground) {
         LocalNotifications.cancel({ notifications: [{ id: 888 }] }).catch(() => {});
       }
     });
 
     return () => {
-      listener.then(l => l.remove());
+       listener.then(l => l.remove());
+       LocalNotifications.cancel({ notifications: [{ id: 888 }] }).catch(() => {});
     };
-  }, [isAndroid, isActive, phase, displayTime, currentTask.category]);
+  }, [isAndroid]);
+
+  // separate background update logic
+  useEffect(() => {
+    if (!isAndroid || !isActive) return;
+
+    let notificationTimeout: any;
+
+    const updateBackgroundNotification = async () => {
+      const state = await App.getState();
+      if (!state.isActive) {
+        LocalNotifications.schedule({
+          notifications: [{
+            id: 888,
+            title: phase === 'work' ? '🔥🔥 Focus session' : '🍃 Rest session',
+            body: `Remaining: ${formatTime(displayTime)} - ${currentTask.category}`,
+            ongoing: true,
+            autoCancel: false,
+            silent: true,
+            smallIcon: 'res://icon'
+          }]
+        }).catch(() => {});
+      }
+    };
+
+    // Update every 5s if in background
+    notificationTimeout = setTimeout(updateBackgroundNotification, 5000);
+
+    return () => {
+      if (notificationTimeout) clearTimeout(notificationTimeout);
+    };
+  }, [isAndroid, isActive, displayTime, phase, currentTask.category]);
 
   if (isInitialLoading) {
     return (
@@ -1854,7 +1916,7 @@ function EmeraldTimer() {
             )}
 
             {activeTab === 'stats' && (
-              <div className="flex-1 px-4 md:px-6 pb-4 md:pb-6 scrollbar-none animate-in fade-in duration-200">
+              <div className={`flex-1 ${isAndroid ? 'px-0' : 'px-4 md:px-6'} pb-4 md:pb-6 scrollbar-none animate-in fade-in duration-200`}>
                 <StatsBoard 
                   logs={logs}
                   statsView={statsView}

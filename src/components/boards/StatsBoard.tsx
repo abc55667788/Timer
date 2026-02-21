@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   History, Settings, PanelLeftOpen, PanelLeftClose, LayoutGrid, BarChart, 
-  ZoomOut, ZoomIn, ExternalLink, Image as ImageIcon
+  ZoomOut, ZoomIn, ExternalLink, Image as ImageIcon, Link as LinkIcon,
+  Search as SearchIcon
 } from 'lucide-react';
 import { 
   PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip,
@@ -104,6 +105,24 @@ const StatsBoard: React.FC<StatsBoardProps> = ({
     return Math.max(800, ((timelineRange.end - timelineRange.start) / 60000) * 1.5 * zoom + 120);
   };
 
+  const [isZoomToolExpanded, setIsZoomToolExpanded] = useState(false);
+  const zoomToolRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (zoomToolRef.current && !zoomToolRef.current.contains(event.target as Node)) {
+        setIsZoomToolExpanded(false);
+      }
+    };
+
+    if (isZoomToolExpanded) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isZoomToolExpanded]);
+
   return (
     <div className="flex flex-col lg:flex-row gap-6 lg:gap-10 items-start h-full animate-in fade-in slide-in-from-right-4 duration-500 overflow-visible relative pt-4 md:pt-6">
       {/* Calendar Side Drawer for Android */}
@@ -117,7 +136,7 @@ const StatsBoard: React.FC<StatsBoardProps> = ({
             />
           )}
           {/* Sidebar Drawer */}
-          <div className={`fixed top-0 left-0 bottom-0 w-[280px] bg-white z-50 shadow-2xl transform transition-transform duration-300 ease-in-out border-r border-emerald-50 ${isCalendarCollapsed ? '-translate-x-full' : 'translate-x-0'}`}>
+          <div className={`fixed top-0 left-0 bottom-0 w-[280px] bg-white z-50 transform transition-all duration-300 ease-in-out border-r border-emerald-50 ${isCalendarCollapsed ? '-translate-x-full shadow-none' : 'translate-x-0 shadow-2xl'}`}>
             <div className="h-full overflow-y-auto p-4 scrollbar-none">
               <div className="flex justify-between items-center mb-6">
                 <h3 className="text-lg font-black text-emerald-950 tracking-tighter pl-2">Timeline Calendar</h3>
@@ -181,10 +200,25 @@ const StatsBoard: React.FC<StatsBoardProps> = ({
                {dayViewMode === 'timeline' ? (
                  <div className="animate-in fade-in zoom-in-95 duration-500">
                    <div className="relative bg-white rounded-[3rem] border border-emerald-50 h-[240px] shadow-sm overflow-visible group flex-shrink-0">
-                      <div className="absolute top-3 right-3 z-30 flex items-center gap-2 bg-white/80 backdrop-blur-sm p-1 rounded-lg border border-emerald-50 shadow-sm">
-                        <button onClick={zoomOut} title="Zoom out" className={`p-2 rounded-md text-emerald-600 hover:bg-emerald-50 transition ${timelineZoom <= MIN_ZOOM ? 'opacity-40 cursor-not-allowed' : ''}`} disabled={timelineZoom <= MIN_ZOOM}><ZoomOut size={16} /></button>
-                        <div className="text-[12px] font-mono font-bold">{Math.round(timelineZoom * 100)}%</div>
-                        <button onClick={zoomIn} title="Zoom in" className={`p-2 rounded-md text-emerald-600 hover:bg-emerald-50 transition ${timelineZoom >= MAX_ZOOM ? 'opacity-40 cursor-not-allowed' : ''}`} disabled={timelineZoom >= MAX_ZOOM}><ZoomIn size={16} /></button>
+                      <div 
+                        ref={zoomToolRef}
+                        className={`absolute top-3 right-3 z-30 flex items-center bg-white/90 backdrop-blur-md rounded-2xl border border-emerald-100 shadow-xl transition-all duration-500 overflow-hidden ${isZoomToolExpanded ? 'p-1 gap-2' : 'p-0 w-10 h-10 shadow-md transform hover:scale-105'}`}
+                      >
+                        {!isZoomToolExpanded ? (
+                          <button 
+                            onClick={() => setIsZoomToolExpanded(true)}
+                            className="w-full h-full flex items-center justify-center text-emerald-600 hover:bg-emerald-50 transition-colors"
+                            title="Open zoom controls"
+                          >
+                             <SearchIcon size={18} />
+                          </button>
+                        ) : (
+                          <>
+                            <button onClick={zoomOut} title="Zoom out" className={`p-2 rounded-xl text-emerald-600 hover:bg-emerald-50 transition-all active:scale-90 ${timelineZoom <= MIN_ZOOM ? 'opacity-20 cursor-not-allowed' : ''}`} disabled={timelineZoom <= MIN_ZOOM}><ZoomOut size={16} /></button>
+                            <div className="text-[12px] font-mono font-black text-emerald-950 px-1 select-none pointer-events-none">{Math.round(timelineZoom * 100)}%</div>
+                            <button onClick={zoomIn} title="Zoom in" className={`p-2 rounded-xl text-emerald-600 hover:bg-emerald-50 transition-all active:scale-90 ${timelineZoom >= MAX_ZOOM ? 'opacity-20 cursor-not-allowed' : ''}`} disabled={timelineZoom >= MAX_ZOOM}><ZoomIn size={16} /></button>
+                          </>
+                        )}
                       </div>
 
                       <div 
@@ -263,42 +297,64 @@ const StatsBoard: React.FC<StatsBoardProps> = ({
                              role="button"
                              tabIndex={0}
                              onClick={() => handleViewLog(log)}
-                             className="bg-white p-3 rounded-2xl border border-emerald-50 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-200 cursor-pointer group ring-1 ring-emerald-50/50"
+                             className="bg-white p-5 rounded-[2.5rem] border border-emerald-50 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-200 cursor-pointer group flex gap-4 pr-6" 
+                             style={{ borderLeft: `10px solid ${getCategoryColor(log.category)}` }}
                            >
-                              <div className="flex justify-between items-start mb-1.5">
-                                <div className="flex items-center gap-2">
-                                  <div className="p-1.5 bg-emerald-50 text-emerald-600 rounded-xl ring-1 ring-emerald-100/50">
-                                    {React.createElement(getCategoryIcon(log.category), {size: 16})}
-                                  </div>
-                                  <div>
-                                    <div className="text-[10px] font-bold text-emerald-300 tracking-tight leading-none mb-0.5">{formatClock(log.startTime)} — {log.endTime ? formatClock(log.endTime) : 'NOW'}</div>
-                                    <div className="text-[10px] font-bold text-emerald-500 leading-none">
-                                      {formatTime(resolvePhaseTotals(log).total)}
+                              <div className="flex-1 min-w-0">
+                                {/* Category Header */}
+                                <div className="flex items-center justify-between mb-3">
+                                  <div className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50/80 rounded-full border border-emerald-100/50">
+                                    <div className="text-emerald-600">
+                                      {React.createElement(getCategoryIcon(log.category), {size: 14})}
                                     </div>
+                                    <span className="text-[10px] font-black text-emerald-700 tracking-tight uppercase">
+                                      {log.category}
+                                    </span>
+                                  </div>
+                                  <div className="text-[10px] font-black text-emerald-300 tracking-tighter tabular-nums text-right">
+                                    {formatClock(log.startTime)} — {log.endTime ? formatClock(log.endTime) : 'NOW'}
                                   </div>
                                 </div>
-                                <span className="text-[9px] font-bold text-white px-2 py-0.5 rounded-md shadow-md tracking-tight" style={{ backgroundColor: getCategoryColor(log.category) }}>
-                                  {log.category}
-                                </span>
+
+                                {/* Content Row */}
+                                <div className="flex flex-col gap-1 pr-2">
+                                  <h4 className="text-sm font-black text-emerald-950 tracking-tight leading-tight line-clamp-2">
+                                    {log.description || 'Focus Session'}
+                                  </h4>
+                                  <div className="text-[10px] font-bold text-emerald-500">
+                                    Duration: {formatTime(resolvePhaseTotals(log).total)}
+                                  </div>
+                                </div>
                               </div>
 
-                              {log.description && (
-                                 <h5 className="text-xs font-bold text-emerald-950 mb-2 leading-relaxed pl-1 tracking-tight line-clamp-2">{log.description}</h5>
-                              )}
-                              
-                              {log.images.length > 0 && (
-                                <div className="pt-0.5 pb-1">
-                                  <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-                                    {log.images.map((img, imgIdx) => (
-                                      <div key={imgIdx} className="relative flex-shrink-0 w-20 h-14 rounded-lg overflow-hidden border border-emerald-50 shadow-sm transition-all duration-200 group-hover:shadow-md">
-                                        <img 
-                                          src={img} 
-                                          onClick={(e) => { e.stopPropagation(); setPreviewImage(img); }} 
-                                          className="w-full h-full object-cover cursor-zoom-in"
-                                        />
-                                      </div>
-                                    ))}
-                                  </div>
+                              {/* Vertical Media Bar */}
+                              {(log.images.length > 0 || log.link) && (
+                                <div className="flex flex-col gap-2 items-center flex-shrink-0 pt-0.5" onClick={(e) => e.stopPropagation()}>
+                                  {log.link && (
+                                    <a 
+                                      href={log.link.startsWith('http') ? log.link : `https://${log.link}`} 
+                                      target="_blank" 
+                                      rel="noopener noreferrer"
+                                      className="w-9 h-9 bg-emerald-50 text-emerald-500 hover:bg-emerald-600 hover:text-white rounded-[1.2rem] flex items-center justify-center transition-all border border-emerald-100 shadow-sm"
+                                      title={log.link}
+                                    >
+                                      <LinkIcon size={14} />
+                                    </a>
+                                  )}
+                                  {log.images.slice(0, 2).map((img, imgIdx) => (
+                                    <div 
+                                      key={imgIdx} 
+                                      className="relative w-9 h-9 rounded-[1.2rem] overflow-hidden border border-emerald-100 shadow-sm hover:scale-110 hover:z-10 transition-transform duration-300 cursor-zoom-in"
+                                      onClick={() => setPreviewImage(img)}
+                                    >
+                                      <img src={img} className="w-full h-full object-cover" />
+                                    </div>
+                                  ))}
+                                  {log.images.length > 2 && (
+                                    <div className="w-9 h-9 rounded-[1.2rem] bg-emerald-50 border border-emerald-100 flex items-center justify-center text-[10px] font-black text-emerald-400">
+                                      +{log.images.length - 2}
+                                    </div>
+                                  )}
                                 </div>
                               )}
                            </div>

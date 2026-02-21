@@ -1,5 +1,5 @@
 ﻿import React from 'react';
-import { X, Plus, Clock } from 'lucide-react';
+import { X, Plus, Clock, Link as LinkIcon, ExternalLink, Copy } from 'lucide-react';
 import { Category, Task, CategoryData, CATEGORY_ICONS } from '../../types';
 
 interface LoggingModalProps {
@@ -16,6 +16,7 @@ interface LoggingModalProps {
   handleStartSession?: () => void;
   setShowLoggingModal: (show: boolean) => void;
   handleApplySettings: () => void;
+  setPreviewImage?: (img: string | null) => void;
 }
 
 const LoggingModal: React.FC<LoggingModalProps> = ({
@@ -31,6 +32,7 @@ const LoggingModal: React.FC<LoggingModalProps> = ({
   handleImageUpload,
   setShowLoggingModal,
   handleApplySettings,
+  setPreviewImage
 }) => {
   const handleUpdate = () => {
     handleApplySettings();
@@ -116,15 +118,35 @@ const LoggingModal: React.FC<LoggingModalProps> = ({
                 <label className="text-[11px] font-bold text-emerald-600 block mb-2 tracking-tight pl-1">Photos ({loggingData.images.length})</label>
                 <div className="flex flex-wrap gap-3">
                   {loggingData.images.map((img, idx) => (
-                    <div key={idx} className="relative w-14 h-14 rounded-2xl overflow-hidden border-2 border-white shadow-md group">
-                      <img src={img} className="w-full h-full object-cover" />
-                      <button onClick={() => setLoggingData({...loggingData, images: loggingData.images.filter((_, i) => i !== idx)})} className="absolute top-0 right-0 p-1 bg-red-500 text-white rounded-bl-xl opacity-0 group-hover:opacity-100 transition-opacity"><X size={12} /></button>
+                    <div key={idx} className="relative w-14 h-14 rounded-2xl overflow-hidden border-2 border-white shadow-md group active:scale-95 transition-all">
+                      <img 
+                        src={img} 
+                        className="w-full h-full object-cover cursor-zoom-in" 
+                        onClick={() => setPreviewImage?.(img)}
+                      />
+                      <button onClick={() => setLoggingData({...loggingData, images: loggingData.images.filter((_, i) => i !== idx)})} className="absolute top-0 right-0 p-1 bg-red-500 text-white rounded-bl-xl opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer shadow-sm"><X size={12} /></button>
                     </div>
                   ))}
                   <label className="w-14 h-14 flex items-center justify-center bg-emerald-50 border-2 border-dashed border-emerald-100 rounded-2xl cursor-pointer hover:bg-emerald-100 text-emerald-400 transition-colors shadow-inner">
                     <Plus size={20} />
                     <input type="file" multiple accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, 'current')} />
                   </label>
+                </div>
+              </section>
+
+              <section>
+                <label className="text-[11px] font-bold text-emerald-600 block mb-2 tracking-tight pl-1">Link</label>
+                <div className="relative group">
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 text-emerald-400 group-focus-within:text-emerald-500 transition-colors pointer-events-none">
+                    <LinkIcon size={14} />
+                  </div>
+                  <input 
+                    type="url"
+                    placeholder="https://..." 
+                    value={loggingData.link || ''} 
+                    onChange={(e) => setLoggingData({...loggingData, link: e.target.value})} 
+                    className="w-full bg-emerald-50/50 border border-emerald-50 rounded-2xl p-3 pl-10 pr-4 text-sm outline-none focus:ring-2 focus:ring-emerald-500/10 transition-all font-bold text-emerald-900 truncate" 
+                  />
                 </div>
               </section>
 

@@ -63,6 +63,9 @@ ipcMain.on('open-devtools', () => {
 });
 
 let originalSize = { width: 1440, height: 900 };
+let lastMiniPos = null;
+let originalPosition = null;
+let isCurrentlyMini = false;
 
 ipcMain.on('window-control', (event, action) => {
   if (!mainWindow) return;
@@ -87,30 +90,51 @@ ipcMain.on('toggle-mini-mode', (event, isMini) => {
   if (mainWindow) {
     const primaryDisplay = screen.getPrimaryDisplay();
     const { width: screenWidth, height: screenHeight } = primaryDisplay.workAreaSize;
+    const miniWidth = 320;
+    const miniHeight = 80;
 
     if (isMini) {
+      // Entering Mini Mode
       const size = mainWindow.getSize();
+      const pos = mainWindow.getPosition();
       originalSize = { width: size[0], height: size[1] };
-      
-      const miniWidth = 320;
-      const miniHeight = 80;
+      originalPosition = { x: pos[0], y: pos[1] };
+      isCurrentlyMini = true;
       
       mainWindow.setResizable(true); // Temporarily allow resize to set size
       mainWindow.setMinimumSize(miniWidth, miniHeight);
       mainWindow.setSize(miniWidth, miniHeight);
       
-      // Position at bottom-left
-      mainWindow.setPosition(20, screenHeight - miniHeight - 20);
+      if (!lastMiniPos) {
+        // First time shrinking: Default to bottom-right
+        lastMiniPos = {
+          x: screenWidth - miniWidth - 20,
+          y: screenHeight - miniHeight - 20
+        };
+      }
       
+      mainWindow.setPosition(lastMiniPos.x, lastMiniPos.y);
       mainWindow.setAlwaysOnTop(true);
       mainWindow.setResizable(false);
     } else {
+      // Leaving Mini Mode
+      if (isCurrentlyMini) {
+        // Save the location where the user might have dragged the mini window
+        const pos = mainWindow.getPosition();
+        lastMiniPos = { x: pos[0], y: pos[1] };
+      }
+      isCurrentlyMini = false;
+
       mainWindow.setResizable(true);
       mainWindow.setMinimumSize(1000, 700);
       mainWindow.setSize(originalSize.width, originalSize.height);
       
-      // Center the window
-      mainWindow.center();
+      // If we saved an original position, try to return there; else center
+      if (originalPosition) {
+        mainWindow.setPosition(originalPosition.x, originalPosition.y);
+      } else {
+        mainWindow.center();
+      }
       
       mainWindow.setAlwaysOnTop(false);
     }

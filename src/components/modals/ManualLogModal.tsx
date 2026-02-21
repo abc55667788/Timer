@@ -1,5 +1,5 @@
 ﻿import React from 'react';
-import { X, Plus, Calendar, Clock, Edit3 } from 'lucide-react';
+import { X, Plus, Calendar, Clock, Edit3, Link as LinkIcon, ExternalLink, Copy } from 'lucide-react';
 import { Category, CategoryData, CATEGORY_ICONS } from '../../types';
 import TimePicker from '../TimePicker';
 import DatePicker from '../DatePicker';
@@ -7,7 +7,7 @@ import DatePicker from '../DatePicker';
 interface ManualLogModalProps {
   wasMiniModeBeforeModal: boolean;
   isMiniMode: boolean;
-  manualLog: { category: Category; description: string; date: string; startTime: string; endTime: string; images: string[] };
+  manualLog: { category: Category; description: string; date: string; startTime: string; endTime: string; images: string[]; link?: string };
   setManualLog: (log: any) => void;
   manualLogError: string | null;
   categories: CategoryData[];
@@ -118,7 +118,7 @@ const ManualLogModal: React.FC<ManualLogModalProps> = ({
                   <textarea rows={2} placeholder="What did you work on?" value={manualLog.description} onChange={(e) => setManualLog({...manualLog, description: e.target.value})} className="w-full bg-emerald-50/50 border border-emerald-50 rounded-[1.5rem] p-3 pl-11 pr-4 text-sm outline-none focus:ring-2 focus:ring-emerald-500/10 transition-all resize-none text-emerald-900 font-bold tracking-tight" />
                 </div>
               </section>
-              
+
               <section>
                 <label className="text-[11px] font-bold tracking-tight text-emerald-600 block mb-2 pl-1">Photos ({manualLog.images.length})</label>
                 <div className="flex flex-wrap gap-3">
@@ -140,6 +140,20 @@ const ManualLogModal: React.FC<ManualLogModalProps> = ({
                     <Plus size={20} />
                     <input type="file" multiple accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, 'manual')} />
                   </label>
+                </div>
+              </section>
+
+              <section>
+                <label className="text-[11px] font-bold tracking-tight text-emerald-600 block mb-2 pl-1">Link</label>
+                <div className="relative group">
+                  <LinkIcon size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-emerald-300 pointer-events-none group-focus-within:text-emerald-500 transition-colors" />
+                  <input 
+                    type="url"
+                    placeholder="https://..." 
+                    value={manualLog.link || ''} 
+                    onChange={(e) => setManualLog({...manualLog, link: e.target.value})} 
+                    className="w-full bg-emerald-50/50 border border-emerald-50 rounded-2xl p-3 pl-11 pr-4 text-sm outline-none focus:ring-2 focus:ring-emerald-500/10 transition-all text-emerald-900 font-bold tracking-tight truncate" 
+                  />
                 </div>
               </section>
 

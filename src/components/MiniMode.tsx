@@ -49,10 +49,10 @@ const MiniMode: React.FC<MiniModeProps> = ({
       style={{ WebkitAppRegion: 'drag', transform: 'translateZ(0)' } as any}
     >
       <div className="flex-1 flex items-center px-4 md:px-6">
-        <div className="flex items-center justify-between w-full">
-          <div className="flex flex-col animate-in fade-in slide-in-from-left-4 duration-700">
+        <div className="flex items-center justify-between w-full h-full">
+          <div className="flex flex-col flex-1 min-w-0 animate-in fade-in slide-in-from-left-4 duration-700">
             <div className="flex items-center gap-2 mb-0.5">
-              <span className={`text-[10px] font-bold tracking-tight ${phase === 'work' ? 'text-emerald-700' : 'text-emerald-600'}`}>
+              <span className={`text-[10px] font-bold tracking-tight uppercase truncate ${phase === 'work' ? 'text-emerald-700' : 'text-emerald-600'}`}>
                 {currentTask.category}
               </span>
               <button 
@@ -64,12 +64,18 @@ const MiniMode: React.FC<MiniModeProps> = ({
                 <Maximize2 size={13} strokeWidth={2.5} />
               </button>
             </div>
-              <div className="flex items-baseline gap-1">
-              <span className="text-3xl font-mono font-bold tabular-nums tracking-tighter leading-none mb-1">{formatTime(displayTime)}</span>
-              {isOvertime && <span className="text-[10px] text-orange-500 font-bold">+{formatTime(overtimeSeconds)}</span>}
+            <div className="flex items-baseline gap-1 flex-wrap-0 whitespace-nowrap">
+              <span className={`${displayTime >= 3600 ? 'text-2xl' : 'text-3xl'} font-mono font-bold tabular-nums tracking-tighter leading-none mb-1 whitespace-nowrap`}>
+                {formatTime(displayTime)}
+              </span>
+              {isOvertime && (
+                <span className="text-[10px] text-orange-500 font-bold ml-1 whitespace-nowrap">
+                  +{formatTime(overtimeSeconds)}
+                </span>
+              )}
             </div>
           </div>
-          <div className="flex gap-1.5" style={{ WebkitAppRegion: 'no-drag' } as any}>
+          <div className="flex gap-1.5 flex-shrink-0 ml-4" style={{ WebkitAppRegion: 'no-drag' } as any}>
              <button title="Journal Sidebar" onClick={() => { setIsMiniMode(false); setActiveTab('timer'); setIsJournalOpen(true); }} className="p-2.5 rounded-xl bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-all duration-300 ease-in-out active:scale-90 flex items-center justify-center shadow-sm"><BookOpen size={15}/></button>
              <button onClick={() => setShowLoggingModal(true)} title="Quick Log" className="p-2.5 rounded-xl bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-all duration-300 ease-in-out active:scale-90 shadow-sm"><Edit3 size={15}/></button>
              
