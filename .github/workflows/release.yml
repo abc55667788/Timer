@@ -128,7 +128,7 @@ jobs:
       - name: Create GitHub Release and upload artifacts
         uses: ncipollo/release-action@v1
         with:
-          name: "Emerald Timer v1.4.0 - Professional Design"
+          name: "Emerald Timer v1.4.0 - Professional Edition (Added Dark Mode)"
           body: |
             ## 💎 Emerald Timer v1.4.0 正式版
             此版本包含了全新的 **Professional Edition (Dark Mode)** 设计，从底层重构了视觉体感。
