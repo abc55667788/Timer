@@ -66,12 +66,12 @@ const TimerBoard: React.FC<TimerBoardProps> = ({
           </div>
 
           <div onClick={() => setShowLoggingModal(true)} className="relative group cursor-pointer active:scale-[0.98] transition-all">
-            <div className={`absolute inset-0 ${darkMode ? 'bg-emerald-400/5' : 'bg-emerald-100/30'} rounded-full blur-[40px] opacity-20 group-hover:opacity-30 transition-opacity`}></div>
+            <div className={`absolute inset-0 ${darkMode ? 'bg-emerald-400/5' : 'bg-emerald-100/30'} rounded-full blur-[24px] opacity-10 group-hover:opacity-20 transition-opacity`}></div>
             <svg className={`${isAndroid ? 'w-64 h-64' : 'w-56 h-56 sm:w-64 sm:h-64 md:w-80 md:h-80'} -rotate-90`} viewBox="0 0 300 300">
               <circle cx="150" cy="150" r={135} stroke="currentColor" strokeWidth="6" fill="transparent" className={darkMode ? 'text-white/5' : 'text-emerald-50'} />
               <circle cx="150" cy="150" r={135} stroke="currentColor" strokeWidth="10" fill="transparent" 
                 strokeDasharray={2 * Math.PI * 135} strokeDashoffset={(2 * Math.PI * 135) - ((timeLeft / (phase === 'work' ? settings.workDuration : settings.restDuration)) * 2 * Math.PI * 135)}
-                className={`text-emerald-500 transition-all duration-1000 ease-linear ${darkMode ? 'drop-shadow-[0_0_8px_rgba(16,185,129,0.2)]' : ''}`}
+                className={`text-emerald-500 transition-all duration-1000 ease-linear`}
                 strokeLinecap="round"
               />
             </svg>
