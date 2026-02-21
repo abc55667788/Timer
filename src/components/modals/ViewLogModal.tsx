@@ -88,8 +88,8 @@ const ViewLogModal: React.FC<ViewLogModalProps> = ({
             onClick={() => setViewingLog({...viewingLog, category: cat.name})}
             className={`flex flex-col items-center justify-center p-2 rounded-2xl border-2 transition-all ${
               isSelected 
-                ? 'border-emerald-500 bg-emerald-50 shadow-sm' 
-                : 'border-transparent bg-gray-50/50 hover:bg-gray-100'
+                ? 'border-emerald-500 bg-white/60 backdrop-blur-md shadow-sm' 
+                : 'border-transparent bg-white/20 backdrop-blur-sm hover:bg-white/40'
             }`}
           >
             <div className={`p-1.5 rounded-lg mb-1 transition-colors ${isSelected ? '' : 'text-gray-400'}`} style={{ backgroundColor: isSelected ? `${color}15` : undefined, color: isSelected ? color : undefined }}>
@@ -105,18 +105,18 @@ const ViewLogModal: React.FC<ViewLogModalProps> = ({
   const ViewingIcon = CATEGORY_ICONS[categories.find(c => c.name === viewingLog.category)?.icon as keyof typeof CATEGORY_ICONS] || CATEGORY_ICONS.Briefcase;
 
   return (
-    <div className={`fixed inset-0 ${(wasMiniModeBeforeModal || isMiniMode) ? 'bg-transparent' : 'bg-emerald-900/60 backdrop-blur-xl'} flex items-center justify-center p-6 z-[150] animate-in fade-in duration-300`}>
-      <div className={`bg-white rounded-[3rem] p-8 w-full shadow-2xl relative max-h-[90vh] overflow-y-auto scrollbar-none ring-1 ring-emerald-100/50 transition-all duration-300 ${isEditMode ? 'max-w-lg' : 'max-w-sm'}`} style={{ WebkitAppRegion: 'drag' } as any}>
+    <div className={`fixed inset-0 ${(wasMiniModeBeforeModal || isMiniMode) ? 'bg-transparent' : 'bg-emerald-950/40 backdrop-blur-xl'} flex items-center justify-center p-6 z-[150] animate-in fade-in duration-300`}>
+      <div className={`bg-white/80 backdrop-blur-2xl rounded-[2.5rem] p-8 w-full shadow-2xl relative max-h-[90vh] overflow-y-auto scrollbar-none border border-white/40 ring-1 ring-emerald-100/20 transition-all duration-300 ${isEditMode ? 'max-w-lg' : 'max-w-sm'}`} style={{ WebkitAppRegion: 'drag' } as any}>
          <div style={{ WebkitAppRegion: 'no-drag' } as any} onPaste={handleClipboardImagePaste}>
            {!isEditMode ? (
              <div className="animate-in fade-in slide-in-from-bottom-4">
                <div className="flex items-center gap-5 mb-8">
-                  <div className="w-16 h-16 bg-emerald-50 rounded-[1.5rem] flex items-center justify-center text-emerald-600 shadow-inner ring-4 ring-white">
+                  <div className="w-16 h-16 bg-white/40 backdrop-blur-md rounded-[1.5rem] flex items-center justify-center text-emerald-600 shadow-sm border border-white/20">
                     <ViewingIcon size={32} style={{ color: getCategoryColor(viewingLog.category) }} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <h2 className="text-xl font-bold text-emerald-950 leading-tight pr-2 tracking-tight truncate">{viewingLog.description || 'Focus Session'}</h2>
-                    <div className="text-[11px] font-bold text-emerald-400 mb-3 ml-0.5 tracking-tight">{formatDisplayDate(viewingLog.startTime)}{viewingLog.endTime && formatDisplayDate(viewingLog.startTime) !== formatDisplayDate(viewingLog.endTime) ? ` - ${formatDisplayDate(viewingLog.endTime)}` : ''}</div>
+                    <div className="text-[11px] font-bold text-emerald-400 mb-3 ml-0.5 tracking-tight opacity-80">{formatDisplayDate(viewingLog.startTime)}{viewingLog.endTime && formatDisplayDate(viewingLog.startTime) !== formatDisplayDate(viewingLog.endTime) ? ` - ${formatDisplayDate(viewingLog.endTime)}` : ''}</div>
                     <span className="text-[10px] font-bold text-white px-4 py-1.5 rounded-xl shadow-[0_4px_12px_rgba(0,0,0,0.1)] tracking-tight inline-block" style={{ backgroundColor: getCategoryColor(viewingLog.category) }}>{viewingLog.category}</span>
                   </div>
                </div>
@@ -124,26 +124,26 @@ const ViewLogModal: React.FC<ViewLogModalProps> = ({
                {viewingLogMetadata && (
                  <div className="space-y-4 mb-8">
                    <div className="grid grid-cols-3 gap-3">
-                     <div className="rounded-[1.5rem] border border-emerald-50 bg-emerald-50/70 p-4 flex flex-col items-center justify-center gap-1.5 shadow-sm">
-                       <span className="text-[10px] font-bold tracking-tight text-emerald-400 opacity-80">Start</span>
+                     <div className="rounded-[1.5rem] border border-white/20 bg-white/40 backdrop-blur-md p-4 flex flex-col items-center justify-center gap-1.5 shadow-sm">
+                       <span className="text-[10px] font-bold tracking-tight text-emerald-400 opacity-80 uppercase">Start</span>
                        <span className="text-base font-bold text-emerald-950 font-mono tracking-tight">{formatClock(viewingLog.startTime)}</span>
                      </div>
-                     <div className="rounded-[1.5rem] border border-emerald-50 bg-white shadow-sm p-4 flex flex-col items-center justify-center gap-1.5">
-                       <span className="text-[10px] font-bold tracking-tight text-emerald-400 opacity-80">End</span>
+                     <div className="rounded-[1.5rem] border border-white/20 bg-white/40 backdrop-blur-md shadow-sm p-4 flex flex-col items-center justify-center gap-1.5">
+                       <span className="text-[10px] font-bold tracking-tight text-emerald-400 opacity-80 uppercase">End</span>
                        <span className="text-base font-bold text-emerald-950 font-mono tracking-tight">{viewingLog.endTime ? formatClock(viewingLog.endTime) : 'Now'}</span>
                      </div>
-                     <div className="rounded-[1.5rem] border border-emerald-50 bg-emerald-50/40 p-4 flex flex-col items-center justify-center gap-1.5 shadow-sm">
-                       <span className="text-[10px] font-bold tracking-tight text-emerald-400 opacity-80">Time</span>
+                     <div className="rounded-[1.5rem] border border-white/20 bg-white/40 backdrop-blur-md p-4 flex flex-col items-center justify-center gap-1.5 shadow-sm">
+                       <span className="text-[10px] font-bold tracking-tight text-emerald-400 opacity-80 uppercase">Time</span>
                        <span className="text-base font-bold text-emerald-950 font-mono tracking-tight">{viewingLogMetadata.durationLabel}</span>
                      </div>
                    </div>
                    <div className="grid grid-cols-2 gap-3">
-                     <div className="rounded-[1.5rem] border border-emerald-50 bg-white p-4 flex items-center justify-between px-6 shadow-sm">
-                       <span className="text-[11px] font-bold tracking-tight text-emerald-300">Focus</span>
+                     <div className="rounded-[1.5rem] border border-white/20 bg-white/40 backdrop-blur-md p-4 flex items-center justify-between px-6 shadow-sm">
+                       <span className="text-[11px] font-bold tracking-tight text-emerald-400 opacity-80">Focus</span>
                        <span className="text-sm font-bold text-emerald-900 font-mono tracking-tight">{formatTime(viewingLogMetadata.phaseDetails.work)}</span>
                      </div>
-                     <div className="rounded-[1.5rem] border border-emerald-50 bg-white p-4 flex items-center justify-between px-6 shadow-sm">
-                       <span className="text-[11px] font-bold tracking-tight text-emerald-300">Rest</span>
+                     <div className="rounded-[1.5rem] border border-white/20 bg-white/40 backdrop-blur-md p-4 flex items-center justify-between px-6 shadow-sm">
+                       <span className="text-[11px] font-bold tracking-tight text-emerald-400 opacity-80">Rest</span>
                        <span className="text-sm font-bold text-emerald-900 font-mono tracking-tight">{formatTime(viewingLogMetadata.phaseDetails.rest)}</span>
                      </div>
                    </div>
@@ -155,7 +155,7 @@ const ViewLogModal: React.FC<ViewLogModalProps> = ({
                    <label className="text-[10px] font-bold tracking-tight text-emerald-400 block mb-4 pl-1 uppercase">Photos ({viewingLog.images.length})</label>
                    <div className="grid grid-cols-3 gap-3">
                      {viewingLog.images.map((img, idx) => (
-                       <div key={idx} className="relative aspect-square rounded-2xl overflow-hidden border-4 border-white shadow-md group">
+                       <div key={idx} className="relative aspect-square rounded-2xl overflow-hidden border border-white shadow-md group">
                          <img src={img} className="w-full h-full object-cover cursor-zoom-in hover:scale-110 transition-transform duration-700" onClick={() => setPreviewImage(img)} />
                        </div>
                      ))}
@@ -170,7 +170,7 @@ const ViewLogModal: React.FC<ViewLogModalProps> = ({
                       href={viewingLog.link.startsWith('http') ? viewingLog.link : `https://${viewingLog.link}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-3 bg-emerald-50/50 border border-emerald-100/30 rounded-2xl p-4 text-[11px] font-bold text-emerald-600 hover:bg-emerald-100/50 transition-all group"
+                      className="flex items-center gap-3 bg-white/40 backdrop-blur-md border border-white/20 rounded-2xl p-4 text-[11px] font-bold text-emerald-600 hover:bg-white/60 transition-all group shadow-sm"
                     >
                       <LinkIcon size={14} className="flex-shrink-0" />
                       <span className="truncate flex-1">{viewingLog.link}</span>
@@ -180,9 +180,9 @@ const ViewLogModal: React.FC<ViewLogModalProps> = ({
                )}
 
                <div className="flex gap-3 mt-4">
-                 <button onClick={() => setIsEditMode(true)} className="flex-1 py-4 bg-emerald-50 text-emerald-600 rounded-[1.5rem] font-black tracking-tight border border-emerald-100/50 hover:bg-emerald-600 hover:text-white hover:shadow-lg hover:shadow-emerald-100 active:scale-[0.98] transition-all text-[11px]">Edit</button>
-                 <button onClick={() => { setViewingLog(null); setIsEditMode(false); setPhaseEditTouched(false); }} className="flex-1 py-4 bg-slate-50 text-slate-500 rounded-[1.5rem] font-black tracking-tight border border-slate-100 hover:bg-slate-700 hover:text-white hover:shadow-lg hover:shadow-slate-100 active:scale-[0.98] transition-all text-[11px]">Close</button>
-                 <button onClick={() => handleDeleteLog(viewingLog.id)} className="flex-1 py-4 bg-red-50 text-red-400 rounded-[1.5rem] font-black tracking-tight border border-red-100 hover:bg-red-500 hover:text-white hover:shadow-lg hover:shadow-red-100 active:scale-[0.98] transition-all text-[11px]">Delete</button>
+                 <button onClick={() => setIsEditMode(true)} className="flex-1 py-4 bg-emerald-600 text-white rounded-[1.5rem] font-black tracking-tight shadow-lg shadow-emerald-200 hover:brightness-110 active:scale-[0.98] transition-all text-[11px]">Edit</button>
+                 <button onClick={() => { setViewingLog(null); setIsEditMode(false); setPhaseEditTouched(false); }} className="flex-1 py-4 bg-white/60 backdrop-blur-md text-emerald-600 rounded-[1.5rem] font-black tracking-tight border border-white/20 shadow-sm hover:bg-white/80 active:scale-[0.98] transition-all text-[11px]">Close</button>
+                 <button onClick={() => handleDeleteLog(viewingLog.id)} className="flex-1 py-4 bg-red-50 text-red-500 rounded-[1.5rem] font-black tracking-tight border border-red-100 hover:bg-red-500 hover:text-white active:scale-[0.98] transition-all text-[11px]">Delete</button>
                </div>
              </div>
            ) : (

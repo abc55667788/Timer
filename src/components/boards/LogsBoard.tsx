@@ -11,8 +11,8 @@ interface LogsBoardProps {
   filteredLogs: LogEntry[];
   showFilters: boolean;
   setShowFilters: (show: boolean) => void;
-  filterCategory: Category | 'All';
-  setFilterCategory: (cat: Category | 'All') => void;
+  filterCategories: Category[];
+  setFilterCategories: (cats: Category[]) => void;
   filterStartDate: string;
   filterEndDate: string;
   setFilterStartDate: (date: string) => void;
@@ -29,8 +29,8 @@ const LogsBoard: React.FC<LogsBoardProps> = ({
   filteredLogs,
   showFilters,
   setShowFilters,
-  filterCategory,
-  setFilterCategory,
+  filterCategories,
+  setFilterCategories,
   filterStartDate,
   filterEndDate,
   setFilterStartDate,
@@ -42,18 +42,26 @@ const LogsBoard: React.FC<LogsBoardProps> = ({
   setPreviewImage,
   categories
 }) => {
+  const toggleCategory = (cat: Category) => {
+    if (filterCategories.includes(cat)) {
+      setFilterCategories(filterCategories.filter(c => c !== cat));
+    } else {
+      setFilterCategories([...filterCategories, cat]);
+    }
+  };
+
   return (
     <div className="space-y-6 w-full pb-6">
-      <div className="flex justify-between items-center py-4 border-b border-emerald-50 px-2 lg:px-4">
-        <div className="flex items-center gap-2 lg:gap-4">
-          <h3 className="text-sm font-bold tracking-tight text-emerald-900 flex items-center gap-2 lg:gap-3">
+      <div className="flex justify-between items-center py-4 border-b border-white/20 px-2 lg:px-4">
+        <div className="flex items-center gap-2 lg:gap-4 flex-1">
+          <h3 className="text-sm font-bold tracking-tight text-emerald-900 flex items-center gap-2 lg:gap-3 flex-shrink-0">
             <Clock size={16} className="text-emerald-500" /> History Logs
           </h3>
           <button 
             onClick={() => setShowFilters(!showFilters)} 
-            className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-[10px] font-bold transition-all ${showFilters ? 'bg-emerald-600 text-white' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'}`}
+            className={`flex items-center gap-2 px-3 py-2 rounded-xl text-[11px] font-bold transition-all shadow-sm ${showFilters ? 'bg-emerald-600 text-white shadow-emerald-200' : 'bg-white/60 backdrop-blur-md text-emerald-700 hover:bg-white/80 border border-white/20'}`}
           >
-            <FilterIcon size={12}/> Filter
+            <FilterIcon size={14}/> Filter
           </button>
         </div>
         <button 
@@ -65,58 +73,68 @@ const LogsBoard: React.FC<LogsBoardProps> = ({
       </div>
 
       {showFilters && (
-        <div className="bg-emerald-50/50 p-7 rounded-[3rem] border border-emerald-100/50 animate-in fade-in slide-in-from-top-6 duration-500 mb-6">
-          <div className="space-y-6">
-            <div className="space-y-3">
-              <label className="text-[11px] font-bold text-emerald-400 tracking-tight ml-1">Category Filter</label>
-              <div className="flex flex-wrap gap-2">
+        <div className="bg-white/80 backdrop-blur-3xl p-3 lg:p-4 rounded-[1.5rem] lg:rounded-[2.5rem] border border-white/40 animate-in fade-in slide-in-from-top-4 duration-500 mb-6 shadow-[0_20px_50px_-20px_rgba(16,185,129,0.15)] relative z-[150]">
+          <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-4 lg:gap-6">
+            {/* Categories - Scrollable row */}
+            <div className="flex-1 flex flex-col gap-1 min-w-0">
+              <label className="text-[9px] font-black text-emerald-400 tracking-wider ml-1 uppercase opacity-50">Filter by Categories</label>
+              <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none py-1.5 px-0.5">
                 <button 
-                  onClick={() => setFilterCategory('All')} 
-                  className={`px-4 py-2 rounded-xl text-[11px] font-bold tracking-tight transition-all ${
-                    filterCategory === 'All' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-100' : 'bg-white text-emerald-400 border border-emerald-100 hover:bg-emerald-50'
+                  onClick={() => setFilterCategories([])} 
+                  className={`flex-shrink-0 px-4 py-1.5 rounded-full text-[10px] font-black tracking-tight transition-all border-2 ${
+                    filterCategories.length === 0 
+                      ? 'bg-emerald-600 text-white border-emerald-600 shadow-lg shadow-emerald-200' 
+                      : 'bg-white/80 text-emerald-500 border-emerald-100 hover:border-emerald-300'
                   }`}
                 >
-                  All
+                  ALL
                 </button>
-                {categories.map((cat, idx) => (
-                  <button 
-                    key={idx}
-                    onClick={() => setFilterCategory(cat.name as any)} 
-                    className={`px-4 py-2 rounded-xl text-[11px] font-bold tracking-tight transition-all ${
-                      filterCategory === cat.name ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-100' : 'bg-white text-emerald-400 border border-emerald-100 hover:bg-emerald-50'
-                    }`}
-                  >
-                    {cat.name}
-                  </button>
-                ))}
+                {categories.map((cat, idx) => {
+                  const isSelected = filterCategories.includes(cat.name as Category);
+                  return (
+                    <button 
+                      key={idx}
+                      onClick={() => toggleCategory(cat.name as Category)} 
+                      className={`flex-shrink-0 px-4 py-1.5 rounded-full text-[10px] font-black tracking-tight transition-all border-2 ${
+                        isSelected 
+                          ? 'text-white shadow-lg' 
+                          : 'bg-white/80 text-emerald-400 border-white hover:border-emerald-100'
+                      }`}
+                      style={isSelected ? { backgroundColor: cat.color, borderColor: cat.color, boxShadow: `0 8px 20px -6px ${cat.color}60` } : {}}
+                    >
+                      {cat.name.toUpperCase()}
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-              <div className="space-y-3">
-                <label className="text-[11px] font-bold text-emerald-400 tracking-tight ml-1">From Date</label>
+            {/* Date Pickers - Row */}
+            <div className="flex items-end gap-3 flex-shrink-0 pt-2 lg:pt-0 lg:border-l lg:border-emerald-100/50 lg:pl-6">
+              <div className="flex flex-col gap-1 w-[120px] lg:w-[140px]">
+                <label className="text-[9px] font-black text-emerald-400 tracking-wider ml-1 uppercase opacity-50">From</label>
                 <DatePicker 
                   value={filterStartDate} 
                   onChange={setFilterStartDate} 
+                  className="z-[160]"
                 />
               </div>
-              <div className="space-y-3">
-                <label className="text-[11px] font-bold text-emerald-400 tracking-tight ml-1">To Date</label>
+              <div className="flex flex-col gap-1 w-[120px] lg:w-[140px]">
+                <label className="text-[9px] font-black text-emerald-400 tracking-wider ml-1 uppercase opacity-50">To</label>
                 <DatePicker 
                   value={filterEndDate} 
                   onChange={setFilterEndDate} 
+                  className="z-[160]"
                 />
               </div>
+              <button 
+                onClick={() => { setFilterCategories([]); setFilterStartDate(''); setFilterEndDate(''); }} 
+                className="h-[38px] px-3 rounded-xl bg-red-50 text-red-500 text-[9px] font-black tracking-widest hover:bg-red-500 hover:text-white transition-all flex items-center justify-center border border-red-100/50"
+                title="Reset Filters"
+              >
+                RESET
+              </button>
             </div>
-          </div>
-
-          <div className="flex justify-end mt-6 pt-4 border-t border-emerald-100/50">
-            <button 
-              onClick={() => { setFilterCategory('All'); setFilterStartDate(''); setFilterEndDate(''); }} 
-              className="px-4 py-1 text-[11px] font-bold text-emerald-400 hover:text-emerald-700 tracking-tight transition-all hover:translate-x-1"
-            >
-              Reset Filters →
-            </button>
           </div>
         </div>
       )}
@@ -127,13 +145,13 @@ const LogsBoard: React.FC<LogsBoardProps> = ({
             <div 
               key={log.id} 
               onClick={() => handleViewLog(log)} 
-              className="bg-white p-6 rounded-[2.5rem] border border-emerald-50 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all flex flex-col cursor-pointer relative overflow-hidden group" 
+              className="bg-white/40 backdrop-blur-xl p-6 rounded-[2.5rem] border border-white/20 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all flex flex-col cursor-pointer relative overflow-hidden group" 
               style={{ borderLeft: `10px solid ${getCategoryColor(log.category)}` }}
             >
               {/* Header: Category Tag (Colored) & Duration */}
               <div className="flex justify-between items-center mb-4">
                 <div 
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-black/5 shadow-sm"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-white/20 shadow-sm"
                   style={{ backgroundColor: `${getCategoryColor(log.category)}15`, color: getCategoryColor(log.category) }}
                 >
                   <div className="flex-shrink-0">
@@ -143,14 +161,14 @@ const LogsBoard: React.FC<LogsBoardProps> = ({
                     {log.category}
                   </span>
                 </div>
-                <div className="bg-emerald-50/50 px-3 py-1 rounded-lg text-xs font-black text-emerald-700 tracking-tighter tabular-nums">
+                <div className="bg-white/30 backdrop-blur-md px-3 py-1 rounded-lg text-xs font-black text-emerald-700 tracking-tighter tabular-nums border border-white/10">
                   {formatTime(log.duration)}
                 </div>
               </div>
 
               {/* Time and Description */}
               <div className="flex-1 space-y-2 mb-6">
-                <div className="text-[11px] font-bold text-emerald-300 tracking-tight pl-0.5">
+                <div className="text-[11px] font-bold text-emerald-300 tracking-tight pl-0.5 opacity-80">
                    {formatDisplayDate(log.startTime)}
                 </div>
                 <h4 className="font-black text-emerald-900 leading-[1.3] tracking-tight text-[15px] line-clamp-3 pl-0.5">
@@ -164,14 +182,14 @@ const LogsBoard: React.FC<LogsBoardProps> = ({
                   {log.images.slice(0, 4).map((img, imgIdx) => (
                     <div 
                       key={imgIdx} 
-                      className="relative w-12 h-12 rounded-xl overflow-hidden border border-emerald-100/50 shadow-sm hover:scale-105 transition-transform flex-shrink-0"
+                      className="relative w-12 h-12 rounded-xl overflow-hidden border border-white/20 shadow-sm hover:scale-105 transition-transform flex-shrink-0"
                       onClick={(e) => { e.stopPropagation(); setPreviewImage(img); }}
                     >
                       <img src={img} className="w-full h-full object-cover" />
                     </div>
                   ))}
                   {log.images.length > 4 && (
-                    <div className="w-12 h-12 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-[11px] font-black text-emerald-400 flex-shrink-0">
+                    <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm border border-white/20 flex items-center justify-center text-[11px] font-black text-emerald-400 flex-shrink-0">
                       +{log.images.length - 4}
                     </div>
                   )}
@@ -183,7 +201,7 @@ const LogsBoard: React.FC<LogsBoardProps> = ({
                     target="_blank" 
                     rel="noopener noreferrer"
                     onClick={(e) => e.stopPropagation()}
-                    className="w-12 h-12 rounded-[1.25rem] flex items-center justify-center transition-all shadow-md hover:shadow-lg hover:-translate-y-1 active:scale-90 border border-black/5"
+                    className="w-12 h-12 rounded-[1.25rem] flex items-center justify-center transition-all shadow-md hover:shadow-lg hover:-translate-y-1 active:scale-90 border border-white/20"
                     style={{ backgroundColor: `${getCategoryColor(log.category)}15`, color: getCategoryColor(log.category) }}
                     title={log.link}
                   >
@@ -195,9 +213,10 @@ const LogsBoard: React.FC<LogsBoardProps> = ({
           ))}
         </div>
       ) : (
-        <div className="flex flex-col items-center justify-center py-24 bg-emerald-50/20 rounded-[3.5rem] border-2 border-dashed border-emerald-100 gap-4">
+        <div className="flex flex-col items-center justify-center py-24 bg-white/20 backdrop-blur-xl rounded-[3.5rem] border-2 border-dashed border-white/20 gap-4">
            <Search size={48} className="text-emerald-200" />
            <p className="text-[10px] font-bold tracking-tight text-emerald-300">No matching logs found</p>
+```
         </div>
       )}
     </div>

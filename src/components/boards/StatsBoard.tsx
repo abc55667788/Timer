@@ -169,9 +169,9 @@ const StatsBoard: React.FC<StatsBoardProps> = ({
       )}
 
       <div className="flex-1 space-y-4 w-full h-full flex flex-col overflow-visible">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between bg-white backdrop-blur-md p-1.5 sm:p-1 rounded-2xl flex-shrink-0 border border-emerald-100/50 gap-2 sticky top-0 z-30">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between bg-white/40 backdrop-blur-xl p-1.5 sm:p-1 rounded-2xl flex-shrink-0 border border-white/20 gap-2 sticky top-0 z-30 shadow-sm">
            <div className="flex items-center gap-1 overflow-x-auto scrollbar-none pb-0.5 sm:pb-0">
-             <button onClick={() => setIsCalendarCollapsed(!isCalendarCollapsed)} className="p-2 text-emerald-600 hover:bg-white rounded-xl transition-all shadow-sm flex-shrink-0">
+             <button onClick={() => setIsCalendarCollapsed(!isCalendarCollapsed)} className="p-2 text-emerald-600 hover:bg-white/60 rounded-xl transition-all shadow-sm flex-shrink-0">
                {isCalendarCollapsed ? <PanelLeftOpen size={16}/> : <PanelLeftClose size={16}/>}
              </button>
              {([
@@ -180,12 +180,12 @@ const StatsBoard: React.FC<StatsBoardProps> = ({
                { id: 'month', label: 'Month' },
                { id: 'year', label: 'Year' }
              ] as { id: StatsView, label: string }[]).map(v => (
-               <button key={v.id} onClick={() => setStatsView(v.id)} className={`px-4 py-2 rounded-xl text-[10px] sm:text-[11px] font-bold tracking-tight transition-all flex-shrink-0 ${statsView === v.id ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-200' : 'text-emerald-500 hover:bg-emerald-100'}`}>{v.label}</button>
+               <button key={v.id} onClick={() => setStatsView(v.id)} className={`px-4 py-2 rounded-xl text-[10px] sm:text-[11px] font-bold tracking-tight transition-all flex-shrink-0 ${statsView === v.id ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-200' : 'text-emerald-500 hover:bg-white/50'}`}>{v.label}</button>
              ))}
            </div>
            <div className="flex items-center justify-between sm:justify-end gap-3 px-2 sm:px-0">
               {statsView === 'day' && (
-                <div className="bg-white/80 p-1 rounded-2xl flex border border-emerald-100/50 shadow-sm">
+                <div className="bg-white/30 backdrop-blur-md p-1 rounded-2xl flex border border-white/20 shadow-sm">
                    <button onClick={() => setDayViewMode('timeline')} className={`p-2 rounded-xl transition-all ${dayViewMode === 'timeline' ? 'bg-emerald-600 text-white shadow-md' : 'text-emerald-400 hover:text-emerald-600'}`} title="Timeline View"><LayoutGrid size={16}/></button>
                    <button onClick={() => setDayViewMode('stats')} className={`p-2 rounded-xl transition-all ${dayViewMode === 'stats' ? 'bg-emerald-600 text-white shadow-md' : 'text-emerald-400 hover:text-emerald-600'}`} title="Stats View"><BarChart size={16}/></button>
                 </div>
@@ -199,24 +199,24 @@ const StatsBoard: React.FC<StatsBoardProps> = ({
             <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
                {dayViewMode === 'timeline' ? (
                  <div className="animate-in fade-in zoom-in-95 duration-500">
-                   <div className="relative bg-white rounded-[3rem] border border-emerald-50 h-[240px] shadow-sm overflow-visible group flex-shrink-0">
+                   <div className="relative bg-white/40 backdrop-blur-xl rounded-[3rem] border border-white/20 h-[240px] shadow-sm overflow-visible group flex-shrink-0">
                       <div 
                         ref={zoomToolRef}
-                        className={`absolute top-3 right-3 z-30 flex items-center bg-white/90 backdrop-blur-md rounded-2xl border border-emerald-100 shadow-xl transition-all duration-500 overflow-hidden ${isZoomToolExpanded ? 'p-1 gap-2' : 'p-0 w-10 h-10 shadow-md transform hover:scale-105'}`}
+                        className={`absolute top-3 right-3 z-30 flex items-center bg-white/60 backdrop-blur-xl rounded-2xl border border-white/30 shadow-xl transition-all duration-500 overflow-hidden ${isZoomToolExpanded ? 'p-1 gap-2' : 'p-0 w-10 h-10 shadow-md transform hover:scale-105'}`}
                       >
                         {!isZoomToolExpanded ? (
                           <button 
                             onClick={() => setIsZoomToolExpanded(true)}
-                            className="w-full h-full flex items-center justify-center text-emerald-600 hover:bg-emerald-50 transition-colors"
+                            className="w-full h-full flex items-center justify-center text-emerald-600 hover:bg-white/40 transition-colors"
                             title="Open zoom controls"
                           >
                              <SearchIcon size={18} />
                           </button>
                         ) : (
                           <>
-                            <button onClick={zoomOut} title="Zoom out" className={`p-2 rounded-xl text-emerald-600 hover:bg-emerald-50 transition-all active:scale-90 ${timelineZoom <= MIN_ZOOM ? 'opacity-20 cursor-not-allowed' : ''}`} disabled={timelineZoom <= MIN_ZOOM}><ZoomOut size={16} /></button>
+                            <button onClick={zoomOut} title="Zoom out" className={`p-2 rounded-xl text-emerald-600 hover:bg-white/40 transition-all active:scale-90 ${timelineZoom <= MIN_ZOOM ? 'opacity-20 cursor-not-allowed' : ''}`} disabled={timelineZoom <= MIN_ZOOM}><ZoomOut size={16} /></button>
                             <div className="text-[12px] font-mono font-black text-emerald-950 px-1 select-none pointer-events-none">{Math.round(timelineZoom * 100)}%</div>
-                            <button onClick={zoomIn} title="Zoom in" className={`p-2 rounded-xl text-emerald-600 hover:bg-emerald-50 transition-all active:scale-90 ${timelineZoom >= MAX_ZOOM ? 'opacity-20 cursor-not-allowed' : ''}`} disabled={timelineZoom >= MAX_ZOOM}><ZoomIn size={16} /></button>
+                            <button onClick={zoomIn} title="Zoom in" className={`p-2 rounded-xl text-emerald-600 hover:bg-white/40 transition-all active:scale-90 ${timelineZoom >= MAX_ZOOM ? 'opacity-20 cursor-not-allowed' : ''}`} disabled={timelineZoom >= MAX_ZOOM}><ZoomIn size={16} /></button>
                           </>
                         )}
                       </div>
@@ -268,7 +268,7 @@ const StatsBoard: React.FC<StatsBoardProps> = ({
                    </div>
 
                    <div className="space-y-12 pt-4">
-                     <div className="flex items-center justify-between border-b border-emerald-50 pb-8">
+                     <div className="flex items-center justify-between border-b border-white/20 pb-8">
                        <div className="flex items-center gap-5">
                          <div className="p-4 bg-emerald-600 text-white rounded-[2.25rem] shadow-xl shadow-emerald-200">
                            <History size={26}/>
@@ -280,16 +280,16 @@ const StatsBoard: React.FC<StatsBoardProps> = ({
                        </div>
                        <button 
                          onClick={() => setActiveTab('logs')} 
-                         className="px-6 py-3 bg-emerald-50 text-emerald-600 rounded-2xl text-[11px] font-bold tracking-tight hover:bg-emerald-100 transition-all flex items-center gap-2 shadow-sm"
+                         className="px-6 py-3 bg-white/40 backdrop-blur-md text-emerald-600 rounded-2xl text-[11px] font-bold tracking-tight hover:bg-white/60 transition-all flex items-center gap-2 shadow-sm border border-white/20"
                        >
                          Historical Logs <ExternalLink size={14}/>
                        </button>
                      </div>
 
-                     <div className="space-y-4 pl-6 border-l-2 border-emerald-50/60 ml-6 mr-4 flex-1 min-w-0">
+                     <div className="space-y-4 pl-6 border-l-2 border-white/20 ml-6 mr-4 flex-1 min-w-0">
                        {selectedDayLogs.map((log, idx) => (
                          <div key={log.id} className="relative animate-in slide-in-from-left duration-500" style={{ animationDelay: `${idx * 80}ms` }}>
-                           <div className="absolute -left-[31px] top-3 w-5 h-5 rounded-full flex items-center justify-center ring-4 ring-[#f0f9f0] z-10" style={{ backgroundColor: getCategoryColor(log.category) }}>
+                           <div className="absolute -left-[31px] top-3 w-5 h-5 rounded-full flex items-center justify-center ring-4 ring-white/30 z-10" style={{ backgroundColor: getCategoryColor(log.category) }}>
                               <div className="w-1.5 h-1.5 bg-white rounded-full"/>
                            </div>
 
@@ -297,13 +297,13 @@ const StatsBoard: React.FC<StatsBoardProps> = ({
                              role="button"
                              tabIndex={0}
                              onClick={() => handleViewLog(log)}
-                             className="bg-white p-5 rounded-[2.5rem] border border-emerald-50 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-200 cursor-pointer group flex gap-4 pr-6" 
+                             className="bg-white/40 backdrop-blur-xl p-5 rounded-[2.5rem] border border-white/20 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-200 cursor-pointer group flex gap-4 pr-6" 
                              style={{ borderLeft: `10px solid ${getCategoryColor(log.category)}` }}
                            >
                               <div className="flex-1 min-w-0">
                                 {/* Category Header */}
                                 <div className="flex items-center justify-between mb-3">
-                                  <div className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50/80 rounded-full border border-emerald-100/50">
+                                  <div className="flex items-center gap-1.5 px-3 py-1 bg-white/50 rounded-full border border-white/20">
                                     <div className="text-emerald-600">
                                       {React.createElement(getCategoryIcon(log.category), {size: 14})}
                                     </div>
@@ -376,13 +376,13 @@ const StatsBoard: React.FC<StatsBoardProps> = ({
                  <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-700">
                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-3">
                       <div className="lg:col-span-3 space-y-2">
-                         <div className="bg-emerald-600 text-white px-4 py-3 rounded-[1.5rem] shadow-lg shadow-emerald-100/50 relative overflow-hidden group min-h-[64px] flex flex-col justify-center">
+                         <div className="bg-emerald-600/90 backdrop-blur-md text-white px-4 py-3 rounded-[1.5rem] shadow-lg shadow-emerald-100/50 relative overflow-hidden group min-h-[64px] flex flex-col justify-center">
                            <span className="text-[11px] font-bold tracking-tight opacity-80 relative z-10 text-emerald-50">Focus</span>
                            <div className="text-xl font-black tracking-tighter relative z-10 font-mono">
                              {formatTime(statsData.filter(item => item.name !== 'Rest').reduce((acc, item) => acc + item.value * 60, 0))}
                            </div>
                          </div>
-                         <div className="bg-white border border-emerald-50 px-4 py-3 rounded-[1.5rem] shadow-sm relative overflow-hidden group min-h-[64px] flex flex-col justify-center">
+                         <div className="bg-white/40 backdrop-blur-xl border border-white/20 px-4 py-3 rounded-[1.5rem] shadow-sm relative overflow-hidden group min-h-[64px] flex flex-col justify-center">
                            <span className="text-[11px] font-bold tracking-tight text-emerald-600 relative z-10">Rest</span>
                            <div className="text-xl font-black tracking-tighter relative z-10 font-mono text-emerald-900">
                              {formatTime(restTimeTotal)}
@@ -396,7 +396,7 @@ const StatsBoard: React.FC<StatsBoardProps> = ({
                       
                       <div className="lg:col-span-9 grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-2 pb-3">
                         {statsData.filter(item => item.name !== 'Rest').map((item, idx) => (
-                          <div key={item.name} className="bg-white px-3 py-2 rounded-xl border border-emerald-50 shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5 flex flex-col justify-center group/card" style={{ animationDelay: `${idx * 20}ms` }}>
+                          <div key={item.name} className="bg-white/40 backdrop-blur-xl px-3 py-2 rounded-xl border border-white/20 shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5 flex flex-col justify-center group/card" style={{ animationDelay: `${idx * 20}ms` }}>
                             <div className="flex items-center gap-2 mb-1.5">
                               <div className="w-9 h-9 rounded-lg flex items-center justify-center text-sm shadow-sm flex-shrink-0 transition-transform group-hover/card:scale-110" style={{ backgroundColor: `${getCategoryColor(item.name as Category)}15`, color: getCategoryColor(item.name as Category) }}>
                                 {React.createElement(getCategoryIcon(item.name as Category), { size: 16 })}
@@ -406,7 +406,7 @@ const StatsBoard: React.FC<StatsBoardProps> = ({
                                 <div className="text-sm font-black text-emerald-950 truncate leading-none">{item.value}m</div>
                               </div>
                             </div>
-                            <div className="w-full h-1.5 bg-emerald-50/70 rounded-full overflow-hidden">
+                            <div className="w-full h-1.5 bg-white/20 rounded-full overflow-hidden">
                                <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${(item.value / Math.max(1, statsData.reduce((a,b)=>a+b.value,0)))*100}%`, backgroundColor: getCategoryColor(item.name as Category) }} />
                             </div>
                           </div>
@@ -415,7 +415,7 @@ const StatsBoard: React.FC<StatsBoardProps> = ({
                    </div>
 
                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-in zoom-in-95 duration-500">
-                      <div className="bg-white p-6 rounded-[2.5rem] border border-emerald-50 h-[380px] shadow-sm flex flex-col relative overflow-hidden group">
+                      <div className="bg-white/40 backdrop-blur-xl p-6 rounded-[2.5rem] border border-white/20 h-[380px] shadow-sm flex flex-col relative overflow-hidden group">
                         <h3 className="text-sm font-bold mb-4 text-emerald-800 tracking-tight relative z-10 flex items-center gap-2"><div className="w-1.5 h-4 bg-emerald-600 rounded-full"/> Category Breakdown</h3>
                         {statsData.length > 0 ? (
                           <ResponsiveContainer width="100%" height="100%">
@@ -429,14 +429,14 @@ const StatsBoard: React.FC<StatsBoardProps> = ({
                           </ResponsiveContainer>
                         ) : <div className="h-full flex items-center justify-center text-emerald-200 font-bold tracking-tight">No Activity</div>}
                       </div>
-                      <div className="bg-white p-6 rounded-[2.5rem] border border-emerald-50 h-[380px] shadow-sm flex flex-col relative overflow-hidden group">
+                      <div className="bg-white/40 backdrop-blur-xl p-6 rounded-[2.5rem] border border-white/20 h-[380px] shadow-sm flex flex-col relative overflow-hidden group">
                         <h3 className="text-sm font-bold mb-4 text-emerald-800 tracking-tight relative z-10 flex items-center gap-2"><div className="w-1.5 h-4 bg-emerald-600 rounded-full"/> Time Distribution</h3>
                         <ResponsiveContainer width="100%" height="100%">
                           <ReBarChart data={statsData.filter(d => d.value > 0)}>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#ffffff20" />
                             <XAxis dataKey="name" fontSize={10} fontWeight="bold" axisLine={false} tickLine={false} tick={{fill: '#94a3b8'}} />
                             <YAxis fontSize={10} fontWeight="bold" axisLine={false} tickLine={false} tick={{fill: '#94a3b8'}} />
-                            <RechartsTooltip cursor={{fill: '#f8fafc', radius: 10}} contentStyle={{borderRadius:'20px', border:'none', boxShadow:'0 10px 15px -3px rgba(0,0,0,0.1)'}} />
+                            <RechartsTooltip cursor={{fill: '#ffffff20', radius: 10}} contentStyle={{borderRadius:'20px', border:'none', boxShadow:'0 10px 15px -3px rgba(0,0,0,0.1)'}} />
                             <Bar dataKey="value" fill="#10b981" radius={[8, 8, 8, 8]} barSize={24} />
                           </ReBarChart>
                         </ResponsiveContainer>

@@ -73,7 +73,7 @@ const TimerBoard: React.FC<TimerBoardProps> = ({
                 strokeLinecap="round"
               />
             </svg>
-            <div className="absolute inset-0 flex flex-col items-center justify-center bg-white rounded-full m-3.5 md:m-5 shadow-2xl border border-emerald-50 overflow-hidden ring-1 ring-emerald-50/50">
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/60 backdrop-blur-xl rounded-full m-3.5 md:m-5 shadow-2xl border border-white/40 overflow-hidden ring-1 ring-emerald-50/10">
               <div className="absolute inset-0 rounded-full bg-emerald-50/0 group-hover:bg-emerald-50/90 flex flex-col items-center justify-center transition-all opacity-0 group-hover:opacity-100 backdrop-blur-[2px] z-20">
                 <Edit3 size={32} className="text-emerald-600 mb-3" />
                 <span className="text-[10px] md:text-[11px] font-black text-emerald-600 uppercase tracking-widest">Edit Session</span>

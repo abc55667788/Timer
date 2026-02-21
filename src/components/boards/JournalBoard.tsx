@@ -28,9 +28,9 @@ const JournalBoard: React.FC<JournalBoardProps> = ({
   onClose
 }) => {
   return (
-    <div className="flex flex-col h-full bg-white border-l border-emerald-100 shadow-2xl animate-in slide-in-from-right duration-500 overflow-hidden">
+    <div className="flex flex-col h-full bg-white/60 backdrop-blur-3xl border-l border-white/20 shadow-2xl animate-in slide-in-from-right duration-500 overflow-hidden">
       {/* Header */}
-      <div className="p-6 border-b border-emerald-50 flex items-center justify-between bg-white/80 backdrop-blur-md sticky top-0 z-20">
+      <div className="p-6 border-b border-white/20 flex items-center justify-between bg-white/40 backdrop-blur-md sticky top-0 z-20">
         <div>
           <h2 className="text-xl font-black text-emerald-950 tracking-tight">Journal</h2>
           <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest leading-none">Daily Plan & Muse</p>

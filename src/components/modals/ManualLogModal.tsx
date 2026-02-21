@@ -42,8 +42,8 @@ const ManualLogModal: React.FC<ManualLogModalProps> = ({
             onClick={() => setManualLog({...manualLog, category: cat.name})}
             className={`flex flex-col items-center justify-center p-1.5 rounded-xl border-2 transition-all ${
               isSelected 
-                ? 'border-emerald-500 bg-emerald-50 shadow-sm' 
-                : 'border-transparent bg-gray-50/50 hover:bg-gray-100'
+                ? 'border-emerald-500 bg-white/60 backdrop-blur-md shadow-sm' 
+                : 'border-transparent bg-white/20 backdrop-blur-sm hover:bg-white/40'
             }`}
           >
             <div className={`p-1.5 rounded-lg mb-1 transition-colors ${isSelected ? 'font-bold' : 'text-gray-400'}`} style={isSelected ? { color: cat.color, backgroundColor: `${cat.color}15` } : {}}>
@@ -57,12 +57,12 @@ const ManualLogModal: React.FC<ManualLogModalProps> = ({
   );
 
   return (
-    <div className={`fixed inset-0 ${(wasMiniModeBeforeModal || isMiniMode) ? 'bg-transparent' : 'bg-emerald-900/60 backdrop-blur-xl'} flex items-center justify-center p-6 z-[160] animate-in fade-in duration-300`}>
-      <div className="bg-white rounded-[3rem] p-7 max-w-sm w-full shadow-3xl relative overflow-y-auto max-h-[90vh] scrollbar-none ring-1 ring-emerald-100/50" style={{ WebkitAppRegion: 'drag' } as any}>
+    <div className={`fixed inset-0 ${(wasMiniModeBeforeModal || isMiniMode) ? 'bg-transparent' : 'bg-emerald-950/40 backdrop-blur-xl'} flex items-center justify-center p-6 z-[160] animate-in fade-in duration-300`}>
+      <div className="bg-white/80 backdrop-blur-2xl rounded-[3rem] p-7 max-w-sm w-full shadow-2xl relative overflow-y-auto max-h-[90vh] scrollbar-none border border-white/40 ring-1 ring-emerald-100/20" style={{ WebkitAppRegion: 'drag' } as any}>
          <div style={{ WebkitAppRegion: 'no-drag' } as any}>
             <button 
               onClick={() => setShowManualModal(false)} 
-              className="absolute top-5 right-5 p-2 bg-emerald-50 rounded-full text-emerald-300 hover:text-emerald-600 transition-all active:scale-95 z-50 flex items-center justify-center cursor-pointer"
+              className="absolute top-5 right-5 p-2 bg-white/40 backdrop-blur-md border border-white/10 rounded-full text-emerald-300 hover:text-emerald-600 transition-all active:scale-95 z-50 flex items-center justify-center cursor-pointer shadow-sm"
               style={{ WebkitAppRegion: 'no-drag' } as any}
               title="Close"
             >
@@ -70,12 +70,12 @@ const ManualLogModal: React.FC<ManualLogModalProps> = ({
             </button>
            
            <div className="flex items-center gap-4 mb-5">
-              <div className="w-10 h-10 bg-emerald-100 rounded-[1rem] flex items-center justify-center text-emerald-600">
+              <div className="w-10 h-10 bg-white/40 backdrop-blur-md border border-white/20 rounded-[1rem] flex items-center justify-center text-emerald-600 shadow-sm">
                 <Plus size={20} />
               </div>
               <div>
                 <h2 className="text-xl font-bold text-emerald-950 tracking-tight leading-none">Add Session</h2>
-                <p className="text-[10px] font-bold text-emerald-600 tracking-tight mt-1">Manual Journal Entry</p>
+                <p className="text-[10px] font-bold text-emerald-600 tracking-tight mt-1 opacity-80 uppercase">Manual Journal Entry</p>
               </div>
            </div>
 

@@ -239,7 +239,7 @@ function EmeraldTimer() {
   const zoomOut = () => setTimelineZoom(z => Math.max(MIN_ZOOM, Math.round((z - ZOOM_STEP) * 1000) / 1000));
 
   const [showFilters, setShowFilters] = useState(false);
-  const [filterCategory, setFilterCategory] = useState<Category | 'All'>('All');
+  const [filterCategories, setFilterCategories] = useState<Category[]>([]);
   const [filterStartDate, setFilterStartDate] = useState('');
   const [filterEndDate, setFilterEndDate] = useState('');
 
@@ -1624,13 +1624,13 @@ function EmeraldTimer() {
 
   const filteredLogs = useMemo(() => {
     return logs.filter(log => {
-      const matchesCategory = filterCategory === 'All' || log.category === filterCategory;
+      const matchesCategory = filterCategories.length === 0 || filterCategories.includes(log.category);
       const logDate = formatDate(log.startTime);
       const matchesStart = !filterStartDate || logDate >= filterStartDate;
       const matchesEnd = !filterEndDate || logDate <= filterEndDate;
       return matchesCategory && matchesStart && matchesEnd;
     });
-  }, [logs, filterCategory, filterStartDate, filterEndDate]);
+  }, [logs, filterCategories, filterStartDate, filterEndDate]);
 
   const [manualLogError, setManualLogError] = useState<string | null>(null);
 
@@ -1685,56 +1685,109 @@ function EmeraldTimer() {
     }, 1200);
   }, []);
 
-  // request notification permission and cleanup and Android notification setup
+  // notification permission and cleanup and Android notification setup
   useEffect(() => {
     if (!isAndroid) return;
     
     // Cleanup if app crashes etc.
     LocalNotifications.cancel({ notifications: [{ id: 888 }] }).catch(() => {});
 
+    // Register action types for Android notification (Pause/Skip like Mini Mode)
+    LocalNotifications.registerActionTypes({
+      types: [
+        {
+          id: 'TIMER_CONTROLS',
+          actions: [
+            { id: 'TOGGLE', title: 'Pause/Play', foreground: true },
+            { id: 'SKIP', title: 'Skip Phase', foreground: true }
+          ]
+        }
+      ]
+    }).catch(e => console.warn('ActionTypes fail', e));
+
     // Listen to backgrounding
-    const listener = App.addListener('appStateChange', async ({ isActive: isForeground }) => {
+    const stateListener = App.addListener('appStateChange', async ({ isActive: isForeground }) => {
       if (isForeground) {
         LocalNotifications.cancel({ notifications: [{ id: 888 }] }).catch(() => {});
       }
     });
 
     return () => {
-       listener.then(l => l.remove());
+       stateListener.then(l => l.remove());
        LocalNotifications.cancel({ notifications: [{ id: 888 }] }).catch(() => {});
     };
   }, [isAndroid]);
 
-  // separate background update logic
+  // Handle notification actions
   useEffect(() => {
-    if (!isAndroid || !isActive) return;
-
-    let notificationTimeout: any;
-
-    const updateBackgroundNotification = async () => {
-      const state = await App.getState();
-      if (!state.isActive) {
-        LocalNotifications.schedule({
-          notifications: [{
-            id: 888,
-            title: phase === 'work' ? '🔥🔥 Focus session' : '🍃 Rest session',
-            body: `Remaining: ${formatTime(displayTime)} - ${currentTask.category}`,
-            ongoing: true,
-            autoCancel: false,
-            silent: true,
-            smallIcon: 'res://icon'
-          }]
-        }).catch(() => {});
+    if (!isAndroid) return;
+    
+    const actionListener = LocalNotifications.addListener('localNotificationActionPerformed', (action) => {
+      if (action.actionId === 'TOGGLE') {
+        handleStart();
+      } else if (action.actionId === 'SKIP') {
+        handleSkipToNextPhase();
       }
-    };
-
-    // Update every 5s if in background
-    notificationTimeout = setTimeout(updateBackgroundNotification, 5000);
-
+    });
+    
     return () => {
-      if (notificationTimeout) clearTimeout(notificationTimeout);
+      actionListener.then(l => l.remove());
     };
-  }, [isAndroid, isActive, displayTime, phase, currentTask.category]);
+  }, [isAndroid, handleStart, handleSkipToNextPhase]);
+
+  // background persistent notification handler for Android
+  const lastNotificationUpdateRef = useRef(0);
+  const lastNotificationKeyRef = useRef('');
+  const timerStateRef = useRef({ phase, isActive, displayTime, currentTask, sessionStartTime });
+
+  useEffect(() => {
+    timerStateRef.current = { phase, isActive, displayTime, currentTask, sessionStartTime };
+  }, [phase, isActive, displayTime, currentTask.category, sessionStartTime]);
+
+  useEffect(() => {
+    if (!isAndroid) return;
+
+    const updateInterval = setInterval(async () => {
+      const state = await App.getState();
+      const { phase, isActive, displayTime, currentTask, sessionStartTime } = timerStateRef.current;
+      
+      // Only show if background AND a session is active (either running or paused)
+      if (!state.isActive && sessionStartTime !== null) {
+        const now = Date.now();
+        const displayTimeStr = formatTime(displayTime);
+        
+        // Define a key that represents the content (ignoring precise time bits to reduce updates)
+        // We only trigger update if:
+        // 1. Phase/Category/Active status changes (Immediate update)
+        // 2. OR 15 seconds passed (Periodic update)
+        const currentKey = `${phase}-${currentTask.category}-${isActive}`;
+        const hasStateChanged = currentKey !== lastNotificationKeyRef.current;
+        const isTimeForUpdate = now - lastNotificationUpdateRef.current > 15000;
+
+        if (hasStateChanged || isTimeForUpdate) {
+          lastNotificationUpdateRef.current = now;
+          lastNotificationKeyRef.current = currentKey;
+
+          LocalNotifications.schedule({
+            notifications: [
+              {
+                id: 888,
+                title: phase === 'work' ? `🔥 ${currentTask.category}` : `🍃 Rest Phase`,
+                body: `${isActive ? '▶️ Running' : '⏸️ Paused'} | ${displayTimeStr}`,
+                ongoing: true,
+                autoCancel: false,
+                silent: true, // Crucial to prevent flashing/beeping on update
+                smallIcon: 'res://icon',
+                actionTypeId: 'TIMER_CONTROLS'
+              }
+            ]
+          }).catch(e => console.error('Schedule fail', e));
+        }
+      } 
+    }, 1000);
+
+    return () => clearInterval(updateInterval);
+  }, [isAndroid]);
 
   if (isInitialLoading) {
     return (
@@ -1760,11 +1813,14 @@ function EmeraldTimer() {
 
   return (
     <div 
-      className={` ${(isMiniMode || wasMiniModeBeforeModal) ? 'bg-transparent' : 'bg-white'} text-emerald-900 flex flex-col h-screen w-full overflow-hidden`}
+      className={` ${(isMiniMode || wasMiniModeBeforeModal) ? 'bg-transparent border-0' : 'bg-gradient-to-br from-white/90 via-emerald-50/80 to-white/90 backdrop-blur-3xl rounded-[1.25rem] border border-white/60 shadow-[0_32px_128px_-20px_rgba(0,0,0,0.18)] ring-1 ring-white/20'} text-emerald-900 flex flex-col h-screen w-full overflow-hidden relative transition-all duration-700 ease-in-out`}
       style={{
-        background: (isMiniMode || wasMiniModeBeforeModal) ? 'transparent' : 'white'
+        background: (isMiniMode || wasMiniModeBeforeModal) ? 'transparent' : undefined
       }}
     >
+      <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-emerald-200/20 blur-[120px] rounded-full -z-10 animate-pulse" />
+      <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-emerald-300/10 blur-[120px] rounded-full -z-10" />
+
       <style>{`
         .scrollbar-none::-webkit-scrollbar {
           display: none !important;
@@ -1792,7 +1848,7 @@ function EmeraldTimer() {
 
       {!isMiniMode && !wasMiniModeBeforeModal && !isAndroid && (
         <header 
-          className="w-full h-12 flex justify-between items-center px-4 flex-shrink-0 bg-[#f0f9f0]/40 backdrop-blur-md border-b border-emerald-50/50 relative z-[60] animate-in fade-in slide-in-from-top-12 duration-500 ease-out" 
+          className="w-full h-12 flex justify-between items-center px-4 flex-shrink-0 bg-white/40 backdrop-blur-xl border-b border-white/20 relative z-[60] animate-in fade-in slide-in-from-top-12 duration-500 ease-out" 
           style={{ WebkitAppRegion: 'drag', transform: 'translateZ(0)' } as any}
         >
           <div className="flex items-center gap-2 pointer-events-none">
@@ -1865,7 +1921,7 @@ function EmeraldTimer() {
       )}
 
       {!hideShellForMiniPrompt && !isMiniMode && !wasMiniModeBeforeModal && (
-        <main className={`w-full bg-white flex flex-col flex-1 overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-500 ease-out ${isAndroid ? 'pt-[env(safe-area-inset-top,20px)]' : ''}`}>
+        <main className={`w-full bg-white/70 backdrop-blur-2xl flex flex-col flex-1 overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-500 ease-out border border-white/40 shadow-2xl ${isAndroid ? 'pt-[env(safe-area-inset-top,20px)]' : 'rounded-[2rem] overflow-hidden'}`}>
           
           <div 
             ref={mainScrollRef}
@@ -1970,8 +2026,8 @@ function EmeraldTimer() {
                   filteredLogs={filteredLogs}
                   showFilters={showFilters}
                   setShowFilters={setShowFilters}
-                  filterCategory={filterCategory}
-                  setFilterCategory={setFilterCategory}
+                  filterCategories={filterCategories}
+                  setFilterCategories={setFilterCategories}
                   filterStartDate={filterStartDate}
                   setFilterStartDate={setFilterStartDate}
                   filterEndDate={filterEndDate}
@@ -2026,7 +2082,7 @@ function EmeraldTimer() {
           </div>
 
           {/* Navigation - Always at the bottom for both Android and PC to save vertical space and improve habit consistency */}
-          <nav className={`flex border-t border-emerald-50 bg-[#f8fcf8] items-stretch justify-around px-2 z-50 transition-all duration-300 ease-in-out
+          <nav className={`flex border-t border-white/30 bg-white/40 backdrop-blur-xl items-stretch justify-around px-2 z-50 transition-all duration-300 ease-in-out
             ${isAndroid 
               ? 'pb-[env(safe-area-inset-bottom,16px)] pt-3 h-[76px] shadow-[0_-10px_30px_rgba(0,0,0,0.03)]' 
               : 'h-18 py-0 shadow-[0_-5px_15px_rgba(0,0,0,0.02)] group/nav'
@@ -2052,7 +2108,7 @@ function EmeraldTimer() {
                 <div className={`transition-all duration-300 flex items-center justify-center
                   ${isAndroid 
                     ? `px-6 py-1.5 rounded-2xl ${activeTab === tab.id ? 'bg-emerald-600/10 text-emerald-700 scale-110 shadow-sm' : 'bg-transparent'}`
-                    : `px-4 py-1.5 rounded-full ${activeTab === tab.id ? 'bg-emerald-100/80 text-emerald-600 scale-105 shadow-sm' : 'bg-transparent hover:bg-emerald-50/80'}`
+                    : `px-4 py-1.5 rounded-full ${activeTab === tab.id ? 'bg-white/60 backdrop-blur-md text-emerald-600 scale-105 shadow-sm border border-white/20' : 'bg-transparent hover:bg-white/40'}`
                   }`}
                 >
                   <tab.icon 
