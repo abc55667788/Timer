@@ -6,9 +6,10 @@ interface DatePickerProps {
   onChange: (val: string) => void;
   className?: string;
   placeholder?: string;
+  darkMode?: boolean;
 }
 
-const DatePicker: React.FC<DatePickerProps> = ({ value, onChange, className, placeholder }) => {
+const DatePicker: React.FC<DatePickerProps> = ({ value, onChange, className, placeholder, darkMode }) => {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   
@@ -57,31 +58,31 @@ const DatePicker: React.FC<DatePickerProps> = ({ value, onChange, className, pla
     <div className={`relative ${className}`} ref={containerRef} style={{ zIndex: isOpen ? 50 : 'auto' }}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full bg-white/80 backdrop-blur-md border border-emerald-100 rounded-xl py-2 px-3 lg:py-2.5 lg:px-4 text-[10px] lg:text-[11px] font-black text-emerald-950 tracking-tight flex items-center justify-between hover:bg-white hover:border-emerald-300 transition-all focus:ring-4 focus:ring-emerald-500/10 shadow-sm"
+        className={`w-full border rounded-xl py-2 px-3 lg:py-2.5 lg:px-4 text-[10px] lg:text-[11px] font-black tracking-tight flex items-center justify-between transition-all focus:ring-4 focus:ring-emerald-500/10 shadow-sm ${darkMode ? 'bg-zinc-800 border-white/5 text-white hover:bg-zinc-700' : 'bg-white/80 backdrop-blur-md border-emerald-100 text-emerald-950 hover:bg-white hover:border-emerald-300'}`}
       >
         <div className="flex items-center gap-1.5 lg:gap-2">
-          <Calendar size={12} className="text-emerald-500" />
+          <Calendar size={12} className={darkMode ? 'text-emerald-500' : 'text-emerald-500'} />
           <span className="truncate">{value ? new Date(value).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : placeholder || "Select Date"}</span>
         </div>
-        <ChevronDown size={12} className={`text-emerald-300 transition-transform flex-shrink-0 ${isOpen ? 'rotate-180' : ''}`} />
+        <ChevronDown size={12} className={`transition-transform flex-shrink-0 ${darkMode ? 'text-zinc-600' : 'text-emerald-300'} ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
       {isOpen && (
-        <div className="absolute top-full left-1/2 -translate-x-1/2 mt-3 bg-white/95 backdrop-blur-3xl rounded-[2.5rem] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.2)] border border-white/60 p-5 z-[500] animate-in fade-in zoom-in-95 origin-top min-w-[280px]">
-          <div className="flex justify-between items-center mb-4 bg-emerald-50/80 p-2 rounded-[1.5rem] border border-emerald-100/50">
+        <div className={`absolute top-full left-1/2 -translate-x-1/2 mt-3 backdrop-blur-3xl rounded-[2.5rem] border p-5 z-[500] animate-in fade-in zoom-in-95 origin-top min-w-[280px] ${darkMode ? 'bg-zinc-900 border-white/10 shadow-[0_32px_128px_-20px_rgba(0,0,0,0.9)]' : 'bg-white/95 border-white/60 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.2)]'}`}>
+          <div className={`flex justify-between items-center mb-4 p-2 rounded-[1.5rem] border ${darkMode ? 'bg-zinc-800 border-white/5' : 'bg-emerald-50/80 border-emerald-100/50'}`}>
             <button 
               onClick={() => setViewDate(new Date(currentYear, currentMonth - 1, 1))}
-              className="p-2 hover:bg-white rounded-xl text-emerald-500 hover:text-emerald-700 transition-all shadow-sm active:scale-90"
+              className={`p-2 rounded-xl transition-all shadow-sm active:scale-90 ${darkMode ? 'bg-zinc-900 text-zinc-400 hover:text-emerald-500' : 'bg-white text-emerald-500 hover:text-emerald-700'}`}
             >
               <ChevronLeft size={16} />
             </button>
             <div className="flex items-center gap-1.5">
-              <span className="text-[11px] font-black text-emerald-950 uppercase tracking-widest">{months[currentMonth]}</span>
-              <span className="text-[11px] font-black text-emerald-300 tracking-tighter">{currentYear}</span>
+              <span className={`text-[11px] font-black uppercase tracking-widest ${darkMode ? 'text-white' : 'text-emerald-950'}`}>{months[currentMonth]}</span>
+              <span className={`text-[11px] font-black tracking-tighter ${darkMode ? 'text-zinc-600' : 'text-emerald-300'}`}>{currentYear}</span>
             </div>
             <button 
               onClick={() => setViewDate(new Date(currentYear, currentMonth + 1, 1))}
-              className="p-2 hover:bg-white rounded-xl text-emerald-500 hover:text-emerald-700 transition-all shadow-sm active:scale-90"
+              className={`p-2 rounded-xl transition-all shadow-sm active:scale-90 ${darkMode ? 'bg-zinc-900 text-zinc-400 hover:text-emerald-500' : 'bg-white text-emerald-500 hover:text-emerald-700'}`}
             >
               <ChevronRight size={16} />
             </button>
@@ -89,7 +90,7 @@ const DatePicker: React.FC<DatePickerProps> = ({ value, onChange, className, pla
 
           <div className="grid grid-cols-7 gap-y-1 gap-x-1 text-center mb-3">
             {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, i) => (
-              <div key={i} className="text-[10px] font-black text-emerald-200/80 py-1 uppercase tracking-tighter">{d}</div>
+              <div key={i} className={`text-[10px] font-black py-1 uppercase tracking-tighter ${darkMode ? 'text-zinc-700' : 'text-emerald-200/80'}`}>{d}</div>
             ))}
             {calendarDays.map((d, i) => {
               if (d === null) return <div key={`empty-${i}`} className="h-9 w-9" />;
@@ -105,8 +106,9 @@ const DatePicker: React.FC<DatePickerProps> = ({ value, onChange, className, pla
                     setIsOpen(false);
                   }}
                   className={`h-9 w-9 rounded-[1rem] text-[11px] font-black flex items-center justify-center transition-all m-auto
-                    ${isSelected ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-200 ring-4 ring-emerald-500/10' : 
-                      isToday ? 'text-emerald-600 bg-emerald-50/50 ring-2 ring-emerald-100/50' : 'text-emerald-900 hover:bg-emerald-50 hover:scale-110'}
+                    ${isSelected ? 'bg-emerald-600 text-white shadow-lg ring-4 ring-emerald-500/10' : 
+                      isToday ? (darkMode ? 'text-emerald-500 bg-emerald-500/10 ring-2 ring-emerald-500/20' : 'text-emerald-600 bg-emerald-50/50 ring-2 ring-emerald-100/50') : 
+                        (darkMode ? 'text-white hover:bg-zinc-800 hover:scale-110' : 'text-emerald-900 hover:bg-emerald-50 hover:scale-110')}
                   `}
                 >
                   {d}
@@ -121,7 +123,7 @@ const DatePicker: React.FC<DatePickerProps> = ({ value, onChange, className, pla
               onChange(today);
               setIsOpen(false);
             }}
-            className="w-full mt-2 py-3 bg-emerald-900 text-white rounded-[1.5rem] text-[10px] font-black tracking-widest uppercase hover:bg-emerald-800 hover:shadow-lg active:scale-95 transition-all shadow-md"
+            className={`w-full mt-2 py-3 rounded-[1.5rem] text-[10px] font-black tracking-widest uppercase hover:shadow-lg active:scale-95 transition-all shadow-md ${darkMode ? 'bg-zinc-800 text-white hover:bg-emerald-500 active:bg-emerald-600' : 'bg-emerald-900 text-white hover:bg-emerald-800'}`}
           >
             Today
           </button>

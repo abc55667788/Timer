@@ -40,6 +40,7 @@ interface ViewLogModalProps {
   setPhaseEditTouched: (val: boolean) => void;
   viewingLogMetadata?: any;
   categories: CategoryData[];
+  darkMode?: boolean;
 }
 
 const ViewLogModal: React.FC<ViewLogModalProps> = ({
@@ -74,7 +75,8 @@ const ViewLogModal: React.FC<ViewLogModalProps> = ({
   handleSaveEdit,
   setPhaseEditTouched,
   viewingLogMetadata,
-  categories
+  categories,
+  darkMode
 }) => {
   const CategoryPicker = () => (
     <div className="grid grid-cols-4 gap-2">
@@ -86,16 +88,16 @@ const ViewLogModal: React.FC<ViewLogModalProps> = ({
           <button
             key={idx}
             onClick={() => setViewingLog({...viewingLog, category: cat.name})}
-            className={`flex flex-col items-center justify-center p-2 rounded-2xl border-2 transition-all ${
+            className={`flex flex-col items-center justify-center p-2 rounded-[1.2rem] border transition-all group/cat ${
               isSelected 
-                ? 'border-emerald-500 bg-white/60 backdrop-blur-md shadow-sm' 
-                : 'border-transparent bg-white/20 backdrop-blur-sm hover:bg-white/40'
+                ? (darkMode ? 'border-emerald-500/50 bg-emerald-500/10 shadow-[0_0_20px_rgba(16,185,129,0.2)] scale-105' : 'border-emerald-500 bg-emerald-50 shadow-sm') 
+                : (darkMode ? 'border-white/5 bg-zinc-800/40 hover:bg-emerald-500/5 hover:border-emerald-500/20' : 'border-transparent bg-gray-50/50 hover:bg-gray-100')
             }`}
           >
-            <div className={`p-1.5 rounded-lg mb-1 transition-colors ${isSelected ? '' : 'text-gray-400'}`} style={{ backgroundColor: isSelected ? `${color}15` : undefined, color: isSelected ? color : undefined }}>
-              <Icon size={14} />
+            <div className={`p-2 rounded-full mb-1 transition-all ${isSelected ? 'scale-110' : (darkMode ? 'text-zinc-600 group-hover/cat:text-emerald-400' : 'text-gray-400')}`} style={isSelected ? { color: cat.color, backgroundColor: `${cat.color}20` } : {}}>
+              <Icon size={16} />
             </div>
-            <span className={`text-[9px] font-bold tracking-tight transition-colors ${isSelected ? '' : 'text-gray-400'}`} style={{ color: isSelected ? color : undefined }}>{cat.name}</span>
+            <span className={`text-[10px] font-black tracking-tight transition-colors ${isSelected ? '' : (darkMode ? 'text-zinc-600 group-hover/cat:text-emerald-400' : 'text-gray-400')}`} style={isSelected ? { color: cat.color } : {}}>{cat.name}</span>
           </button>
         );
       })}
@@ -105,46 +107,46 @@ const ViewLogModal: React.FC<ViewLogModalProps> = ({
   const ViewingIcon = CATEGORY_ICONS[categories.find(c => c.name === viewingLog.category)?.icon as keyof typeof CATEGORY_ICONS] || CATEGORY_ICONS.Briefcase;
 
   return (
-    <div className={`fixed inset-0 ${(wasMiniModeBeforeModal || isMiniMode) ? 'bg-transparent' : 'bg-emerald-950/40 backdrop-blur-xl'} flex items-center justify-center p-6 z-[150] animate-in fade-in duration-300`}>
-      <div className={`bg-white/80 backdrop-blur-2xl rounded-[2.5rem] p-8 w-full shadow-2xl relative max-h-[90vh] overflow-y-auto scrollbar-none border border-white/40 ring-1 ring-emerald-100/20 transition-all duration-300 ${isEditMode ? 'max-w-lg' : 'max-w-sm'}`} style={{ WebkitAppRegion: 'drag' } as any}>
+    <div className={`fixed inset-0 ${(wasMiniModeBeforeModal || isMiniMode) ? 'bg-transparent' : (darkMode ? 'bg-black/80 backdrop-blur-2xl' : 'bg-black/60 backdrop-blur-xl')} flex items-center justify-center p-6 z-[150] animate-in fade-in duration-300`}>
+      <div className={`${darkMode ? 'bg-zinc-900 border-white/5 shadow-[0_32px_128px_-20px_rgba(0,0,0,0.9)]' : 'bg-white border-white/40 shadow-2xl'} backdrop-blur-3xl rounded-[2.5rem] p-8 w-full relative max-h-[90vh] overflow-y-auto scrollbar-none border transition-all duration-300 ${isEditMode ? 'max-w-lg' : 'max-w-sm'}`} style={{ WebkitAppRegion: 'drag' } as any}>
          <div style={{ WebkitAppRegion: 'no-drag' } as any} onPaste={handleClipboardImagePaste}>
            {!isEditMode ? (
              <div className="animate-in fade-in slide-in-from-bottom-4">
                <div className="flex items-center gap-5 mb-8">
-                  <div className="w-16 h-16 bg-white/40 backdrop-blur-md rounded-[1.5rem] flex items-center justify-center text-emerald-600 shadow-sm border border-white/20">
+                  <div className={`w-16 h-16 ${darkMode ? 'bg-zinc-800 border-white/5 shadow-inner' : 'bg-white/40 border-white/20 shadow-sm'} backdrop-blur-md rounded-[1.8rem] flex items-center justify-center border`}>
                     <ViewingIcon size={32} style={{ color: getCategoryColor(viewingLog.category) }} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h2 className="text-xl font-bold text-emerald-950 leading-tight pr-2 tracking-tight truncate">{viewingLog.description || 'Focus Session'}</h2>
-                    <div className="text-[11px] font-bold text-emerald-400 mb-3 ml-0.5 tracking-tight opacity-80">{formatDisplayDate(viewingLog.startTime)}{viewingLog.endTime && formatDisplayDate(viewingLog.startTime) !== formatDisplayDate(viewingLog.endTime) ? ` - ${formatDisplayDate(viewingLog.endTime)}` : ''}</div>
-                    <span className="text-[10px] font-bold text-white px-4 py-1.5 rounded-xl shadow-[0_4px_12px_rgba(0,0,0,0.1)] tracking-tight inline-block" style={{ backgroundColor: getCategoryColor(viewingLog.category) }}>{viewingLog.category}</span>
+                    <h2 className={`text-sm font-black ${darkMode ? 'text-white' : 'text-emerald-950'} leading-tight pr-2 truncate`}>{viewingLog.description || 'Focus Session'}</h2>
+                    <div className={`text-[10px] font-black ${darkMode ? 'text-zinc-500' : 'text-emerald-400'} mb-3 ml-0.5 tracking-widest opacity-80 uppercase`}>{formatDisplayDate(viewingLog.startTime)}{viewingLog.endTime && formatDisplayDate(viewingLog.startTime) !== formatDisplayDate(viewingLog.endTime) ? ` - ${formatDisplayDate(viewingLog.endTime)}` : ''}</div>
+                    <span className="text-[10px] font-black text-white px-5 py-2 rounded-xl shadow-[0_4px_12px_rgba(0,0,0,0.3)] tracking-widest uppercase inline-block" style={{ backgroundColor: getCategoryColor(viewingLog.category) }}>{viewingLog.category}</span>
                   </div>
                </div>
 
                {viewingLogMetadata && (
                  <div className="space-y-4 mb-8">
                    <div className="grid grid-cols-3 gap-3">
-                     <div className="rounded-[1.5rem] border border-white/20 bg-white/40 backdrop-blur-md p-4 flex flex-col items-center justify-center gap-1.5 shadow-sm">
-                       <span className="text-[10px] font-bold tracking-tight text-emerald-400 opacity-80 uppercase">Start</span>
-                       <span className="text-base font-bold text-emerald-950 font-mono tracking-tight">{formatClock(viewingLog.startTime)}</span>
+                     <div className={`rounded-[2rem] border ${darkMode ? 'border-white/5 bg-zinc-800/40 shadow-lg shadow-black/20' : 'border-white/20 bg-white/40 shadow-sm'} backdrop-blur-md p-4.5 flex flex-col items-center justify-center gap-1.5`}>
+                       <span className={`text-[9px] font-black tracking-widest ${darkMode ? 'text-zinc-500' : 'text-emerald-400'} opacity-80 uppercase`}>Start</span>
+                       <span className={`text-base font-black ${darkMode ? 'text-white' : 'text-emerald-950'} font-mono tracking-tight`}>{formatClock(viewingLog.startTime)}</span>
                      </div>
-                     <div className="rounded-[1.5rem] border border-white/20 bg-white/40 backdrop-blur-md shadow-sm p-4 flex flex-col items-center justify-center gap-1.5">
-                       <span className="text-[10px] font-bold tracking-tight text-emerald-400 opacity-80 uppercase">End</span>
-                       <span className="text-base font-bold text-emerald-950 font-mono tracking-tight">{viewingLog.endTime ? formatClock(viewingLog.endTime) : 'Now'}</span>
+                     <div className={`rounded-[2rem] border ${darkMode ? 'border-white/5 bg-zinc-800/40 shadow-lg shadow-black/20' : 'border-white/20 bg-white/40 shadow-sm'} backdrop-blur-md p-4.5 flex flex-col items-center justify-center gap-1.5`}>
+                       <span className={`text-[9px] font-black tracking-widest ${darkMode ? 'text-zinc-500' : 'text-emerald-400'} opacity-80 uppercase`}>End</span>
+                       <span className={`text-base font-black ${darkMode ? 'text-white' : 'text-emerald-950'} font-mono tracking-tight`}>{viewingLog.endTime ? formatClock(viewingLog.endTime) : 'Now'}</span>
                      </div>
-                     <div className="rounded-[1.5rem] border border-white/20 bg-white/40 backdrop-blur-md p-4 flex flex-col items-center justify-center gap-1.5 shadow-sm">
-                       <span className="text-[10px] font-bold tracking-tight text-emerald-400 opacity-80 uppercase">Time</span>
-                       <span className="text-base font-bold text-emerald-950 font-mono tracking-tight">{viewingLogMetadata.durationLabel}</span>
+                     <div className={`rounded-[2rem] border ${darkMode ? 'border-white/5 bg-zinc-800/40 shadow-lg shadow-black/20' : 'border-white/20 bg-white/40 shadow-sm'} backdrop-blur-md p-4.5 flex flex-col items-center justify-center gap-1.5`}>
+                       <span className={`text-[9px] font-black tracking-widest ${darkMode ? 'text-zinc-500' : 'text-emerald-400'} opacity-80 uppercase`}>Time</span>
+                       <span className={`text-base font-black ${darkMode ? 'text-white' : 'text-emerald-950'} font-mono tracking-tight`}>{viewingLogMetadata.durationLabel}</span>
                      </div>
                    </div>
                    <div className="grid grid-cols-2 gap-3">
-                     <div className="rounded-[1.5rem] border border-white/20 bg-white/40 backdrop-blur-md p-4 flex items-center justify-between px-6 shadow-sm">
-                       <span className="text-[11px] font-bold tracking-tight text-emerald-400 opacity-80">Focus</span>
-                       <span className="text-sm font-bold text-emerald-900 font-mono tracking-tight">{formatTime(viewingLogMetadata.phaseDetails.work)}</span>
+                     <div className={`rounded-[2rem] border ${darkMode ? 'border-white/5 bg-zinc-800/40 shadow-lg shadow-black/20' : 'border-white/20 bg-white/40 shadow-sm'} backdrop-blur-md p-4.5 flex items-center justify-between px-6`}>
+                       <span className={`text-[10px] font-black tracking-widest ${darkMode ? 'text-zinc-500' : 'text-emerald-400'} opacity-80 uppercase`}>Focus</span>
+                       <span className={`text-sm font-black ${darkMode ? 'text-white' : 'text-emerald-950'} font-mono tracking-tight`}>{formatTime(viewingLogMetadata.phaseDetails.work)}</span>
                      </div>
-                     <div className="rounded-[1.5rem] border border-white/20 bg-white/40 backdrop-blur-md p-4 flex items-center justify-between px-6 shadow-sm">
-                       <span className="text-[11px] font-bold tracking-tight text-emerald-400 opacity-80">Rest</span>
-                       <span className="text-sm font-bold text-emerald-900 font-mono tracking-tight">{formatTime(viewingLogMetadata.phaseDetails.rest)}</span>
+                     <div className={`rounded-[2rem] border ${darkMode ? 'border-white/5 bg-zinc-800/40 shadow-lg shadow-black/20' : 'border-white/20 bg-white/40 shadow-sm'} backdrop-blur-md p-4.5 flex items-center justify-between px-6`}>
+                       <span className={`text-[10px] font-black tracking-widest ${darkMode ? 'text-zinc-500' : 'text-emerald-400'} opacity-80 uppercase`}>Rest</span>
+                       <span className={`text-sm font-black ${darkMode ? 'text-white' : 'text-emerald-950'} font-mono tracking-tight`}>{formatTime(viewingLogMetadata.phaseDetails.rest)}</span>
                      </div>
                    </div>
                  </div>
@@ -152,10 +154,10 @@ const ViewLogModal: React.FC<ViewLogModalProps> = ({
 
                {viewingLog.images.length > 0 && (
                  <div className="mb-6">
-                   <label className="text-[10px] font-bold tracking-tight text-emerald-400 block mb-4 pl-1 uppercase">Photos ({viewingLog.images.length})</label>
+                   <label className={`text-[9px] font-black tracking-widest ${darkMode ? 'text-zinc-500' : 'text-emerald-400'} block mb-4 pl-1 uppercase opacity-80`}>Photos ({viewingLog.images.length})</label>
                    <div className="grid grid-cols-3 gap-3">
                      {viewingLog.images.map((img, idx) => (
-                       <div key={idx} className="relative aspect-square rounded-2xl overflow-hidden border border-white shadow-md group">
+                       <div key={idx} className={`relative aspect-square rounded-2xl overflow-hidden border ${darkMode ? 'border-white/10 shadow-[0_10px_30px_rgba(0,0,0,0.5)]' : 'border-white shadow-md'} group`}>
                          <img src={img} className="w-full h-full object-cover cursor-zoom-in hover:scale-110 transition-transform duration-700" onClick={() => setPreviewImage(img)} />
                        </div>
                      ))}
@@ -165,12 +167,12 @@ const ViewLogModal: React.FC<ViewLogModalProps> = ({
 
                {viewingLog.link && (
                  <div className="mb-8 px-1">
-                    <label className="text-[10px] font-bold tracking-tight text-emerald-400 block mb-3 pl-1 uppercase">Link</label>
+                    <label className={`text-[9px] font-black tracking-widest ${darkMode ? 'text-zinc-500' : 'text-emerald-400'} block mb-3 pl-1 uppercase opacity-80`}>Link</label>
                     <a 
                       href={viewingLog.link.startsWith('http') ? viewingLog.link : `https://${viewingLog.link}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-3 bg-white/40 backdrop-blur-md border border-white/20 rounded-2xl p-4 text-[11px] font-bold text-emerald-600 hover:bg-white/60 transition-all group shadow-sm"
+                      className={`flex items-center gap-3 ${darkMode ? 'bg-zinc-800/50 border-white/5 text-emerald-400 hover:bg-emerald-500/10' : 'bg-white/40 border-white/20 text-emerald-600 hover:bg-white/60 shadow-sm'} backdrop-blur-md rounded-2xl p-4 text-[11px] font-black transition-all group border`}
                     >
                       <LinkIcon size={14} className="flex-shrink-0" />
                       <span className="truncate flex-1">{viewingLog.link}</span>
@@ -180,18 +182,33 @@ const ViewLogModal: React.FC<ViewLogModalProps> = ({
                )}
 
                <div className="flex gap-3 mt-4">
-                 <button onClick={() => setIsEditMode(true)} className="flex-1 py-4 bg-emerald-600 text-white rounded-[1.5rem] font-black tracking-tight shadow-lg shadow-emerald-200 hover:brightness-110 active:scale-[0.98] transition-all text-[11px]">Edit</button>
-                 <button onClick={() => { setViewingLog(null); setIsEditMode(false); setPhaseEditTouched(false); }} className="flex-1 py-4 bg-white/60 backdrop-blur-md text-emerald-600 rounded-[1.5rem] font-black tracking-tight border border-white/20 shadow-sm hover:bg-white/80 active:scale-[0.98] transition-all text-[11px]">Close</button>
-                 <button onClick={() => handleDeleteLog(viewingLog.id)} className="flex-1 py-4 bg-red-50 text-red-500 rounded-[1.5rem] font-black tracking-tight border border-red-100 hover:bg-red-500 hover:text-white active:scale-[0.98] transition-all text-[11px]">Delete</button>
+                 <button 
+                   onClick={() => setIsEditMode(true)} 
+                   className={`flex-1 py-4.5 ${darkMode ? 'bg-zinc-800 text-white hover:bg-emerald-500 shadow-black/40 border border-white/5' : 'bg-emerald-600 text-white hover:bg-emerald-500 shadow-lg'} rounded-[1.5rem] font-black tracking-tight active:scale-[0.98] transition-all text-[11px] uppercase`}
+                 >
+                   Edit
+                 </button>
+                 <button 
+                   onClick={() => { setViewingLog(null); setIsEditMode(false); setPhaseEditTouched(false); }} 
+                   className={`flex-1 py-4.5 ${darkMode ? 'bg-zinc-800 text-white hover:bg-orange-500 shadow-black/40 border border-white/5' : 'bg-white/60 text-emerald-600 hover:bg-white/80 border-emerald-100/20 shadow-sm'} backdrop-blur-md rounded-[1.5rem] font-black tracking-tight border active:scale-[0.98] transition-all text-[11px] uppercase`}
+                 >
+                   Close
+                 </button>
+                 <button 
+                   onClick={() => handleDeleteLog(viewingLog.id)} 
+                   className={`flex-1 py-4.5 ${darkMode ? 'bg-zinc-800 text-white hover:bg-red-500 shadow-black/40 border border-white/5' : 'bg-red-50 text-red-500 border-red-100 hover:bg-red-500 hover:text-white'} rounded-[1.5rem] font-black tracking-tight border active:scale-[0.98] transition-all text-[11px] uppercase`}
+                 >
+                   Delete
+                 </button>
                </div>
              </div>
            ) : (
              <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 pb-2">
                 <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-xl font-bold text-emerald-950 tracking-tight">Edit Session</h2>
+                    <h2 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-emerald-950'} tracking-tight`}>Edit Session</h2>
                     <button 
                       onClick={() => { setIsEditMode(false); setPhaseEditTouched(false); }} 
-                      className="w-9 h-9 flex items-center justify-center bg-emerald-50 rounded-full text-emerald-300 hover:text-emerald-600 transition-all cursor-pointer"
+                      className={`w-9 h-9 flex items-center justify-center ${darkMode ? 'bg-zinc-800 text-zinc-500 hover:text-orange-500 border border-white/5 shadow-sm' : 'bg-emerald-50 text-emerald-300 hover:text-emerald-600'} rounded-full transition-all cursor-pointer`}
                       style={{ WebkitAppRegion: "no-drag" } as any}
                     >
                       <X size={18} />
@@ -200,12 +217,12 @@ const ViewLogModal: React.FC<ViewLogModalProps> = ({
 
                 <div className="space-y-5">
                   <section>
-                    <label className="text-[10px] font-bold text-emerald-400 block mb-3 tracking-tight pl-1 uppercase">Category</label>
+                    <label className={`text-[10px] font-bold ${darkMode ? 'text-zinc-500' : 'text-emerald-400'} block mb-3 tracking-tight pl-1 uppercase`}>Category</label>
                     <CategoryPicker />
                   </section>
                   
                   <section>
-                    <label className="text-[10px] font-bold text-emerald-400 block mb-3 tracking-tight pl-1 uppercase">Photos ({viewingLog.images.length})</label>
+                    <label className={`text-[10px] font-bold ${darkMode ? 'text-zinc-500' : 'text-emerald-400'} block mb-3 tracking-tight pl-1 uppercase`}>Photos ({viewingLog.images.length})</label>
                     <div className="flex flex-wrap gap-3">
                       {viewingLog.images.map((img, idx) => (
                         <div 
@@ -224,7 +241,7 @@ const ViewLogModal: React.FC<ViewLogModalProps> = ({
                                setViewingLog({...viewingLog, images: newImgs});
                             }
                           }}
-                          className="relative w-16 h-16 rounded-2xl overflow-hidden shadow-md border-2 border-white group cursor-move hover:scale-105 transition-transform"
+                          className={`relative w-16 h-16 rounded-2xl overflow-hidden shadow-md border ${darkMode ? 'border-white/10' : 'border-white'} group cursor-move hover:scale-105 transition-transform`}
                         >
                           <img 
                             src={img} 
@@ -236,7 +253,7 @@ const ViewLogModal: React.FC<ViewLogModalProps> = ({
                           {idx === 0 && <div className="absolute bottom-0 left-0 right-0 bg-emerald-600/90 text-[7px] text-white font-bold text-center py-0.5 tracking-tight">Main</div>}
                         </div>
                       ))}
-                      <label className="w-16 h-16 flex flex-col items-center justify-center bg-emerald-50 border-2 border-dashed border-emerald-100 rounded-2xl cursor-pointer hover:bg-emerald-100 text-emerald-400 transition-colors">
+                      <label className={`w-16 h-16 flex flex-col items-center justify-center ${darkMode ? 'bg-zinc-800 border-white/5 hover:bg-zinc-700 text-zinc-500' : 'bg-emerald-50 border-emerald-100 hover:bg-emerald-100 text-emerald-400'} border-2 border-dashed rounded-2xl cursor-pointer transition-colors shadow-inner`}>
                         <Plus size={24} />
                         <input type="file" multiple accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, 'edit')} />
                       </label>
@@ -244,9 +261,9 @@ const ViewLogModal: React.FC<ViewLogModalProps> = ({
                   </section>
 
                   <section>
-                    <label className="text-[10px] font-bold text-emerald-400 block mb-3 tracking-tight pl-1 uppercase">Link</label>
+                    <label className={`text-[10px] font-bold ${darkMode ? 'text-zinc-500' : 'text-emerald-400'} block mb-3 tracking-tight pl-1 uppercase`}>Link</label>
                     <div className="relative group/link">
-                      <div className="absolute left-4 top-1/2 -translate-y-1/2 text-emerald-300 group-focus-within/link:text-emerald-500 transition-colors pointer-events-none">
+                      <div className={`absolute left-4 top-1/2 -translate-y-1/2 ${darkMode ? 'text-zinc-500' : 'text-emerald-300'} group-focus-within/link:text-emerald-500 transition-colors pointer-events-none`}>
                         <LinkIcon size={14} />
                       </div>
                       <input 
@@ -254,65 +271,68 @@ const ViewLogModal: React.FC<ViewLogModalProps> = ({
                         placeholder="Paste related link here..." 
                         value={viewingLog.link || ''} 
                         onChange={(e) => setViewingLog({...viewingLog, link: e.target.value})} 
-                        className="w-full bg-white border border-emerald-100 rounded-2xl p-4 pl-10 pr-4 text-xs font-bold text-emerald-900 outline-none shadow-sm focus:border-emerald-300 focus:ring-4 focus:ring-emerald-500/5 transition-all truncate" 
+                        className={`w-full ${darkMode ? 'bg-zinc-800 border-white/5 text-emerald-400 placeholder:text-zinc-600 focus:border-emerald-500/30' : 'bg-white border-emerald-100 text-emerald-900 placeholder-emerald-100 focus:border-emerald-300 shadow-sm'} border rounded-2xl p-4 pl-11 pr-4 text-xs font-bold outline-none focus:ring-4 focus:ring-emerald-500/5 transition-all truncate`} 
                       />
                     </div>
                   </section>
 
-                  <section className="bg-emerald-50/20 p-6 rounded-[2.5rem] border border-emerald-50/80 space-y-6">
+                  <section className={`${darkMode ? 'bg-zinc-800/40 border-white/5 shadow-inner' : 'bg-emerald-50/20 border-emerald-50/80'} p-6 rounded-[2.5rem] border space-y-6`}>
                     <div className="space-y-3">
-                      <label className="text-[10px] font-bold text-emerald-400 tracking-tight pl-2">Session Date</label>
+                      <label className={`text-[10px] font-bold ${darkMode ? 'text-zinc-500' : 'text-emerald-400'} tracking-tight pl-2 uppercase`}>Session Date</label>
                       <DatePicker 
                         value={editStartDate} 
                         onChange={(val) => {
                           setEditStartDate(val);
                           setEditEndDate(val);
                         }} 
+                        darkMode={darkMode}
                       />
                     </div>
                     
                     <div className="grid grid-cols-2 gap-5">
                       <div className="space-y-3">
-                        <label className="text-[10px] font-bold text-emerald-400 tracking-tight pl-2">Start</label>
+                        <label className={`text-[10px] font-bold ${darkMode ? 'text-zinc-500' : 'text-emerald-400'} tracking-tight pl-2 uppercase`}>Start</label>
                         <TimePicker 
                           value={editStartTime} 
                           onChange={setEditStartTime} 
                           className="text-[11px]"
+                          darkMode={darkMode}
                         />
                       </div>
                       <div className="space-y-3">
-                        <label className="text-[10px] font-bold text-emerald-400 tracking-tight pl-2">End</label>
+                        <label className={`text-[10px] font-bold ${darkMode ? 'text-zinc-500' : 'text-emerald-400'} tracking-tight pl-2 uppercase`}>End</label>
                         <TimePicker 
                           value={editEndTime} 
                           onChange={setEditEndTime} 
                           className="text-[11px]"
+                          darkMode={darkMode}
                         />
                       </div>
                     </div>
-                    {editTimeError && <div className="text-[10px] text-red-500 font-bold text-center bg-red-50/50 py-2.5 rounded-xl border border-red-50">{editTimeError}</div>}
+                    {editTimeError && <div className={`text-[10px] text-red-500 font-bold text-center ${darkMode ? 'bg-red-500/10 border-red-500/20 shadow-sm' : 'bg-red-50/50 border-red-50 shadow-sm'} py-2.5 rounded-xl border animate-shake`}>{editTimeError}</div>}
                   </section>
 
-                  <section className="grid grid-cols-2 gap-5 bg-white p-6 rounded-[2.5rem] border border-emerald-50 shadow-sm ring-1 ring-emerald-50/50">
+                  <section className={`grid grid-cols-2 gap-5 ${darkMode ? 'bg-zinc-800/40 border-white/5 shadow-inner' : 'bg-white border-emerald-50 shadow-sm ring-1 ring-emerald-50/50'} p-6 rounded-[2.5rem] border`}>
                     <div className="space-y-3">
-                      <label className="text-[10px] font-bold text-emerald-400 tracking-tight pl-2">Focus (Min)</label>
+                      <label className={`text-[10px] font-bold ${darkMode ? 'text-zinc-500' : 'text-emerald-400'} tracking-tight pl-2 uppercase`}>Focus (Min)</label>
                       <input
                         type="number"
                         min="0"
                         step="0.5"
                         value={editWorkMinutes}
                         onChange={(e) => handleWorkMinutesChange(e.target.value)}
-                        className="w-full bg-emerald-50/30 border border-emerald-100/50 rounded-2xl p-3.5 text-sm font-bold text-emerald-950 focus:outline-none focus:ring-4 focus:ring-emerald-500/5 font-mono transition-all"
+                        className={`w-full ${darkMode ? 'bg-zinc-800 border-white/5 text-emerald-400 focus:border-emerald-500/30' : 'bg-emerald-50/30 border-emerald-100/50 text-emerald-950 shadow-sm'} border rounded-2xl p-3.5 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-emerald-500/5 font-mono transition-all`}
                       />
                     </div>
                     <div className="space-y-3">
-                      <label className="text-[10px] font-bold text-emerald-400 tracking-tight pl-2">Rest (Min)</label>
+                      <label className={`text-[10px] font-bold ${darkMode ? 'text-zinc-500' : 'text-emerald-400'} tracking-tight pl-2 uppercase`}>Rest (Min)</label>
                       <input
                         type="number"
                         min="0"
                         step="0.5"
                         value={editRestMinutes}
                         onChange={(e) => handleRestMinutesChange(e.target.value)}
-                        className="w-full bg-emerald-50/30 border border-emerald-100/50 rounded-2xl p-3.5 text-sm font-bold text-emerald-950 focus:outline-none focus:ring-4 focus:ring-emerald-500/5 font-mono transition-all"
+                        className={`w-full ${darkMode ? 'bg-zinc-800 border-white/5 text-emerald-400 focus:border-emerald-500/30' : 'bg-emerald-50/30 border-emerald-100/50 text-emerald-950 shadow-sm'} border rounded-2xl p-3.5 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-emerald-500/5 font-mono transition-all`}
                       />
                     </div>
                   </section>
@@ -321,15 +341,17 @@ const ViewLogModal: React.FC<ViewLogModalProps> = ({
                     <button 
                       disabled={!isEditValid} 
                       onClick={handleSaveEdit} 
-                      className={`flex-1 py-4.5 rounded-[1.5rem] text-xs font-bold tracking-tight shadow-lg transition-all active:scale-95 ${
-                        isEditValid ? 'bg-emerald-600 text-white shadow-emerald-100' : 'bg-emerald-100 text-emerald-300 cursor-not-allowed'
+                      className={`flex-1 py-4.5 rounded-[1.5rem] text-xs font-bold tracking-tight transition-all active:scale-95 ${
+                        isEditValid 
+                          ? (darkMode ? 'bg-zinc-800 text-white hover:bg-emerald-500 shadow-xl shadow-black/40 border border-white/5' : 'bg-emerald-600 text-white shadow-emerald-100 hover:bg-emerald-500 shadow-lg') 
+                          : (darkMode ? 'bg-zinc-900 text-zinc-700 cursor-not-allowed border border-white/5' : 'bg-emerald-100 text-emerald-300 cursor-not-allowed')
                       }`}
                     >
                       Save Changes
                     </button>
                     <button 
                       onClick={() => { setIsEditMode(false); setPhaseEditTouched(false); }} 
-                      className="flex-1 py-4.5 bg-emerald-50 text-emerald-600 rounded-[1.5rem] text-xs font-bold tracking-tight border border-emerald-100 active:scale-95 transition-all"
+                      className={`flex-1 py-4.5 ${darkMode ? 'bg-zinc-800 text-white hover:bg-orange-500 shadow-xl shadow-black/40 border border-white/5' : 'bg-emerald-50 text-emerald-600 border-emerald-100 hover:bg-emerald-100 shadow-sm'} rounded-[1.5rem] text-xs font-bold tracking-tight border active:scale-95 transition-all`}
                     >
                       Cancel
                     </button>

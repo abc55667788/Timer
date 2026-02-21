@@ -21,6 +21,7 @@ interface TimerBoardProps {
   isJournalOpen: boolean;
   setIsJournalOpen: (val: boolean) => void;
   isAndroid?: boolean;
+  darkMode: boolean;
 }
 
 const TimerBoard: React.FC<TimerBoardProps> = ({
@@ -41,6 +42,7 @@ const TimerBoard: React.FC<TimerBoardProps> = ({
   isJournalOpen,
   setIsJournalOpen,
   isAndroid,
+  darkMode,
 }) => {
   return (
     <div className={`flex flex-col items-center justify-center w-full flex-1 min-h-full animate-in fade-in duration-500 relative scrollbar-none px-4 ${isAndroid ? 'py-4 pb-12' : 'py-8'}`}>
@@ -48,40 +50,40 @@ const TimerBoard: React.FC<TimerBoardProps> = ({
         <div className={`absolute ${isAndroid ? 'top-2 right-2' : 'top-4 right-4 md:top-10 md:right-10'} z-[60]`}>
           <button 
             onClick={() => setIsJournalOpen(true)} 
-            className={`${isAndroid ? 'p-3 rounded-2xl' : 'p-3.5 md:p-5 rounded-2xl md:rounded-[1.5rem]'} bg-white/95 backdrop-blur-sm text-emerald-600 shadow-[0_12px_44px_-8px_rgba(0,0,0,0.15)] border border-emerald-50 hover:shadow-emerald-500/20 transition-all duration-300 active:scale-95 group`}
+            className={`${isAndroid ? 'p-3 rounded-2xl' : 'p-3.5 md:p-5 rounded-2xl md:rounded-[1.5rem]'} ${darkMode ? 'bg-zinc-900/80 text-zinc-400 border-white/5 hover:text-emerald-500 hover:bg-zinc-800 shadow-[0_20px_50px_rgba(0,0,0,0.5)]' : 'bg-white/95 text-emerald-600 border-emerald-50 shadow-[0_12px_44px_-8px_rgba(0,0,0,0.15)]'} backdrop-blur-md transition-all duration-300 active:scale-95 group border`}
             title="Open Journal"
           >
-            <Library size={isAndroid ? 18 : 22} className="group-hover:rotate-6 transition-transform"/>
+            <Library size={isAndroid ? 18 : 22} className="group-hover:rotate-6 group-hover:scale-110 transition-transform"/>
           </button>
         </div>
       )}
 
       <div className={`flex flex-col items-center gap-6 md:gap-12 w-full max-w-lg ${isAndroid ? 'py-1' : 'py-4'}`}>
         <div className={`flex flex-col items-center gap-4 md:gap-8 ${isAndroid ? 'mt-0' : 'mt-2 md:mt-0'}`}>
-          <div className="flex items-center gap-2 px-5 py-2 bg-emerald-50 rounded-full border border-emerald-100/50">
-            <div className={`w-2 h-2 rounded-full ${phase === 'work' ? 'bg-emerald-500' : 'bg-emerald-400'} ${isActive ? 'animate-pulse' : ''}`} />
-            <span className="text-[10px] font-black uppercase tracking-[0.1em] text-emerald-700">{isActive ? (phase === 'work' ? 'Focusing' : 'Resting') : 'Idle'}</span>
+          <div className={`flex items-center gap-2 px-5 py-2 ${darkMode ? 'bg-zinc-900 border-white/5 shadow-inner' : 'bg-emerald-50 border-emerald-100/50 shadow-sm'} rounded-full border`}>
+            <div className={`w-2 h-2 rounded-full ${phase === 'work' ? (darkMode ? 'bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.5)]' : 'bg-emerald-500 shadow-[0_0_8px_#10b981]') : (darkMode ? 'bg-orange-500 shadow-[0_0_12px_rgba(249,115,22,0.5)]' : 'bg-emerald-400 shadow-[0_0_8px_#34d399]')} ${isActive ? 'animate-pulse' : ''}`} />
+            <span className={`text-[10px] font-black uppercase tracking-[0.1em] ${darkMode ? 'text-zinc-500' : 'text-emerald-700'}`}>{isActive ? (phase === 'work' ? 'Focusing' : 'Resting') : 'Idle'}</span>
           </div>
 
           <div onClick={() => setShowLoggingModal(true)} className="relative group cursor-pointer active:scale-[0.98] transition-all">
-            <div className="absolute inset-0 bg-emerald-100 rounded-full blur-[80px] opacity-10 group-hover:opacity-30 transition-opacity"></div>
+            <div className={`absolute inset-0 ${darkMode ? 'bg-emerald-400/5' : 'bg-emerald-100/30'} rounded-full blur-[40px] opacity-20 group-hover:opacity-30 transition-opacity`}></div>
             <svg className={`${isAndroid ? 'w-64 h-64' : 'w-56 h-56 sm:w-64 sm:h-64 md:w-80 md:h-80'} -rotate-90`} viewBox="0 0 300 300">
-              <circle cx="150" cy="150" r={135} stroke="currentColor" strokeWidth="6" fill="transparent" className="text-emerald-50" />
-              <circle cx="150" cy="150" r={135} stroke="currentColor" strokeWidth="8" fill="transparent" 
+              <circle cx="150" cy="150" r={135} stroke="currentColor" strokeWidth="6" fill="transparent" className={darkMode ? 'text-white/5' : 'text-emerald-50'} />
+              <circle cx="150" cy="150" r={135} stroke="currentColor" strokeWidth="10" fill="transparent" 
                 strokeDasharray={2 * Math.PI * 135} strokeDashoffset={(2 * Math.PI * 135) - ((timeLeft / (phase === 'work' ? settings.workDuration : settings.restDuration)) * 2 * Math.PI * 135)}
-                className="text-emerald-500 transition-all duration-1000 ease-linear"
+                className={`text-emerald-500 transition-all duration-1000 ease-linear ${darkMode ? 'drop-shadow-[0_0_8px_rgba(16,185,129,0.2)]' : ''}`}
                 strokeLinecap="round"
               />
             </svg>
-            <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/60 backdrop-blur-xl rounded-full m-3.5 md:m-5 shadow-2xl border border-white/40 overflow-hidden ring-1 ring-emerald-50/10">
-              <div className="absolute inset-0 rounded-full bg-emerald-50/0 group-hover:bg-emerald-50/90 flex flex-col items-center justify-center transition-all opacity-0 group-hover:opacity-100 backdrop-blur-[2px] z-20">
-                <Edit3 size={32} className="text-emerald-600 mb-3" />
-                <span className="text-[10px] md:text-[11px] font-black text-emerald-600 uppercase tracking-widest">Edit Session</span>
+            <div className={`absolute inset-0 flex flex-col items-center justify-center ${darkMode ? 'bg-zinc-950/40 text-emerald-50 shadow-[inset_0_4px_20px_rgba(0,0,0,0.4)]' : 'bg-white/60 text-slate-800'} backdrop-blur-3xl rounded-full m-3.5 md:m-5 shadow-2xl border ${darkMode ? 'border-white/10' : 'border-white/40'} overflow-hidden`}>
+              <div className={`absolute inset-0 rounded-full ${darkMode ? 'bg-zinc-900/90' : 'bg-emerald-50/90'} flex flex-col items-center justify-center transition-all opacity-0 group-hover:opacity-100 backdrop-blur-[6px] z-20`}>
+                <Edit3 size={32} className={`${darkMode ? 'text-emerald-500' : 'text-emerald-600'} mb-3 drop-shadow-[0_0_10px_rgba(16,185,129,0.3)] animate-in zoom-in-50 duration-300`} />
+                <span className={`text-[10px] md:text-[11px] font-black ${darkMode ? 'text-emerald-500 font-bold' : 'text-emerald-600'} uppercase tracking-[0.2em]`}>Edit Session</span>
               </div>
               
-              <span className={`font-mono font-bold tabular-nums z-10 tracking-tighter ${isAndroid ? 'text-4xl' : 'text-3xl md:text-6xl'}`}>{formatTime(displayTime)}</span>
-              {isOvertime && <span className={`text-orange-500 font-bold ${isAndroid ? 'text-[11px]' : 'text-xs'} animate-pulse mt-0.5 font-mono z-10`}>+{formatTime(overtimeSeconds)}</span>}
-              <div className={`mt-3 px-3 py-1 bg-emerald-50/50 rounded-lg text-black/40 text-[9px] font-black uppercase tracking-[0.15em] truncate z-10 ${isAndroid ? 'max-w-[140px]' : 'max-w-[110px] md:max-w-[160px]'}`}>
+              <span className={`font-mono font-bold tabular-nums z-10 tracking-tighter ${isAndroid ? 'text-4xl' : 'text-3xl md:text-6xl'} ${darkMode ? 'text-white drop-shadow-[0_0_12px_rgba(0,0,0,0.4)]' : ''}`}>{formatTime(displayTime)}</span>
+              {isOvertime && <span className={`text-orange-400 font-bold ${isAndroid ? 'text-[11px]' : 'text-xs'} animate-pulse mt-0.5 font-mono z-10 drop-shadow-[0_0_12px_rgba(251,146,60,0.6)]`}>+{formatTime(overtimeSeconds)}</span>}
+              <div className={`mt-3 px-3 py-1 ${darkMode ? 'bg-zinc-900/80 text-emerald-500 border border-white/5 shadow-inner' : 'bg-emerald-50/50 text-black/40 shadow-sm'} rounded-lg text-[9px] font-black uppercase tracking-[0.15em] truncate z-10 ${isAndroid ? 'max-w-[140px]' : 'max-w-[110px] md:max-w-[160px]'}`}>
                 {currentTask.category}
               </div>
             </div>
@@ -92,19 +94,19 @@ const TimerBoard: React.FC<TimerBoardProps> = ({
           {isCurrentlyRecording && (
             <button 
               onClick={handleStopClick} 
-              className={`${isAndroid ? 'w-12 h-12' : 'w-10 h-10 md:w-13 md:h-13'} rounded-full bg-emerald-50 text-emerald-600 hover:bg-red-50 hover:text-red-500 transition-all duration-300 ease-in-out shadow-sm border border-emerald-100 flex items-center justify-center group active:scale-90 animate-in fade-in slide-in-from-right-8 duration-500`}
+              className={`${isAndroid ? 'w-12 h-12' : 'w-11 h-11 md:w-13 md:h-13'} rounded-full ${darkMode ? 'bg-zinc-800 text-white border-white/5 hover:bg-red-500 shadow-black/40' : 'bg-emerald-50 text-emerald-600 border-emerald-100 hover:bg-red-50 hover:text-red-500 shadow-sm'} transition-all duration-300 ease-in-out border flex items-center justify-center group active:scale-90 animate-in fade-in slide-in-from-right-8 duration-500`}
             >
-              <Square size={isAndroid ? 18 : 16} fill="currentColor" className="group-hover:scale-90 transition-transform"/>
+              <Square size={isAndroid ? 18 : 16} fill="currentColor" className="group-hover:scale-110 transition-transform"/>
             </button>
           )}
 
           <button 
             onClick={handleStart} 
-            className={`flex items-center justify-center transition-[background-color,border-radius,box-shadow,transform] duration-700 ease-[cubic-bezier(0.34,1.56,0.64,1)] shadow-xl active:scale-90 
-              ${isAndroid ? 'w-20 h-20 shadow-emerald-500/10' : 'w-16 h-16 md:w-20 md:h-20'} 
+            className={`flex items-center justify-center transition-all duration-300 active:scale-90 shadow-2xl
+              ${isAndroid ? 'w-20 h-20' : 'w-16 h-16 md:w-20 md:h-20'} 
               ${isActive 
-                ? 'text-white bg-orange-600 shadow-orange-200/50 rounded-[1.4rem]' 
-                : 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-emerald-200/50 rounded-[50%]'
+                ? (darkMode ? 'text-white bg-orange-500 border-white/10 hover:bg-orange-400 rounded-[1.4rem] shadow-orange-500/30' : 'text-white bg-orange-600 shadow-orange-200/50 rounded-[1.4rem]') 
+                : (darkMode ? 'bg-emerald-500 text-white rounded-[50%] border-white/10 hover:bg-emerald-400 hover:scale-105 shadow-emerald-500/30' : 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-emerald-200/50 rounded-[50%]')
               }`}
           >
             {isActive ? (
@@ -117,7 +119,7 @@ const TimerBoard: React.FC<TimerBoardProps> = ({
           {!isOvertime && isCurrentlyRecording && (
             <button 
               onClick={handleSkipToNextPhase} 
-              className={`${isAndroid ? 'w-12 h-12' : 'w-11 h-11 md:w-13 md:h-13'} rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100 hover:bg-emerald-100 transition-all duration-300 ease-in-out active:scale-90 flex items-center justify-center animate-in fade-in slide-in-from-left-8 duration-500`} 
+              className={`${isAndroid ? 'w-12 h-12' : 'w-11 h-11 md:w-13 md:h-13'} rounded-full ${darkMode ? 'bg-zinc-800 text-white border-white/5 hover:bg-emerald-500 shadow-black/40' : 'bg-emerald-50 text-emerald-600 border border-emerald-100 hover:bg-emerald-100 shadow-sm'} transition-all duration-300 ease-in-out active:scale-90 flex items-center justify-center animate-in fade-in slide-in-from-left-8 duration-500`} 
               title={phase === 'work' ? 'Start Rest' : 'Start Work'}
             >
               {phase === 'work' ? <Coffee size={isAndroid ? 20 : 18} /> : <Briefcase size={isAndroid ? 20 : 18} />}
@@ -127,7 +129,7 @@ const TimerBoard: React.FC<TimerBoardProps> = ({
           {isOvertime && (
             <button 
               onClick={handleSkipToNextPhase} 
-              className={`${isAndroid ? 'w-12 h-12' : 'w-11 h-11 md:w-13 md:h-13'} rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100 hover:bg-emerald-100 transition-all duration-300 ease-in-out active:scale-90 flex items-center justify-center animate-in fade-in slide-in-from-left-8 duration-500`} 
+              className={`${isAndroid ? 'w-12 h-12' : 'w-11 h-11 md:w-13 md:h-13'} rounded-full ${darkMode ? 'bg-zinc-800 text-white border-white/5 hover:bg-emerald-500 shadow-black/40' : 'bg-emerald-50 text-emerald-600 border border-emerald-100 hover:bg-emerald-100 shadow-sm'} transition-all duration-300 ease-in-out active:scale-90 flex items-center justify-center animate-in fade-in slide-in-from-left-8 duration-500`} 
               title="Next Phase"
             >
               <RotateCcw size={isAndroid ? 20 : 18} />
