@@ -276,6 +276,17 @@ function EmeraldTimer() {
   });
 
   const [timeLeft, setTimeLeft] = useState(settings.workDuration);
+  const timeLeftRef = useRef(settings.workDuration);
+  const overtimeSecondsRef = useRef(0);
+  const lastTickRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    timeLeftRef.current = timeLeft;
+  }, [timeLeft]);
+
+  useEffect(() => {
+    overtimeSecondsRef.current = overtimeSeconds;
+  }, [overtimeSeconds]);
 
   const [currentTask, setCurrentTask] = useState({
     category: 'Work' as Category,
@@ -499,12 +510,48 @@ function EmeraldTimer() {
 
   useEffect(() => {
     let interval: number | null = null;
-    if (isActive && timeLeft > 0) {
+    if (isActive) {
+      lastTickRef.current = Date.now();
       interval = window.setInterval(() => {
-        sessionPhaseDurationsRef.current[phaseRef.current] += 1;
-        setTimeLeft(prev => prev - 1);
+        const now = Date.now();
+        const deltaMs = now - (lastTickRef.current || now);
+        const deltaSec = Math.floor(deltaMs / 1000);
+        
+        if (deltaSec >= 1) {
+          lastTickRef.current = now - (deltaMs % 1000); // preserve the remainder
+          
+          if (!isOvertime) {
+            if (timeLeftRef.current > 0) {
+              const consumed = Math.min(deltaSec, timeLeftRef.current);
+              sessionPhaseDurationsRef.current[phaseRef.current] += consumed;
+              setTimeLeft(prev => Math.max(0, prev - consumed));
+              
+              if (timeLeftRef.current <= deltaSec) {
+                // If the app slept through the end of the phase
+                const overage = deltaSec - consumed;
+                if (overage > 0) {
+                  setOvertimeSeconds(prev => prev + overage);
+                  setIsOvertime(true);
+                }
+              }
+            } else {
+              setIsOvertime(true);
+              setOvertimeSeconds(prev => prev + deltaSec);
+            }
+          } else {
+            sessionPhaseDurationsRef.current[phaseRef.current] += deltaSec;
+            setOvertimeSeconds(prev => prev + deltaSec);
+          }
+        }
       }, 1000);
-    } else if (!isOvertime && timeLeft === 0 && isActive) {
+    } else {
+      lastTickRef.current = null;
+    }
+    return () => { if (interval) window.clearInterval(interval); };
+  }, [isActive, isOvertime]);
+
+  useEffect(() => {
+    if (!isOvertime && timeLeft === 0 && isActive) {
       setIsActive(false);
       setIsOvertime(false);
       setOvertimeSeconds(0);
@@ -517,19 +564,7 @@ function EmeraldTimer() {
       triggerAppNotification(title, body);
       setPhasePrompt({ phase, kind });
     }
-    return () => { if (interval) window.clearInterval(interval); };
   }, [isActive, timeLeft, phase, isOvertime]);
-
-  useEffect(() => {
-    let otInterval: number | null = null;
-    if (isOvertime && isActive) {
-      otInterval = window.setInterval(() => {
-        sessionPhaseDurationsRef.current[phaseRef.current] += 1;
-        setOvertimeSeconds(prev => prev + 1);
-      }, 1000);
-    }
-    return () => { if (otInterval) window.clearInterval(otInterval); };
-  }, [isOvertime, isActive]);
 
   useEffect(() => {
     if (isOvertime && overtimeSeconds >= nextReminderAt && !phasePrompt) {
@@ -1698,23 +1733,78 @@ function EmeraldTimer() {
         {
           id: 'TIMER_CONTROLS',
           actions: [
-            { id: 'TOGGLE', title: 'Pause/Play', foreground: true },
+            { id: 'TOGGLE', title: 'Pause / Play', foreground: true },
             { id: 'SKIP', title: 'Skip Phase', foreground: true }
           ]
         }
       ]
     }).catch(e => console.warn('ActionTypes fail', e));
 
+    // Create a high-importance channel for Android "Time's Up" alarms
+    if (isAndroid) {
+      LocalNotifications.createChannel({
+        id: 'timer-alerts',
+        name: 'Timer Alerts',
+        description: 'Notifications for finished timer phases',
+        importance: 5, // Max importance
+        visibility: 1, // Public
+        vibration: true,
+        sound: 'res://bell'
+      }).catch(() => {});
+    }
+
     // Listen to backgrounding
     const stateListener = App.addListener('appStateChange', async ({ isActive: isForeground }) => {
       if (isForeground) {
-        LocalNotifications.cancel({ notifications: [{ id: 888 }] }).catch(() => {});
+        // App is foreground: cancel status (888) and completion (999) notifications
+        LocalNotifications.cancel({ notifications: [{ id: 888 }, { id: 999 }] }).catch(() => {});
+      } else {
+        // App is background: 
+        const { phase, isActive, displayTime, currentTask, timeLeft, sessionStartTime } = timerStateRef.current;
+        
+        if (sessionStartTime !== null) {
+          // 1. Show persistent status
+          LocalNotifications.schedule({
+            notifications: [
+              {
+                id: 888,
+                title: phase === 'work' ? `🔥 ${currentTask.category}` : `🍃 Rest Phase`,
+                body: `${isActive ? '▶️ Running' : '⏸️ Paused'} | ${formatTime(displayTime)}`,
+                ongoing: true,
+                autoCancel: false,
+                silent: true,
+                smallIcon: 'ic_stat_icon_config_sample', 
+                actionTypeId: 'TIMER_CONTROLS'
+              }
+            ]
+          }).catch(() => {});
+
+          // 2. If running, schedule an alarm for the exact moment it ends (ID 999)
+          if (isActive && timeLeft > 0) {
+            const completionDate = new Date(Date.now() + (timeLeft * 1000));
+            LocalNotifications.schedule({
+              notifications: [
+                {
+                  id: 999,
+                  title: phase === 'work' ? '🔥🔥 Focus Complete!' : '🍃 Rest Complete!',
+                  body: phase === 'work' ? 'Block finished - time for a break.' : 'Break over - time to focus!',
+                  schedule: { at: completionDate, allowWhileIdle: true },
+                  sound: 'res://bell', 
+                  vibrations: true,
+                  smallIcon: 'ic_stat_icon_config_sample',
+                  channelId: 'timer-alerts',
+                  actionTypeId: 'OPEN_APP'
+                }
+              ]
+            }).catch(e => console.error('Schedule completion error', e));
+          }
+        }
       }
     });
 
     return () => {
        stateListener.then(l => l.remove());
-       LocalNotifications.cancel({ notifications: [{ id: 888 }] }).catch(() => {});
+       LocalNotifications.cancel({ notifications: [{ id: 888 }, { id: 999 }] }).catch(() => {});
     };
   }, [isAndroid]);
 
@@ -1736,58 +1826,11 @@ function EmeraldTimer() {
   }, [isAndroid, handleStart, handleSkipToNextPhase]);
 
   // background persistent notification handler for Android
-  const lastNotificationUpdateRef = useRef(0);
-  const lastNotificationKeyRef = useRef('');
-  const timerStateRef = useRef({ phase, isActive, displayTime, currentTask, sessionStartTime });
+  const timerStateRef = useRef({ phase, isActive, displayTime, currentTask, sessionStartTime, timeLeft });
 
   useEffect(() => {
-    timerStateRef.current = { phase, isActive, displayTime, currentTask, sessionStartTime };
-  }, [phase, isActive, displayTime, currentTask.category, sessionStartTime]);
-
-  useEffect(() => {
-    if (!isAndroid) return;
-
-    const updateInterval = setInterval(async () => {
-      const state = await App.getState();
-      const { phase, isActive, displayTime, currentTask, sessionStartTime } = timerStateRef.current;
-      
-      // Only show if background AND a session is active (either running or paused)
-      if (!state.isActive && sessionStartTime !== null) {
-        const now = Date.now();
-        const displayTimeStr = formatTime(displayTime);
-        
-        // Define a key that represents the content (ignoring precise time bits to reduce updates)
-        // We only trigger update if:
-        // 1. Phase/Category/Active status changes (Immediate update)
-        // 2. OR 15 seconds passed (Periodic update)
-        const currentKey = `${phase}-${currentTask.category}-${isActive}`;
-        const hasStateChanged = currentKey !== lastNotificationKeyRef.current;
-        const isTimeForUpdate = now - lastNotificationUpdateRef.current > 15000;
-
-        if (hasStateChanged || isTimeForUpdate) {
-          lastNotificationUpdateRef.current = now;
-          lastNotificationKeyRef.current = currentKey;
-
-          LocalNotifications.schedule({
-            notifications: [
-              {
-                id: 888,
-                title: phase === 'work' ? `🔥 ${currentTask.category}` : `🍃 Rest Phase`,
-                body: `${isActive ? '▶️ Running' : '⏸️ Paused'} | ${displayTimeStr}`,
-                ongoing: true,
-                autoCancel: false,
-                silent: true, // Crucial to prevent flashing/beeping on update
-                smallIcon: 'res://icon',
-                actionTypeId: 'TIMER_CONTROLS'
-              }
-            ]
-          }).catch(e => console.error('Schedule fail', e));
-        }
-      } 
-    }, 1000);
-
-    return () => clearInterval(updateInterval);
-  }, [isAndroid]);
+    timerStateRef.current = { phase, isActive, displayTime, currentTask, sessionStartTime, timeLeft };
+  }, [phase, isActive, displayTime, currentTask.category, sessionStartTime, timeLeft]);
 
   if (isInitialLoading) {
     return (

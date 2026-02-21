@@ -20,7 +20,9 @@ All notable changes to the Emerald Timer project will be documented in this file
 - **Visual Cleanup**: Removed the "Display Zoom" setting on Android as it's not applicable to the native platform.
 - **UI Artifact Fixes**: Fixed a white border issue on the left side of the Stats view when the calendar drawer is collapsed.
 - **Persistent Notification**: Implemented a sticky notification for the Android status bar that updates when the timer is running in the background. Added "Play/Pause" and "Skip" quick actions.
-- **Flicker Reduction**: Optimized background update logic to reduce notification bar flashing and battery drain.
+- **Flicker Reduction**: Optimized background update logic to reduce notification bar flashing and battery drain by removing periodic per-second updates.
+- **Background Persistence**: Implemented a Date-based timer logic to prevent time drift when the JS engine is suspended by Android.
+- **Pre-scheduled Alarms**: Added pre-scheduled future notifications for phase completion, ensuring the user is alerted with sound and vibration even if the app process is frozen.
 
 ## [1.3.5] - 2026-02-20
 
