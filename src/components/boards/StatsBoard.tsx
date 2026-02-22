@@ -158,6 +158,7 @@ const StatsBoard: React.FC<StatsBoardProps> = ({
                   onSelectDate={setSelectedStatsDate} 
                   viewType={statsView} 
                   darkMode={darkMode}
+                  compact={true}
                 />
               </div>
             </div>
@@ -178,13 +179,13 @@ const StatsBoard: React.FC<StatsBoardProps> = ({
       )}
 
       <div className="flex-1 space-y-4 w-full h-full flex flex-col overflow-visible">
-        <div className={`flex flex-col sm:flex-row sm:items-center justify-between ${darkMode ? 'bg-zinc-900 border-white/10 text-emerald-100 shadow-[0_8px_32px_rgba(0,0,0,0.6)]' : 'bg-white/40 border-white/20 text-emerald-900'} backdrop-blur-3xl p-1.5 sm:p-1 rounded-2xl flex-shrink-0 border gap-2 sticky top-0 z-30 shadow-sm transition-all duration-500`}>
-           <div className="flex items-center gap-1 overflow-x-auto scrollbar-none pb-0.5 sm:pb-0">
+        <div className={`flex flex-col sm:flex-row sm:items-center justify-between ${darkMode ? 'bg-zinc-900 border-white/10 text-emerald-100 shadow-[0_8px_32px_rgba(0,0,0,0.6)]' : 'bg-white border-white/60 shadow-[0_8px_40px_-12px_rgba(16,185,129,0.15)]'} backdrop-blur-3xl p-1.5 sm:p-1.5 rounded-2xl flex-shrink-0 border gap-2 sticky top-0 z-30 transition-all duration-500`}>
+           <div className="flex items-center gap-1.5 overflow-visible">
              <button 
                onClick={() => setIsCalendarCollapsed(!isCalendarCollapsed)} 
-               className={`p-2 rounded-xl transition-all shadow-sm flex-shrink-0 border border-transparent active:scale-95 ${darkMode ? 'bg-zinc-800 text-zinc-500 hover:bg-emerald-500 hover:text-white hover:shadow-black' : 'text-emerald-600 hover:bg-white/60'}`}
+               className={`p-2.5 rounded-2xl transition-all shadow-sm flex-shrink-0 border active:scale-95 ${darkMode ? 'bg-zinc-800 text-zinc-400 border-white/5 hover:bg-emerald-500 hover:text-white hover:shadow-[0_8px_20px_-4px_rgba(16,185,129,0.3)]' : 'bg-white text-emerald-600 border-emerald-50 shadow-sm hover:shadow-lg hover:shadow-emerald-500/10 hover:border-emerald-200 hover:text-emerald-700'}`}
              >
-               {isCalendarCollapsed ? <PanelLeftOpen size={16}/> : <PanelLeftClose size={16}/>}
+               {isCalendarCollapsed ? <PanelLeftOpen size={18} strokeWidth={2.5}/> : <PanelLeftClose size={18} strokeWidth={2.5}/>}
              </button>
              {([
                { id: 'day', label: 'Day' },

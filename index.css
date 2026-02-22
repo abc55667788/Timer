@@ -75,6 +75,25 @@
   scrollbar-width: none !important;
 }
 
+/* --- Android Dark Mode Overrides --- */
+.android-dark html,
+.android-dark body,
+.android-dark #root {
+  background: #0b1215 !important;
+  color: #e7f6ef !important;
+}
+
+.android-dark .bg-white { background-color: #0f161a !important; }
+.android-dark .text-emerald-900 { color: #e7f6ef !important; }
+.android-dark .border-emerald-100 { border-color: #12352b !important; }
+.android-dark .shadow-2xl { box-shadow: 0 20px 50px rgba(0,0,0,0.5) !important; }
+.android-dark .bg-emerald-50 { background-color: #0f1d18 !important; }
+.android-dark .bg-emerald-100 { background-color: #123227 !important; }
+.android-dark .bg-emerald-200 { background-color: #144536 !important; }
+.android-dark .text-emerald-800 { color: #b2f0d8 !important; }
+.android-dark .text-emerald-600 { color: #8be4c6 !important; }
+.android-dark .border { border-color: #1c2a2f !important; }
+
 /* --- Tailwind Animate Substitutes --- */
 @keyframes enter {
   from {
