@@ -126,6 +126,8 @@ jobs:
         run: |
           gh release create ${{ github.ref_name }} \
             --title "Emerald Timer ${{ github.ref_name }} - Professional Edition (Added Dark Mode)" \
+            --draft=false \
+            --prerelease=false \
             --notes "## 💎 Emerald Timer ${{ github.ref_name }} 正式版
             此版本包含了全新的 **Professional Edition (Dark Mode)** 设计，从底层重构了视觉体感。
 
@@ -143,4 +145,4 @@ jobs:
 
             ---
             *本版本由 GitHub Actions 自动构建发布。*" \
-            dist/* || gh release upload ${{ github.ref_name }} dist/* --clobber
+            dist/* || (gh release edit ${{ github.ref_name }} --draft=false --prerelease=false && gh release upload ${{ github.ref_name }} dist/* --clobber)
