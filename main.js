@@ -94,12 +94,13 @@ ipcMain.on('toggle-mini-mode', (event, isMini) => {
     const miniHeight = 80;
 
     if (isMini) {
-      // Entering Mini Mode
-      const size = mainWindow.getSize();
-      const pos = mainWindow.getPosition();
-      originalSize = { width: size[0], height: size[1] };
-      originalPosition = { x: pos[0], y: pos[1] };
-      isCurrentlyMini = true;
+      if (!isCurrentlyMini) {
+        // Entering Mini Mode
+        const size = mainWindow.getSize();
+        const pos = mainWindow.getPosition();
+        originalSize = { width: size[0], height: size[1] };
+        originalPosition = { x: pos[0], y: pos[1] };
+      }
       
       mainWindow.setResizable(true); // Temporarily allow resize to set size
       mainWindow.setMinimumSize(miniWidth, miniHeight);
@@ -116,12 +117,14 @@ ipcMain.on('toggle-mini-mode', (event, isMini) => {
       mainWindow.setPosition(lastMiniPos.x, lastMiniPos.y);
       mainWindow.setAlwaysOnTop(true);
       mainWindow.setResizable(false);
+      // We are now in mini mode
+      isCurrentlyMini = true;
     } else {
       // Leaving Mini Mode
       if (isCurrentlyMini) {
-        // Save the location where the user might have dragged the mini window
-        const pos = mainWindow.getPosition();
-        lastMiniPos = { x: pos[0], y: pos[1] };
+        // 退出 mini 模式前，记录当前窗口位置作为下次 mini 的记忆值
+        const bounds = mainWindow.getBounds();
+        lastMiniPos = { x: bounds.x, y: bounds.y };
       }
       isCurrentlyMini = false;
 
