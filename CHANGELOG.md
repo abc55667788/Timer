@@ -2,6 +2,13 @@
 
 All notable changes to the Emerald Timer project will be documented in this file.
 
+## [1.4.1] - 2026-02-22
+
+### 📱 Android Notification & Dark Mode Polish
+- **Reliable End-of-Session Alerts**: End-of-phase notifications now carry the task name and planned duration, and are always delivered as system notifications (foreground or background).
+- **Stable Background Status**: Persistent Android notification shows session status without flicker; completion alarms remain scheduled for exact end times.
+- **Dark Mode Visuals**: Android dark theme now aligns with the desktop glass/gradient aesthetic for a consistent look.
+
 ## [1.4.0] - 2026-02-22
 
 ### 📱 Android Pro Edition (Major Update)

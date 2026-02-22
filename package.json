@@ -1,6 +1,6 @@
 {
   "name": "emerald-timer",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "type": "module",
   "description": "Visual Time Tracker & Life Journal",
   "main": "main.cjs",

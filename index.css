@@ -93,6 +93,19 @@
 .android-dark .text-emerald-800 { color: #b2f0d8 !important; }
 .android-dark .text-emerald-600 { color: #8be4c6 !important; }
 .android-dark .border { border-color: #1c2a2f !important; }
+.android-dark .bg-white\/70,
+.android-dark .bg-white\/80,
+.android-dark .bg-white\/90,
+.android-dark .bg-white\/60,
+.android-dark .card-surface {
+  background: rgba(17, 28, 32, 0.88) !important;
+  border-color: rgba(33, 72, 60, 0.55) !important;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.45) !important;
+  backdrop-filter: blur(12px);
+}
+.android-dark .text-slate-700 { color: #d9f1e6 !important; }
+.android-dark .text-gray-700 { color: #cfe9df !important; }
+.android-dark .bg-emerald-300 { background-color: #15503f !important; }
 
 /* --- Tailwind Animate Substitutes --- */
 @keyframes enter {

@@ -898,10 +898,10 @@ function EmeraldTimer() {
     setSessionStartTime(null);
     setShowConfirmModal(null);
     setIsPausedBySettings(false);
-    setCurrentTask({ category: 'Work', description: '', images: [], liveId: null });
     
     if (activeTab === 'settings') {
       showNotice('Preferences Saved Successfully!', 1500);
+      setCurrentTask({ category: 'Work', description: '', images: [], liveId: null });
     } else {
       setActiveTab('timer');
     }
@@ -924,6 +924,17 @@ function EmeraldTimer() {
       return;
     }
     const newSettings = { workDuration: w * 60, restDuration: r * 60 };
+    
+    // Check if durations actually changed
+    const settingsChanged = newSettings.workDuration !== settings.workDuration || 
+                            newSettings.restDuration !== settings.restDuration;
+    
+    if (!settingsChanged) {
+      showNotice('Session details updated successfully!');
+      setShowLoggingModal(false);
+      return;
+    }
+
     if (isCurrentlyRecording) {
       setPendingSettingsChange(newSettings);
       return;
@@ -1756,51 +1767,53 @@ function EmeraldTimer() {
       }).catch(() => {});
     }
 
+    const scheduleStatusNotification = async (body: string, title: string) => {
+      await LocalNotifications.schedule({
+        notifications: [
+          {
+            id: 888,
+            title,
+            body,
+            ongoing: true,
+            autoCancel: false,
+            silent: true,
+            smallIcon: 'res://icon',
+            actionTypeId: 'TIMER_CONTROLS'
+          }
+        ]
+      }).catch(() => {});
+    };
+
+    const scheduleCompletionAlarm = (timeLeftSeconds: number, phase: TimerPhase) => {
+      if (timeLeftSeconds <= 0) return;
+      const completionDate = new Date(Date.now() + (timeLeftSeconds * 1000));
+      LocalNotifications.schedule({
+        notifications: [
+          {
+            id: 999,
+            title: phase === 'work' ? '🔥🔥 Focus Complete!' : '🍃 Rest Complete!',
+            body: phase === 'work' ? 'Block finished - time for a break.' : 'Break over - time to focus!',
+            schedule: { at: completionDate, allowWhileIdle: true },
+            sound: 'res://bell',
+            smallIcon: 'res://icon',
+            channelId: 'timer-alerts',
+            actionTypeId: 'OPEN_APP'
+          }
+        ]
+      }).catch(() => {});
+    };
+
     // Listen to backgrounding
     const stateListener = App.addListener('appStateChange', async ({ isActive: isForeground }) => {
       if (isForeground) {
-        // App is foreground: cancel status (888) and completion (999) notifications
         LocalNotifications.cancel({ notifications: [{ id: 888 }, { id: 999 }, { id: 777 }] }).catch(() => {});
       } else {
-        // App is background: 
-        const { phase, isActive, displayTime, currentTask, timeLeft, sessionStartTime } = timerStateRef.current;
-        
-        if (sessionStartTime !== null) {
-          // 1. Show persistent status
-          LocalNotifications.schedule({
-            notifications: [
-              {
-                id: 888,
-                title: phase === 'work' ? `🔥 ${currentTask.category}` : `🍃 Rest Phase`,
-                body: `${isActive ? '▶️ Running' : '⏸️ Paused'} | ${formatTime(displayTime)}`,
-                ongoing: true,
-                autoCancel: false,
-                silent: true,
-                smallIcon: 'res://icon',
-                actionTypeId: 'TIMER_CONTROLS'
-              }
-            ]
-          }).catch(() => {});
-
-          // 2. If running, schedule an alarm for the exact moment it ends (ID 999)
-          if (isActive && timeLeft > 0) {
-            const completionDate = new Date(Date.now() + (timeLeft * 1000));
-            LocalNotifications.schedule({
-              notifications: [
-                {
-                  id: 999,
-                  title: phase === 'work' ? '🔥🔥 Focus Complete!' : '🍃 Rest Complete!',
-                  body: phase === 'work' ? 'Block finished - time for a break.' : 'Break over - time to focus!',
-                  schedule: { at: completionDate, allowWhileIdle: true },
-                  sound: 'res://bell',
-                  smallIcon: 'res://icon',
-                  channelId: 'timer-alerts',
-                  actionTypeId: 'OPEN_APP'
-                }
-              ]
-            }).catch(e => console.error('Schedule completion error', e));
-          }
-        }
+        // App is background: show a stable status without ticking time to avoid stutter
+        const snap = timerStateRef.current;
+        const title = snap.phase === 'work' ? `🔥 ${snap.currentTask.category}` : `🍃 Rest Phase`;
+        const body = `${snap.isActive ? '▶️ Running' : '⏸️ Paused'} | ${snap.phase === 'work' ? 'Focus' : 'Rest'} Session`;
+        await scheduleStatusNotification(body, title);
+        scheduleCompletionAlarm(snap.timeLeft, snap.phase);
       }
     });
 
@@ -1903,11 +1916,11 @@ function EmeraldTimer() {
   const rootBgClass = (isMiniMode || wasMiniModeBeforeModal)
     ? 'bg-transparent border-0'
     : (isAndroid && isDarkMode 
-      ? 'bg-[#0b1215] border-0 ring-0' 
+      ? 'bg-gradient-to-br from-[#0d1a1f] via-[#0a161b] to-[#0b1215] border border-emerald-900/40 ring-1 ring-emerald-500/10 shadow-[0_24px_90px_rgba(0,0,0,0.45)] backdrop-blur-xl'
       : 'bg-gradient-to-br from-white/95 via-emerald-50/90 to-white/95 border border-white/40 ring-1 ring-white/20');
   
-  const rootTextClass = (isAndroid && isDarkMode) ? 'text-emerald-50/90' : 'text-emerald-900';
-  const rootRoundedClass = isAndroid ? 'rounded-0 shadow-none' : 'rounded-[1.5rem]';
+  const rootTextClass = (isAndroid && isDarkMode) ? 'text-emerald-50' : 'text-emerald-900';
+  const rootRoundedClass = isAndroid ? 'rounded-[1.25rem] shadow-lg' : 'rounded-[1.5rem]';
 
   return (
     <div 
@@ -1915,7 +1928,7 @@ function EmeraldTimer() {
       style={{
         background: (isMiniMode || wasMiniModeBeforeModal)
           ? 'transparent'
-          : (isAndroid && isDarkMode ? '#0b1215' : undefined)
+          : undefined
       }}
     >
       {!isMiniMode && !wasMiniModeBeforeModal && (
