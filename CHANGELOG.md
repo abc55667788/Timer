@@ -14,10 +14,6 @@ All notable changes to the Emerald Timer project will be documented in this file
 
 ## [1.4.0] - 2026-02-21
 
-### Desktop & Mini Mode Optimizations
-- **Mini Mode Memory**: Fixed an issue where the mini mode window position was not remembered after being dragged. Now, if you drag the mini window and then expand it (e.g., to edit a session or view logs), it will return to your preferred desktop location when switching back to mini mode.
-- **Production Readiness**: Removed all built-in demo data to provide a clean, production-ready recording environment for new users.
-
 ### Professional Dark Mode Overhaul
 - **Dedicated Dark/Zinc Theme**: Implemented "Deep Dark Zinc" (Zinc-950) as the system default for professional use.
 - **Aesthetic Refinement**: Migrated from "Neon Emerald" to a more focused and reduced eye-strain color palette.
@@ -25,6 +21,7 @@ All notable changes to the Emerald Timer project will be documented in this file
 - **Shadow System**: Replaced glow effects with deep black shadows (`shadow-black/70`) for professional depth.
 - **Dark Mode Support**: Comprehensive Dark/Zinc mode support with improved backdrop blurs (`backdrop-blur-3xl`).
 - **Glow Optimization**: Refined timer ring glows to be non-obtrusive and more professional.
+- **Mini Mode Memory**: Fixed an issue where the mini mode window position was not remembered after being dragged. Now, it correctly restores to your last preferred desktop location after being expanded/restored.
 - **Notification Design**: Overhauled all "Prompt" modals (Phase Complete, Log Decision, etc.) to be borderless with high-contrast button states.
 
 ### Interactive & Visual Enhancements
