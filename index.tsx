@@ -381,11 +381,14 @@ function EmeraldTimer() {
 
   const [isDarkMode, setIsDarkMode] = useState(() => {
     if (typeof window === 'undefined') return false;
-    // Check local storage first
+    // On Android we prefer to follow system theme by default (avoid persisting mobile user overrides)
+    if (isAndroid) return window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+    // Check local storage first for desktop users
     const saved = localStorage.getItem('emerald-theme');
     if (saved) return saved === 'dark';
     
-    // Check system preference
+    // Fallback to system preference
     return window.matchMedia('(prefers-color-scheme: dark)').matches;
   });
 
@@ -400,18 +403,19 @@ function EmeraldTimer() {
     return saved === 'true';
   });
 
-  // Persist theme choice and sync with platform
+  // Persist theme choice (desktop only) and sync with platform
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    localStorage.setItem('emerald-theme', isDarkMode ? 'dark' : 'light');
-    
-    // For Android, we also apply a class for native StatusBar styling or similar if needed
-    if (isAndroid) {
-      const cls = 'android-dark';
-      const action = isDarkMode ? 'add' : 'remove';
-      document.documentElement.classList[action](cls);
-      document.body.classList[action](cls);
+    // On Android we do not persist theme so the app follows system preference by default
+    if (!isAndroid) {
+      localStorage.setItem('emerald-theme', isDarkMode ? 'dark' : 'light');
     }
+
+    // Apply Android class for styling regardless so CSS updates immediately
+    const cls = 'android-dark';
+    const action = isDarkMode ? 'add' : 'remove';
+    document.documentElement.classList[action](cls);
+    document.body.classList[action](cls);
   }, [isDarkMode, isAndroid]);
 
   useEffect(() => {
