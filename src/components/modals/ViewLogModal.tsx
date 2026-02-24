@@ -79,7 +79,7 @@ const ViewLogModal: React.FC<ViewLogModalProps> = ({
   darkMode
 }) => {
   const CategoryPicker = () => (
-    <div className="grid grid-cols-4 gap-2">
+    <div className="grid grid-cols-6 sm:grid-cols-8 gap-2">
       {categories.map((cat, idx) => {
         const isSelected = viewingLog.category === cat.name;
         const color = cat.color;
@@ -97,7 +97,7 @@ const ViewLogModal: React.FC<ViewLogModalProps> = ({
             <div className={`p-2 rounded-full mb-1 transition-all ${isSelected ? 'scale-110' : (darkMode ? 'text-zinc-600 group-hover/cat:text-emerald-400' : 'text-gray-400')}`} style={isSelected ? { color: cat.color, backgroundColor: `${cat.color}20` } : {}}>
               <Icon size={16} />
             </div>
-            <span className={`text-[10px] font-black tracking-tight transition-colors ${isSelected ? '' : (darkMode ? 'text-zinc-600 group-hover/cat:text-emerald-400' : 'text-gray-400')}`} style={isSelected ? { color: cat.color } : {}}>{cat.name}</span>
+            <span className={`text-[9.5px] font-black tracking-tighter truncate w-full px-0.5 text-center transition-colors ${isSelected ? '' : (darkMode ? 'text-zinc-600 group-hover/cat:text-emerald-400' : 'text-gray-400')}`} style={isSelected ? { color: cat.color } : {}} title={cat.name}>{cat.name}</span>
           </button>
         );
       })}
@@ -108,7 +108,7 @@ const ViewLogModal: React.FC<ViewLogModalProps> = ({
 
   return (
     <div className={`fixed inset-0 ${(wasMiniModeBeforeModal || isMiniMode) ? 'bg-transparent' : (darkMode ? 'bg-black/80 backdrop-blur-2xl' : 'bg-black/60 backdrop-blur-xl')} flex items-center justify-center p-6 z-[150] animate-in fade-in duration-300`}>
-      <div className={`${darkMode ? 'bg-zinc-900 border-white/5 shadow-[0_32px_128px_-20px_rgba(0,0,0,0.9)]' : 'bg-white border-white/40 shadow-2xl'} backdrop-blur-3xl rounded-[2.5rem] p-8 w-full relative max-h-[90vh] overflow-y-auto scrollbar-none border transition-all duration-300 ${isEditMode ? 'max-w-lg' : 'max-w-sm'}`} style={{ WebkitAppRegion: 'drag' } as any}>
+      <div className={`${darkMode ? 'bg-zinc-900 border-white/5 shadow-[0_32px_128px_-20px_rgba(0,0,0,0.9)]' : 'bg-white border-white/40 shadow-2xl'} backdrop-blur-3xl rounded-[2.5rem] p-8 w-full relative max-h-[90vh] overflow-y-auto scrollbar-none border transition-all duration-300 max-w-lg`} style={{ WebkitAppRegion: 'drag' } as any}>
          <div style={{ WebkitAppRegion: 'no-drag' } as any} onPaste={handleClipboardImagePaste}>
            {!isEditMode ? (
              <div className="animate-in fade-in slide-in-from-bottom-4">

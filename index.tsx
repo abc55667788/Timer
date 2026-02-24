@@ -1,4 +1,4 @@
-﻿
+
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Capacitor } from '@capacitor/core';
@@ -373,26 +373,55 @@ function EmeraldTimer() {
     return Capacitor.getPlatform() === 'android' || /Android/i.test(navigator.userAgent);
   }, []);
 
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    // Check local storage first
+    const saved = localStorage.getItem('emerald-theme');
+    if (saved) return saved === 'dark';
+    
+    // Check system preference
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  });
 
-  // Track Android dark mode (follow system)
+  const [autoContinueLog, setAutoContinueLog] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    const saved = localStorage.getItem('emerald-auto-continue-log');
+    return saved === 'true';
+  });
+
+  // Persist theme choice and sync with platform
   useEffect(() => {
-    if (!isAndroid || typeof window === 'undefined') return;
+    if (typeof window === 'undefined') return;
+    localStorage.setItem('emerald-theme', isDarkMode ? 'dark' : 'light');
+    
+    // For Android, we also apply a class for native StatusBar styling or similar if needed
+    if (isAndroid) {
+      const cls = 'android-dark';
+      const action = isDarkMode ? 'add' : 'remove';
+      document.documentElement.classList[action](cls);
+      document.body.classList[action](cls);
+    }
+  }, [isDarkMode, isAndroid]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    localStorage.setItem('emerald-auto-continue-log', autoContinueLog.toString());
+  }, [autoContinueLog]);
+
+  // Track system preference changes (only update if not manually overridden or just sync)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
     const media = window.matchMedia('(prefers-color-scheme: dark)');
-    const apply = (ev: MediaQueryList | MediaQueryListEvent) => setIsDarkMode(!!ev.matches);
-    apply(media);
+    const apply = (ev: MediaQueryList | MediaQueryListEvent) => {
+      // If no manual preference, follow system
+      if (!localStorage.getItem('emerald-theme')) {
+        setIsDarkMode(!!ev.matches);
+      }
+    };
+    
     media.addEventListener('change', apply);
     return () => media.removeEventListener('change', apply);
-  }, [isAndroid]);
-
-  // Apply dark class to body/html for Android only
-  useEffect(() => {
-    if (!isAndroid) return;
-    const cls = 'android-dark';
-    const action = isDarkMode ? 'add' : 'remove';
-    document.documentElement.classList[action](cls);
-    document.body.classList[action](cls);
-  }, [isAndroid, isDarkMode]);
+  }, []);
 
   useEffect(() => {
     if (activeTab === 'stats' && isAndroid) {
@@ -568,12 +597,14 @@ function EmeraldTimer() {
   useEffect(() => {
     if (!isOvertime && timeLeft === 0 && isActive) {
       // Immediate alert (sound + vibration) when phase ends, even in foreground
+      const planned = formatTime(phase === 'work' ? settings.workDuration : settings.restDuration);
+      const taskLabel = currentTask.category || (phase === 'work' ? 'Focus' : 'Rest');
       LocalNotifications.schedule({
         notifications: [
           {
             id: 777,
-            title: phase === 'work' ? '🔥 Focus session done' : '🍃 Rest session done',
-            body: phase === 'work' ? 'Start your break or extend time.' : 'Break over — start focusing.',
+            title: phase === 'work' ? `🔥 Focus done · ${taskLabel}` : '🍃 Rest session done',
+            body: phase === 'work' ? `Planned ${planned} — start break or extend time.` : 'Break over — time to focus.',
             sound: 'res://bell',
             smallIcon: 'res://icon',
             channelId: 'timer-alerts',
@@ -817,7 +848,15 @@ function EmeraldTimer() {
     setPendingPromptBackup(phasePrompt);
     setPendingNextPhase(targetPhase);
     setPhasePrompt(null);
-    setShowLogContinuationPrompt(true);
+    if (autoContinueLog) {
+      transitionToPhase(targetPhase);
+      setPendingNextPhase(null);
+      setPendingPromptBackup(null);
+      const label = targetPhase === 'work' ? '专注' : '休息';
+      showNotice(`正在自动延续当前记录至${label}时段。`);
+    } else {
+      setShowLogContinuationPrompt(true);
+    }
   };
 
   const handleSkipToNextPhase = () => {
@@ -828,7 +867,15 @@ function EmeraldTimer() {
     }
     setPendingPromptBackup(null);
     setPendingNextPhase(targetPhase);
-    setShowLogContinuationPrompt(true);
+    if (autoContinueLog) {
+      transitionToPhase(targetPhase);
+      setPendingNextPhase(null);
+      setPendingPromptBackup(null);
+      const label = targetPhase === 'work' ? '专注' : '休息';
+      showNotice(`正在自动延续当前记录至${label}时段。`);
+    } else {
+      setShowLogContinuationPrompt(true);
+    }
   };
 
   const handleExitAndSave = () => {
@@ -1708,13 +1755,13 @@ function EmeraldTimer() {
     return logs.filter(l => formatDate(l.startTime) === selectedStatsDate).sort((a,b) => a.startTime - b.startTime);
   }, [logs, selectedStatsDate]);
 
-  const continueButtonLabel = pendingNextPhase === 'work' ? 'Continue for work' : pendingNextPhase === 'rest' ? 'Continue for rest' : 'Continue current log';
+  const continueButtonLabel = 'Continue current session log';
   const startNewButtonLabel = pendingNextPhase === 'work' ? 'Save & start new work log' : pendingNextPhase === 'rest' ? 'Save & start new rest log' : 'Save & start new log';
   const continuationDescription = pendingNextPhase === 'work'
     ? 'Continue adding time to the current log as you begin the next work session, or save it now and start fresh before focusing again.'
     : pendingNextPhase === 'rest'
       ? 'Carry this log into the upcoming rest break, or save it now and create a fresh entry for your downtime.'
-      : 'Continue the current log or save it now before moving into the next phase.';
+      : `Continue the current log or save it now before moving to ${pendingNextPhase === 'work' ? 'focus' : 'rest'}.`;
   const continuationNote = pendingNextPhase === 'work'
     ? 'Starting a new log resets the accumulated focus time before the upcoming work session.'
     : pendingNextPhase === 'rest'
@@ -1784,15 +1831,15 @@ function EmeraldTimer() {
       }).catch(() => {});
     };
 
-    const scheduleCompletionAlarm = (timeLeftSeconds: number, phase: TimerPhase) => {
+    const scheduleCompletionAlarm = (timeLeftSeconds: number, phase: TimerPhase, taskLabel: string, planned: string) => {
       if (timeLeftSeconds <= 0) return;
       const completionDate = new Date(Date.now() + (timeLeftSeconds * 1000));
       LocalNotifications.schedule({
         notifications: [
           {
             id: 999,
-            title: phase === 'work' ? '🔥🔥 Focus Complete!' : '🍃 Rest Complete!',
-            body: phase === 'work' ? 'Block finished - time for a break.' : 'Break over - time to focus!',
+            title: phase === 'work' ? `🔥🔥 Focus Complete · ${taskLabel}` : '🍃 Rest Complete!',
+            body: phase === 'work' ? `Planned ${planned} — block finished, time for a break.` : 'Break over — time to focus!',
             schedule: { at: completionDate, allowWhileIdle: true },
             sound: 'res://bell',
             smallIcon: 'res://icon',
@@ -1813,7 +1860,9 @@ function EmeraldTimer() {
         const title = snap.phase === 'work' ? `🔥 ${snap.currentTask.category}` : `🍃 Rest Phase`;
         const body = `${snap.isActive ? '▶️ Running' : '⏸️ Paused'} | ${snap.phase === 'work' ? 'Focus' : 'Rest'} Session`;
         await scheduleStatusNotification(body, title);
-        scheduleCompletionAlarm(snap.timeLeft, snap.phase);
+        const planned = formatTime(snap.phase === 'work' ? settings.workDuration : settings.restDuration);
+        const taskLabel = snap.currentTask.category || 'Focus';
+        scheduleCompletionAlarm(snap.timeLeft, snap.phase, taskLabel, planned);
       }
     });
 
@@ -1871,12 +1920,14 @@ function EmeraldTimer() {
 
     if (isActive && timeLeft > 0) {
       const completionDate = new Date(Date.now() + (timeLeft * 1000));
+      const planned = formatTime(phase === 'work' ? settings.workDuration : settings.restDuration);
+      const taskLabel = currentTask.category || 'Focus';
       LocalNotifications.schedule({
         notifications: [
           {
             id: 999,
-            title: phase === 'work' ? '🔥🔥 Focus Complete!' : '🍃 Rest Complete!',
-            body: phase === 'work' ? 'Block finished - time for a break.' : 'Break over - time to focus!',
+            title: phase === 'work' ? `🔥🔥 Focus Complete · ${taskLabel}` : '🍃 Rest Complete!',
+            body: phase === 'work' ? `Planned ${planned} — block finished, time for a break.` : 'Break over — time to focus!',
             schedule: { at: completionDate, allowWhileIdle: true },
             sound: 'res://bell',
             smallIcon: 'res://icon',
@@ -1890,16 +1941,16 @@ function EmeraldTimer() {
 
   if (isInitialLoading) {
     return (
-      <div className="fixed inset-0 bg-white flex flex-col items-center justify-center z-[500] animate-in fade-in duration-300 rounded-[1.5rem] border border-white/10 ring-1 ring-white/5 overflow-hidden">
-        <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-emerald-200/20 blur-[120px] rounded-full -z-10 animate-pulse" />
-        <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-emerald-300/10 blur-[120px] rounded-full -z-10" />
+      <div className={`fixed inset-0 ${isDarkMode ? 'bg-[#0a0f12]' : 'bg-white'} flex flex-col items-center justify-center z-[500] animate-in fade-in duration-300 rounded-[1.5rem] border ${isDarkMode ? 'border-white/5' : 'border-white/10'} ring-1 ${isDarkMode ? 'ring-white/5' : 'ring-white/5'} overflow-hidden`}>
+        <div className={`absolute top-[-10%] right-[-10%] w-[40%] h-[40%] ${isDarkMode ? 'bg-emerald-500/5' : 'bg-emerald-200/20'} blur-[120px] rounded-full -z-10 animate-pulse`} />
+        <div className={`absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] ${isDarkMode ? 'bg-emerald-500/5' : 'bg-emerald-300/10'} blur-[120px] rounded-full -z-10`} />
         
-        <div className="w-24 h-24 bg-white rounded-[2rem] flex items-center justify-center shadow-2xl shadow-emerald-200/50 mb-8 scale-110 animate-pulse border-4 border-emerald-50">
+        <div className={`w-24 h-24 ${isDarkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-white border-emerald-50 shadow-emerald-200/50'} rounded-[2rem] flex items-center justify-center shadow-2xl mb-8 scale-110 animate-pulse border-4`}>
           <img src={APP_LOGO} alt="Emerald Timer" className="w-14 h-14 object-contain" />
         </div>
         <div className="flex flex-col items-center gap-2">
-           <h2 className="text-xl font-black text-emerald-800 tracking-tighter">Emerald Timer</h2>
-           <div className="w-16 h-1.5 bg-emerald-100 rounded-full overflow-hidden">
+           <h2 className={`text-xl font-black ${isDarkMode ? 'text-white' : 'text-emerald-800'} tracking-tighter`}>Emerald Timer</h2>
+           <div className={`w-16 h-1.5 ${isDarkMode ? 'bg-zinc-800' : 'bg-emerald-100'} rounded-full overflow-hidden`}>
              <div className="h-full bg-emerald-500 rounded-full" style={{ animation: 'loading 1.2s infinite ease-in-out' }} />
            </div>
         </div>
@@ -1915,11 +1966,11 @@ function EmeraldTimer() {
 
   const rootBgClass = (isMiniMode || wasMiniModeBeforeModal)
     ? 'bg-transparent border-0'
-    : (isAndroid && isDarkMode 
+    : (isDarkMode 
       ? 'bg-gradient-to-br from-[#0d1a1f] via-[#0a161b] to-[#0b1215] border border-emerald-900/40 ring-1 ring-emerald-500/10 shadow-[0_24px_90px_rgba(0,0,0,0.45)] backdrop-blur-xl'
       : 'bg-gradient-to-br from-white/95 via-emerald-50/90 to-white/95 border border-white/40 ring-1 ring-white/20');
   
-  const rootTextClass = (isAndroid && isDarkMode) ? 'text-emerald-50' : 'text-emerald-900';
+  const rootTextClass = isDarkMode ? 'text-emerald-50' : 'text-emerald-900';
   const rootRoundedClass = isAndroid ? 'rounded-[1.25rem] shadow-lg' : 'rounded-[1.5rem]';
 
   return (
@@ -1965,7 +2016,7 @@ function EmeraldTimer() {
 
       {!isMiniMode && !wasMiniModeBeforeModal && !isAndroid && (
         <header 
-          className="w-full h-12 flex justify-between items-center px-4 flex-shrink-0 bg-white/40 backdrop-blur-xl border-b border-white/20 relative z-[60] animate-in fade-in slide-in-from-top-12 duration-500 ease-out" 
+          className={`w-full h-12 flex justify-between items-center px-4 flex-shrink-0 ${isDarkMode ? 'bg-zinc-950/40 border-b border-white/5' : 'bg-white/40 border-b border-white/20'} backdrop-blur-xl relative z-[60] animate-in fade-in slide-in-from-top-12 duration-500 ease-out`} 
           style={{ WebkitAppRegion: 'drag', transform: 'translateZ(0)' } as any}
         >
           <div className="flex items-center gap-2 pointer-events-none">
@@ -1973,37 +2024,34 @@ function EmeraldTimer() {
               <img src={APP_LOGO} alt="Emerald Timer Logo" className="w-full h-full object-contain filter drop-shadow-sm" />
             </div>
             <div className="flex items-center gap-2">
-              <h1 className="text-[15px] font-black text-emerald-800 tracking-tight">Emerald Timer</h1>
+              <h1 className={`text-[15px] font-black ${isDarkMode ? 'text-white' : 'text-emerald-800'} tracking-tight`}>Emerald Timer</h1>
             </div>
           </div>
           <div className="flex items-center gap-1.5" style={{ WebkitAppRegion: 'no-drag' } as any}>
-            <button onClick={handleSetupClick} className="p-1.5 bg-white rounded-lg border border-emerald-100 hover:bg-emerald-50 text-emerald-600 shadow-sm transition-all active:scale-95" title="Settings">
-              <Settings size={15} />
-            </button>
-            <button onClick={() => setIsMiniMode(true)} className="p-1.5 bg-white rounded-lg border border-emerald-100 hover:bg-emerald-50 text-emerald-600 flex items-center gap-2 text-xs font-bold shadow-sm transition-all active:scale-95">
+            <button onClick={() => setIsMiniMode(true)} className={`p-1.5 ${isDarkMode ? 'bg-zinc-900 border-white/5 text-emerald-400 hover:bg-zinc-800' : 'bg-white border-emerald-100 text-emerald-600 hover:bg-emerald-600 hover:text-white'} rounded-lg border flex items-center gap-2 text-xs font-bold shadow-sm transition-all active:scale-95`}>
               <Minimize2 size={14} /> <span className="hidden lg:inline">Mini Mode</span>
             </button>
 
             {/* Window Controls Group - Hide on Android */}
             {!isAndroid && (
-              <div className="flex items-center gap-0.5 ml-1 pl-3 border-l border-emerald-100/30">
+              <div className={`flex items-center gap-0.5 ml-1 pl-3 border-l ${isDarkMode ? 'border-white/5' : 'border-emerald-100/30'}`}>
                 <button 
                   onClick={() => handleWindowControl('minimize')} 
-                  className="p-1.5 text-emerald-400 hover:bg-emerald-50 hover:text-emerald-700 transition-all rounded-lg" 
+                  className={`p-1.5 ${isDarkMode ? 'text-zinc-500 hover:bg-zinc-800' : 'text-emerald-400 hover:bg-emerald-600 hover:text-white'} transition-all rounded-lg`} 
                   title="Minimize"
                 >
                   <Minus size={15} />
                 </button>
                 <button 
                   onClick={() => handleWindowControl('maximize')} 
-                  className="p-1.5 text-emerald-400 hover:bg-emerald-50 hover:text-emerald-700 transition-all rounded-lg" 
+                  className={`p-1.5 ${isDarkMode ? 'text-zinc-500 hover:bg-zinc-800' : 'text-emerald-400 hover:bg-emerald-600 hover:text-white'} transition-all rounded-lg`} 
                   title="Maximize"
                 >
                   <Copy size={13} strokeWidth={2.5} />
                 </button>
                 <button 
                   onClick={() => handleWindowControl('close')} 
-                  className="p-1.5 text-emerald-300 hover:bg-red-500 hover:text-white transition-all rounded-lg ml-0.5" 
+                  className={`p-1.5 ${isDarkMode ? 'text-zinc-600 hover:bg-red-500 hover:text-white' : 'text-emerald-300 hover:bg-red-500 hover:text-white'} transition-all rounded-lg ml-0.5`} 
                   title="Close"
                 >
                   <X size={15} />
@@ -2033,12 +2081,13 @@ function EmeraldTimer() {
           isActive={isActive}
           timeLeft={timeLeft}
           settings={settings}
+          darkMode={isDarkMode}
           isAndroid={isAndroid}
         />
       )}
 
       {!hideShellForMiniPrompt && !isMiniMode && !wasMiniModeBeforeModal && (
-        <main className={`w-full bg-white/70 backdrop-blur-2xl flex flex-col flex-1 overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-500 ease-out border-t border-white/40 ${isAndroid ? 'pt-[env(safe-area-inset-top,20px)]' : 'overflow-hidden'}`}>
+        <main className={`w-full ${isDarkMode ? 'bg-zinc-950/60' : 'bg-white/70'} backdrop-blur-2xl flex flex-col flex-1 overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-500 ease-out border-t ${isDarkMode ? 'border-white/5' : 'border-white/40'} ${isAndroid ? 'pt-[env(safe-area-inset-top,20px)]' : 'overflow-hidden'}`}>
           
           <div 
             ref={mainScrollRef}
@@ -2065,7 +2114,10 @@ function EmeraldTimer() {
                     setShowLoggingModal={setShowLoggingModal}
                     isJournalOpen={isJournalOpen}
                     setIsJournalOpen={setIsJournalOpen}
+                    getCategoryColor={getCategoryColor}
+                    getCategoryIcon={getCategoryIcon}
                     isAndroid={isAndroid}
+                    darkMode={isDarkMode}
                   />
                 </div>
                 
@@ -2083,6 +2135,7 @@ function EmeraldTimer() {
                     setPreviewImage={setPreviewImage}
                     onClose={() => setIsJournalOpen(false)}
                     isAndroid={isAndroid}
+                    darkMode={isDarkMode}
                   />
                 </div>
               </div>
@@ -2133,6 +2186,7 @@ function EmeraldTimer() {
                   MAX_ZOOM={MAX_ZOOM}
                   restTimeTotal={restTimeTotal}
                   isAndroid={isAndroid}
+                  darkMode={isDarkMode}
                 />
               </div>
             )}
@@ -2155,6 +2209,7 @@ function EmeraldTimer() {
                   getCategoryIcon={getCategoryIcon}
                   setPreviewImage={setPreviewImage}
                   categories={categories}
+                  darkMode={isDarkMode}
                 />
               </div>
             )}
@@ -2191,6 +2246,10 @@ function EmeraldTimer() {
                   closeSettingsWithoutSaving={() => setActiveTab('timer')}
                   uiScale={uiScale}
                   setUiScale={setUiScale}
+                  darkMode={isDarkMode}
+                  setDarkMode={setIsDarkMode}
+                  autoContinueLog={autoContinueLog}
+                  setAutoContinueLog={setAutoContinueLog}
                   isPage={true}
                   isAndroid={isAndroid}
                 />
@@ -2199,9 +2258,9 @@ function EmeraldTimer() {
           </div>
 
           {/* Navigation - Always at the bottom for both Android and PC to save vertical space and improve habit consistency */}
-          <nav className={`flex border-t border-emerald-50 bg-white/40 items-stretch justify-around px-2 z-50 transition-all duration-300 ease-in-out
+          <nav className={`flex border-t ${isDarkMode ? 'border-white/5 bg-zinc-950/40' : 'border-emerald-50 bg-white/40'} items-stretch justify-around px-2 z-50 transition-all duration-300 ease-in-out
             ${isAndroid 
-              ? 'pb-[env(safe-area-inset-bottom,16px)] pt-3 h-[76px] shadow-[0_-10px_30px_rgba(0,0,0,0.03)] backdrop-blur-xl' 
+              ? `pb-[env(safe-area-inset-bottom,16px)] pt-3 h-[76px] ${isDarkMode ? 'shadow-black' : 'shadow-[0_-10px_30px_rgba(0,0,0,0.03)]'} backdrop-blur-xl` 
               : 'h-18 py-0 group/nav'
             }`}
           >
@@ -2219,13 +2278,13 @@ function EmeraldTimer() {
                 }} 
                 className={`flex-1 flex flex-col items-center justify-center tracking-tight relative transition-all duration-300 h-full
                   ${activeTab === tab.id 
-                    ? (isAndroid ? 'text-emerald-700' : 'text-emerald-600') 
-                    : 'text-emerald-400 group-hover/nav:text-emerald-500 hover:text-emerald-600'}`}
+                    ? (isDarkMode ? 'text-white' : (isAndroid ? 'text-emerald-700' : 'text-emerald-600')) 
+                    : (isDarkMode ? 'text-zinc-600' : 'text-emerald-400') + ' group-hover/nav:text-emerald-500 hover:text-emerald-600'}`}
               >
                 <div className={`transition-all duration-300 flex items-center justify-center
                   ${isAndroid 
-                    ? `px-6 py-1.5 rounded-2xl ${activeTab === tab.id ? 'bg-emerald-600/10 text-emerald-700 scale-110 shadow-sm' : 'bg-transparent'}`
-                    : `px-4 py-1.5 rounded-full ${activeTab === tab.id ? 'bg-white/60 backdrop-blur-md text-emerald-600 scale-105 shadow-sm border border-white/20' : 'bg-transparent hover:bg-white/40'}`
+                    ? `px-6 py-1.5 rounded-2xl ${activeTab === tab.id ? (isDarkMode ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-600/10 text-emerald-700') + ' scale-110 shadow-sm' : 'bg-transparent'}`
+                    : `px-4 py-1.5 rounded-full ${activeTab === tab.id ? (isDarkMode ? 'bg-zinc-800' : 'bg-white/60') + ' backdrop-blur-md text-emerald-600 scale-105 shadow-sm border border-white/10' : 'bg-transparent hover:bg-white/40'}`
                   }`}
                 >
                   <tab.icon 
@@ -2240,14 +2299,14 @@ function EmeraldTimer() {
                   ${isAndroid 
                     ? `text-[10px] mt-1.5 line-clamp-1 ${activeTab === tab.id ? 'opacity-100 transform translate-y-0' : 'opacity-60 transform translate-y-0.5'}` 
                     : 'text-[11px] max-h-0 opacity-0 group-hover/nav:max-h-4 group-hover/nav:opacity-100 group-hover/nav:mt-1'
-                  }`}
+                  } ${isDarkMode ? 'text-emerald-500/80' : ''}`}
                   style={!isAndroid ? { width: '100%' } : {}}
                 >
                   {tab.label}
                 </span>
                 
                 {isAndroid && activeTab === tab.id && (
-                  <div className="absolute bottom-1 w-1 h-1 bg-emerald-500 rounded-full" />
+                  <div className={`absolute bottom-1 w-1 h-1 ${isDarkMode ? 'bg-emerald-400' : 'bg-emerald-500'} rounded-full`} />
                 )}
               </button>
             ))}
@@ -2290,6 +2349,7 @@ function EmeraldTimer() {
           setPhaseEditTouched={setPhaseEditTouched}
           viewingLogMetadata={viewingLogMetadata}
           categories={categories}
+          darkMode={isDarkMode}
         />
       )}
 
@@ -2302,6 +2362,7 @@ function EmeraldTimer() {
           handleContinuePhase={handleContinuePhase}
           handleNextPhaseFromPrompt={handleNextPhaseFromPrompt}
           handleExitAndSave={handleExitAndSave}
+          darkMode={isDarkMode}
         />
       )}
 
@@ -2318,6 +2379,7 @@ function EmeraldTimer() {
           setShowManualModal={setShowManualModal}
           isManualLogValid={isManualLogValid}
           setPreviewImage={setPreviewImage}
+          darkMode={isDarkMode}
         />
       )}
 
@@ -2335,6 +2397,7 @@ function EmeraldTimer() {
           handleImageUpload={handleImageUpload}
           setShowLoggingModal={setShowLoggingModal}
           handleApplySettings={handleApplySettings}
+          darkMode={isDarkMode}
         />
       )}
 
@@ -2344,6 +2407,7 @@ function EmeraldTimer() {
           isMiniMode={isMiniMode}
           pendingSettingsChange={pendingSettingsChange}
           handleSettingsSaveDecision={handleSettingsSaveDecision}
+          darkMode={isDarkMode}
         />
       )}
 
@@ -2360,6 +2424,7 @@ function EmeraldTimer() {
           handleImageUpload={handleImageUpload}
           handleClipboardImagePaste={handleClipboardImagePaste}
           setPreviewImage={setPreviewImage}
+          darkMode={isDarkMode}
         />
       )}
 
@@ -2369,6 +2434,7 @@ function EmeraldTimer() {
           isMiniMode={isMiniMode}
           setShowConfirmModal={setShowConfirmModal}
           confirmAction={confirmAction}
+          darkMode={isDarkMode}
         />
       )}
 

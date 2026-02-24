@@ -42,7 +42,7 @@ const LoggingModal: React.FC<LoggingModalProps> = ({
   };
 
   const CategoryPicker = () => (
-    <div className="grid grid-cols-5 gap-2">
+    <div className="grid grid-cols-6 sm:grid-cols-8 gap-1.5">
       {categories.map((cat, idx) => {
         const isSelected = loggingData.category === cat.name;
         const Icon = CATEGORY_ICONS[cat.icon as keyof typeof CATEGORY_ICONS] || CATEGORY_ICONS.Briefcase;
@@ -59,7 +59,7 @@ const LoggingModal: React.FC<LoggingModalProps> = ({
             <div className={`p-1.5 rounded-lg mb-1 transition-colors ${isSelected ? 'font-bold' : (darkMode ? 'text-zinc-600' : 'text-gray-400')}`} style={isSelected ? { color: cat.color, backgroundColor: `${cat.color}15` } : {}}>
               <Icon size={14} />
             </div>
-            <span className={`text-[10px] font-black tracking-tight transition-colors ${isSelected ? '' : (darkMode ? 'text-zinc-600' : 'text-gray-400')}`} style={isSelected ? { color: cat.color } : {}}>{cat.name}</span>
+            <span className={`text-[9px] font-black tracking-tighter truncate w-full px-0.5 text-center transition-colors ${isSelected ? '' : (darkMode ? 'text-zinc-600' : 'text-gray-400')}`} style={isSelected ? { color: cat.color } : {}} title={cat.name}>{cat.name}</span>
           </button>
         );
       })}
@@ -68,7 +68,7 @@ const LoggingModal: React.FC<LoggingModalProps> = ({
 
   return (
     <div className={`fixed inset-0 ${darkMode ? 'bg-zinc-950/80 backdrop-blur-md' : (wasMiniModeBeforeModal || isMiniMode) ? 'bg-transparent' : 'bg-emerald-900/60 backdrop-blur-xl'} flex items-center justify-center p-6 z-[170] animate-in fade-in duration-300`}>
-      <div className={`${darkMode ? 'bg-zinc-900 border-none shadow-[0_32px_128px_-20px_rgba(0,0,0,0.9)]' : 'bg-white ring-1 ring-emerald-100/50 shadow-2xl'} rounded-[3rem] p-7 max-w-sm w-full relative`} style={{ WebkitAppRegion: 'drag' } as any}>
+      <div className={`${darkMode ? 'bg-zinc-900 border-none shadow-[0_32px_128px_-20px_rgba(0,0,0,0.9)]' : 'bg-white ring-1 ring-emerald-100/50 shadow-2xl'} rounded-[3rem] p-7 max-w-lg w-full relative`} style={{ WebkitAppRegion: 'drag' } as any}>
          <div style={{ WebkitAppRegion: 'no-drag' } as any}>
            <button 
              onClick={() => setShowLoggingModal(false)} 

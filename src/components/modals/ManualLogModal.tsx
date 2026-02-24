@@ -34,7 +34,7 @@ const ManualLogModal: React.FC<ManualLogModalProps> = ({
   darkMode
 }) => {
   const CategoryPicker = () => (
-    <div className="grid grid-cols-5 gap-2">
+    <div className="grid grid-cols-6 sm:grid-cols-8 gap-2">
       {categories.map((cat, idx) => {
         const isSelected = manualLog.category === cat.name;
         const Icon = CATEGORY_ICONS[cat.icon as keyof typeof CATEGORY_ICONS] || CATEGORY_ICONS.Briefcase;
@@ -51,7 +51,7 @@ const ManualLogModal: React.FC<ManualLogModalProps> = ({
             <div className={`p-1.5 rounded-lg mb-1 transition-colors ${isSelected ? 'font-bold' : (darkMode ? 'text-zinc-600' : 'text-gray-400')}`} style={isSelected ? { color: cat.color, backgroundColor: `${cat.color}15` } : {}}>
               <Icon size={12} />
             </div>
-            <span className={`text-[7.5px] font-bold tracking-tight transition-colors ${isSelected ? '' : (darkMode ? 'text-zinc-600' : 'text-gray-400')}`} style={isSelected ? { color: cat.color } : {}}>{cat.name}</span>
+            <span className={`text-[8.5px] font-black tracking-tighter truncate w-full px-0.5 text-center transition-colors ${isSelected ? '' : (darkMode ? 'text-zinc-600' : 'text-gray-400')}`} style={isSelected ? { color: cat.color } : {}} title={cat.name}>{cat.name}</span>
           </button>
         );
       })}
@@ -60,7 +60,7 @@ const ManualLogModal: React.FC<ManualLogModalProps> = ({
 
   return (
     <div className={`fixed inset-0 ${darkMode ? 'bg-zinc-950/80 backdrop-blur-md' : (wasMiniModeBeforeModal || isMiniMode) ? 'bg-transparent' : 'bg-emerald-900/60 backdrop-blur-xl'} flex items-center justify-center p-6 z-[160] animate-in fade-in duration-300`}>
-      <div className={`${darkMode ? 'bg-zinc-900 border-none shadow-[0_32px_128px_-20px_rgba(0,0,0,0.9)]' : 'bg-white rounded-[3rem] ring-1 ring-emerald-100/50 shadow-2xl'} p-7 max-w-sm w-full relative overflow-y-auto max-h-[90vh] scrollbar-none transition-all duration-300`} style={{ WebkitAppRegion: 'drag' } as any}>
+      <div className={`${darkMode ? 'bg-zinc-900 border-none shadow-[0_32px_128px_-20px_rgba(0,0,0,0.9)]' : 'bg-white rounded-[3rem] ring-1 ring-emerald-100/50 shadow-2xl'} p-7 max-w-lg w-full relative overflow-y-auto max-h-[90vh] scrollbar-none transition-all duration-300`} style={{ WebkitAppRegion: 'drag' } as any}>
          <div style={{ WebkitAppRegion: 'no-drag' } as any}>
             <button 
               onClick={() => setShowManualModal(false)} 

@@ -20,6 +20,8 @@ interface TimerBoardProps {
   setShowLoggingModal: (show: boolean) => void;
   isJournalOpen: boolean;
   setIsJournalOpen: (val: boolean) => void;
+  getCategoryColor: (cat: Category) => string;
+  getCategoryIcon: (cat: Category) => any;
   isAndroid?: boolean;
   darkMode: boolean;
 }
@@ -41,16 +43,21 @@ const TimerBoard: React.FC<TimerBoardProps> = ({
   setShowLoggingModal,
   isJournalOpen,
   setIsJournalOpen,
+  getCategoryColor,
+  getCategoryIcon,
   isAndroid,
   darkMode,
 }) => {
+  const catColor = getCategoryColor(currentTask.category);
+  const CatIcon = getCategoryIcon(currentTask.category);
+
   return (
     <div className={`flex flex-col items-center justify-center w-full flex-1 min-h-full animate-in fade-in duration-500 relative scrollbar-none px-4 ${isAndroid ? 'py-4 pb-12' : 'py-8'}`}>
       {!isJournalOpen && (
         <div className={`absolute ${isAndroid ? 'top-2 right-2' : 'top-4 right-4 md:top-10 md:right-10'} z-[60]`}>
           <button 
             onClick={() => setIsJournalOpen(true)} 
-            className={`${isAndroid ? 'p-3 rounded-2xl' : 'p-3.5 md:p-5 rounded-2xl md:rounded-[1.5rem]'} ${darkMode ? 'bg-zinc-900/80 text-zinc-400 border-white/5 hover:text-emerald-500 hover:bg-zinc-800 shadow-[0_20px_50px_rgba(0,0,0,0.5)]' : 'bg-white/95 text-emerald-600 border-emerald-50 shadow-[0_12px_44px_-8px_rgba(0,0,0,0.15)]'} backdrop-blur-md transition-all duration-300 active:scale-95 group border`}
+            className={`${isAndroid ? 'p-3 rounded-2xl' : 'p-3.5 md:p-5 rounded-2xl md:rounded-[1.5rem]'} ${darkMode ? 'bg-zinc-900/80 text-zinc-400 border-white/5 hover:text-emerald-500 hover:bg-zinc-800 shadow-[0_20px_50px_rgba(0,0,0,0.5)]' : 'bg-white/95 text-emerald-600 border-emerald-50 shadow-[0_12px_44px_-8px_rgba(0,0,0,0.15)] hover:bg-emerald-600 hover:text-white hover:border-emerald-600'} backdrop-blur-md transition-all duration-300 active:scale-95 group border`}
             title="Open Journal"
           >
             <Library size={isAndroid ? 18 : 22} className="group-hover:rotate-6 group-hover:scale-110 transition-transform"/>
@@ -83,8 +90,13 @@ const TimerBoard: React.FC<TimerBoardProps> = ({
               
               <span className={`font-mono font-bold tabular-nums z-10 tracking-tighter ${isAndroid ? 'text-4xl' : 'text-3xl md:text-6xl'} ${darkMode ? 'text-white drop-shadow-[0_0_12px_rgba(0,0,0,0.4)]' : ''}`}>{formatTime(displayTime)}</span>
               {isOvertime && <span className={`text-orange-400 font-bold ${isAndroid ? 'text-[11px]' : 'text-xs'} animate-pulse mt-0.5 font-mono z-10 drop-shadow-[0_0_12px_rgba(251,146,60,0.6)]`}>+{formatTime(overtimeSeconds)}</span>}
-              <div className={`mt-3 px-3 py-1 ${darkMode ? 'bg-zinc-900/80 text-emerald-500 border border-white/5 shadow-inner' : 'bg-emerald-50/50 text-black/40 shadow-sm'} rounded-lg text-[9px] font-black uppercase tracking-[0.15em] truncate z-10 ${isAndroid ? 'max-w-[140px]' : 'max-w-[110px] md:max-w-[160px]'}`}>
-                {currentTask.category}
+              <div 
+                className={`mt-3 px-3 py-1 flex items-center gap-1.5 ${darkMode ? \'bg-zinc-900 border border-white/5 shadow-inner text-emerald-400\' : \'bg-white border border-emerald-50 shadow-sm text-emerald-600\'} rounded-[0.85rem] z-10 ${isAndroid ? \'max-w-[140px]\' : \'max-w-[110px] md:max-w-[160px]\'}`}
+              >
+                <CatIcon size={12} strokeWidth={2.5} />
+                <span className="text-[10px] font-black uppercase tracking-[0.1em] truncate">
+                  {currentTask.category}
+                </span>
               </div>
             </div>
           </div>
@@ -105,8 +117,8 @@ const TimerBoard: React.FC<TimerBoardProps> = ({
             className={`flex items-center justify-center transition-all duration-300 active:scale-90 shadow-2xl
               ${isAndroid ? 'w-20 h-20' : 'w-16 h-16 md:w-20 md:h-20'} 
               ${isActive 
-                ? (darkMode ? 'text-white bg-orange-500 border-white/10 hover:bg-orange-400 rounded-[1.4rem] shadow-orange-500/30' : 'text-white bg-orange-600 shadow-orange-200/50 rounded-[1.4rem]') 
-                : (darkMode ? 'bg-emerald-500 text-white rounded-[50%] border-white/10 hover:bg-emerald-400 hover:scale-105 shadow-emerald-500/30' : 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-emerald-200/50 rounded-[50%]')
+                ? (darkMode ? 'text-white bg-orange-500 border-white/10 hover:bg-orange-400 rounded-[1.4rem] shadow-orange-500/30' : 'text-white bg-orange-600 shadow-orange-200/50 hover:bg-orange-700 hover:scale-105 rounded-[1.4rem]') 
+                : (darkMode ? 'bg-emerald-500 text-white rounded-[50%] border-white/10 hover:bg-emerald-400 hover:scale-105 shadow-emerald-500/30' : 'bg-emerald-600 text-white hover:bg-emerald-700 hover:scale-105 shadow-emerald-200/50 rounded-[50%]')
               }`}
           >
             {isActive ? (
@@ -119,8 +131,8 @@ const TimerBoard: React.FC<TimerBoardProps> = ({
           {!isOvertime && isCurrentlyRecording && (
             <button 
               onClick={handleSkipToNextPhase} 
-              className={`${isAndroid ? 'w-12 h-12' : 'w-11 h-11 md:w-13 md:h-13'} rounded-full ${darkMode ? 'bg-zinc-800 text-white border-white/5 hover:bg-emerald-500 shadow-black/40' : 'bg-emerald-50 text-emerald-600 border border-emerald-100 hover:bg-emerald-100 shadow-sm'} transition-all duration-300 ease-in-out active:scale-90 flex items-center justify-center animate-in fade-in slide-in-from-left-8 duration-500`} 
-              title={phase === 'work' ? 'Start Rest' : 'Start Work'}
+              className={`${isAndroid ? 'w-12 h-12' : 'w-11 h-11 md:w-13 md:h-13'} rounded-full ${darkMode ? 'bg-zinc-800 text-white border-white/5 hover:bg-emerald-500 shadow-black/40' : 'bg-emerald-50 text-emerald-600 border border-emerald-100 hover:bg-emerald-600 hover:text-white hover:border-emerald-600 shadow-sm'} transition-all duration-300 ease-in-out active:scale-90 flex items-center justify-center animate-in fade-in slide-in-from-left-8 duration-500`} 
+              title={phase === 'work' ? 'go rest' : 'go focus'}
             >
               {phase === 'work' ? <Coffee size={isAndroid ? 20 : 18} /> : <Briefcase size={isAndroid ? 20 : 18} />}
             </button>
@@ -129,8 +141,8 @@ const TimerBoard: React.FC<TimerBoardProps> = ({
           {isOvertime && (
             <button 
               onClick={handleSkipToNextPhase} 
-              className={`${isAndroid ? 'w-12 h-12' : 'w-11 h-11 md:w-13 md:h-13'} rounded-full ${darkMode ? 'bg-zinc-800 text-white border-white/5 hover:bg-emerald-500 shadow-black/40' : 'bg-emerald-50 text-emerald-600 border border-emerald-100 hover:bg-emerald-100 shadow-sm'} transition-all duration-300 ease-in-out active:scale-90 flex items-center justify-center animate-in fade-in slide-in-from-left-8 duration-500`} 
-              title="Next Phase"
+              className={`${isAndroid ? 'w-12 h-12' : 'w-11 h-11 md:w-13 md:h-13'} rounded-full ${darkMode ? 'bg-zinc-800 text-white border-white/5 hover:bg-emerald-500 shadow-black/40' : 'bg-emerald-50 text-emerald-600 border border-emerald-100 hover:bg-emerald-600 hover:text-white hover:border-emerald-600 shadow-sm'} transition-all duration-300 ease-in-out active:scale-90 flex items-center justify-center animate-in fade-in slide-in-from-left-8 duration-500`} 
+              title={phase === 'work' ? 'go rest' : 'go focus'}
             >
               <RotateCcw size={isAndroid ? 20 : 18} />
             </button>

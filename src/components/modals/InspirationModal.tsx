@@ -3,6 +3,7 @@ import { X, Quote, Link, Trash2, Plus } from 'lucide-react';
 import { Inspiration } from '../../types';
 
 interface InspirationModalProps {
+  darkMode: boolean;
   wasMiniModeBeforeModal: boolean;
   isMiniMode: boolean;
   selectedInspiration: Inspiration | null;
@@ -17,6 +18,7 @@ interface InspirationModalProps {
 }
 
 const InspirationModal: React.FC<InspirationModalProps> = ({
+  darkMode,
   wasMiniModeBeforeModal,
   isMiniMode,
   selectedInspiration,
@@ -56,12 +58,12 @@ const InspirationModal: React.FC<InspirationModalProps> = ({
   };
 
   return (
-    <div className={`fixed inset-0 ${(wasMiniModeBeforeModal || isMiniMode) ? 'bg-transparent' : 'bg-emerald-900/60 backdrop-blur-xl'} flex items-center justify-center p-6 z-[190] animate-in fade-in duration-300`}>
-      <div className="bg-white rounded-[2.5rem] p-8 max-w-sm w-full shadow-2xl relative ring-1 ring-emerald-100/50 transition-all" onPaste={handleClipboardImagePaste} style={{ WebkitAppRegion: 'drag' } as any}>
+    <div className={`fixed inset-0 ${(wasMiniModeBeforeModal || isMiniMode) ? 'bg-transparent' : (darkMode ? 'bg-black/60 backdrop-blur-xl' : 'bg-emerald-900/60 backdrop-blur-xl')} flex items-center justify-center p-6 z-[190] animate-in fade-in duration-300`}>
+      <div className={`${darkMode ? 'bg-zinc-950 border border-white/5 shadow-2xl' : 'bg-white ring-1 ring-emerald-100/50 shadow-2xl'} rounded-[2.5rem] p-8 max-w-lg w-full relative transition-all`} onPaste={handleClipboardImagePaste} style={{ WebkitAppRegion: 'drag' } as any}>
         <div style={{ WebkitAppRegion: 'no-drag' } as any} className="scrollbar-none overflow-y-auto max-h-[85vh]">
           <button 
             onClick={() => setShowInspirationModal(false)} 
-            className="absolute top-4 right-4 p-2 bg-emerald-50 rounded-full text-emerald-300 hover:text-emerald-600 transition-all active:scale-95 z-50 flex items-center justify-center cursor-pointer"
+            className={`absolute top-4 right-4 p-2 rounded-xl transition-all active:scale-95 z-50 flex items-center justify-center cursor-pointer ${darkMode ? 'bg-zinc-800 text-zinc-400 hover:text-emerald-400' : 'bg-emerald-50 rounded-full text-emerald-300 hover:text-emerald-600'}`}
             style={{ WebkitAppRegion: 'no-drag' } as any}
             title="Close"
           >
@@ -69,14 +71,14 @@ const InspirationModal: React.FC<InspirationModalProps> = ({
           </button>
           
           <div className="flex items-center gap-4 mb-8">
-            <div className="w-12 h-12 bg-emerald-50 rounded-[1.5rem] flex items-center justify-center text-emerald-600 shadow-sm">
+            <div className={`w-12 h-12 rounded-[1.5rem] flex items-center justify-center shadow-sm ${darkMode ? 'bg-zinc-900 text-emerald-500 border border-white/5' : 'bg-emerald-50 text-emerald-600'}`}>
               <Quote size={24} />
             </div>
             <div>
-              <h2 className="text-xl font-black text-emerald-950 tracking-tight">
+              <h2 className={`text-xl font-black tracking-tight ${darkMode ? 'text-white' : 'text-emerald-950'}`}>
                 {selectedInspiration ? 'Edit Insight' : 'New Musing'}
               </h2>
-              <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest leading-none">Eternal Wisdom</p>
+              <p className={`text-[10px] font-black uppercase tracking-widest leading-none ${darkMode ? 'text-emerald-500/80' : 'text-emerald-400'}`}>Eternal Wisdom</p>
             </div>
           </div>
 

@@ -39,6 +39,8 @@ interface SetupModalProps {
   setUiScale: (val: number | ((prev: number) => number)) => void;
   darkMode: boolean;
   setDarkMode: (val: boolean | ((prev: boolean) => boolean)) => void;
+  autoContinueLog: boolean;
+  setAutoContinueLog: (val: boolean | ((prev: boolean) => boolean)) => void;
   isPage?: boolean;
   isAndroid?: boolean;
 }
@@ -75,6 +77,8 @@ const SetupModal: React.FC<SetupModalProps> = ({
   setUiScale,
   darkMode,
   setDarkMode,
+  autoContinueLog,
+  setAutoContinueLog,
   isPage = false,
   isAndroid = false,
 }) => {
@@ -120,7 +124,7 @@ const SetupModal: React.FC<SetupModalProps> = ({
            {!isPage && (
               <button 
                 onClick={closeSettingsWithoutSaving} 
-                className={`absolute top-4 right-4 p-2 ${darkMode ? 'bg-white/5 text-emerald-400 border-white/5 ring-1 ring-white/5 hover:bg-white/10' : 'bg-emerald-50 text-emerald-300 hover:text-emerald-600 shadow-sm'} rounded-full transition-all active:scale-95 z-50 flex items-center justify-center cursor-pointer`}
+                className={`absolute top-4 right-4 p-2 ${darkMode ? 'bg-white/5 text-emerald-400 border-white/5 ring-1 ring-white/5 hover:bg-red-500 hover:text-white' : 'bg-emerald-50 text-emerald-300 hover:bg-red-500 hover:text-white shadow-sm'} rounded-full transition-all active:scale-95 z-50 flex items-center justify-center cursor-pointer`}
                 style={{ WebkitAppRegion: 'no-drag' } as any}
                 title="Close"
               >
@@ -298,6 +302,30 @@ const SetupModal: React.FC<SetupModalProps> = ({
               </div>
 
               <div className="space-y-6">
+                <section>
+                  <h3 className={`text-sm font-bold tracking-tight ${darkMode ? 'text-emerald-400' : 'text-emerald-800'} mb-4 flex items-center gap-2`}><RefreshCw size={14}/> Timer Behavior</h3>
+                  <div className={`${darkMode ? 'bg-emerald-950/20' : 'bg-emerald-50/30'} p-5 rounded-[1.8rem] border ${darkMode ? 'border-white/5' : 'border-emerald-50'}`}>
+                    {/* Auto-continue Session Log Toggle */}
+                    <div className={`${darkMode ? 'bg-zinc-950 border-white/5 shadow-none' : 'bg-white border-emerald-100 shadow-sm'} p-4 rounded-2xl border flex items-center justify-between`}>
+                      <div className="flex items-center gap-3">
+                        <div className={`p-2 rounded-xl ${darkMode ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-600'}`}>
+                          <RefreshCw size={18} />
+                        </div>
+                        <div>
+                          <span className={`text-sm font-black ${darkMode ? 'text-zinc-50' : 'text-emerald-950'} block leading-tight`}>自动继续日志</span>
+                          <span className={`text-[10px] font-bold ${darkMode ? 'text-zinc-600' : 'text-emerald-500/60'} uppercase tracking-widest`}>不提示保存，直接延续当前记录</span>
+                        </div>
+                      </div>
+                      <button 
+                        onClick={() => setAutoContinueLog(!autoContinueLog)}
+                        className={`w-14 h-8 rounded-full p-1 transition-all duration-300 relative ${autoContinueLog ? 'bg-emerald-600' : 'bg-emerald-200'}`}
+                      >
+                        <div className={`w-6 h-6 bg-white rounded-full shadow-md transition-all duration-300 transform ${autoContinueLog ? 'translate-x-6' : 'translate-x-0'}`} />
+                      </button>
+                    </div>
+                  </div>
+                </section>
+                
                 <section>
                   <h3 className={`text-sm font-bold tracking-tight ${darkMode ? 'text-emerald-400' : 'text-emerald-800'} mb-4 flex items-center gap-2`}><Cloud size={14}/> Cloud Sync</h3>
                   

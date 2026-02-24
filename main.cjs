@@ -35,7 +35,13 @@ function createWindow() {
 
   // Enforce normal mode minimum size initially
   mainWindow.setMinimumSize(1000, 700);
-
+  // Fix: On some Linux environments, the window might start maximized.
+  // We ensure it starts in a normal state.
+  if (process.platform === 'linux') {
+    mainWindow.unmaximize();
+    mainWindow.setSize(1440, 900);
+    mainWindow.center();
+  }
   // In production, load the built index.html from the dist folder
   if (isDev) {
     mainWindow.loadFile(path.join(__dirname, 'dist/index.html')).catch(() => {
@@ -60,6 +66,7 @@ ipcMain.on('open-devtools', () => {
 // 记录普通窗口尺寸和位置，以及 mini 模式的位置
 let originalSize = { width: 1440, height: 900 };
 let originalPosition = null;
+let originalWasMaximized = false; // Add this to remember if it was maximized
 let lastMiniPos = null; // mini 模式记忆位置（仅当前进程内生效）
 let isCurrentlyMini = false;
 
@@ -94,6 +101,10 @@ ipcMain.on('toggle-mini-mode', (event, isMini) => {
     // 进入 mini 模式
     if (!isCurrentlyMini) {
       // 只在从普通模式切到 mini 时记录一次原始尺寸和位置
+      originalWasMaximized = mainWindow.isMaximized();
+      if (originalWasMaximized) {
+        mainWindow.unmaximize();
+      }
       const size = mainWindow.getSize();
       const pos = mainWindow.getPosition();
       originalSize = { width: size[0], height: size[1] };
@@ -139,13 +150,19 @@ ipcMain.on('toggle-mini-mode', (event, isMini) => {
       mainWindow.setMaximumSize(9999, 9999); // 解除 Linux 的最大尺寸限制
     }
     mainWindow.setMinimumSize(1000, 700);
-    mainWindow.setSize(originalSize.width, originalSize.height);
 
-    // 尽量回到原来的普通窗口位置
-    if (originalPosition) {
-      mainWindow.setPosition(originalPosition.x, originalPosition.y);
+    // If it was maximized before mini mode, restore that state
+    if (originalWasMaximized) {
+      mainWindow.maximize();
     } else {
-      mainWindow.center();
+      mainWindow.setSize(originalSize.width, originalSize.height);
+
+      // 尽量回到原来的普通窗口位置
+      if (originalPosition) {
+        mainWindow.setPosition(originalPosition.x, originalPosition.y);
+      } else {
+        mainWindow.center();
+      }
     }
 
     mainWindow.setAlwaysOnTop(false);

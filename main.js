@@ -34,6 +34,14 @@ function createWindow() {
     // backgroundColor: '#f0f9f0' removed to allow transparency
   });
 
+  // Fix: On some Linux environments, the window might start maximized.
+  // We ensure it starts in a normal state.
+  if (process.platform === 'linux') {
+    mainWindow.unmaximize();
+    mainWindow.setSize(1440, 900);
+    mainWindow.center();
+  }
+
   // Explicitly set the taskbar icon for Windows
   if (process.platform === 'win32') {
     mainWindow.setIcon(appIcon);
@@ -63,8 +71,9 @@ ipcMain.on('open-devtools', () => {
 });
 
 let originalSize = { width: 1440, height: 900 };
-let lastMiniPos = null;
 let originalPosition = null;
+let originalWasMaximized = false; // Add this to remember if it was maximized
+let lastMiniPos = null;
 let isCurrentlyMini = false;
 
 ipcMain.on('window-control', (event, action) => {
@@ -96,6 +105,10 @@ ipcMain.on('toggle-mini-mode', (event, isMini) => {
     if (isMini) {
       if (!isCurrentlyMini) {
         // Entering Mini Mode
+        originalWasMaximized = mainWindow.isMaximized();
+        if (originalWasMaximized) {
+          mainWindow.unmaximize();
+        }
         const size = mainWindow.getSize();
         const pos = mainWindow.getPosition();
         originalSize = { width: size[0], height: size[1] };
@@ -130,13 +143,18 @@ ipcMain.on('toggle-mini-mode', (event, isMini) => {
 
       mainWindow.setResizable(true);
       mainWindow.setMinimumSize(1000, 700);
-      mainWindow.setSize(originalSize.width, originalSize.height);
-      
-      // If we saved an original position, try to return there; else center
-      if (originalPosition) {
-        mainWindow.setPosition(originalPosition.x, originalPosition.y);
+
+      if (originalWasMaximized) {
+        mainWindow.maximize();
       } else {
-        mainWindow.center();
+        mainWindow.setSize(originalSize.width, originalSize.height);
+
+        // If we saved an original position, try to return there; else center
+        if (originalPosition) {
+          mainWindow.setPosition(originalPosition.x, originalPosition.y);
+        } else {
+          mainWindow.center();
+        }
       }
       
       mainWindow.setAlwaysOnTop(false);

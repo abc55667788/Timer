@@ -50,7 +50,7 @@ const MiniMode: React.FC<MiniModeProps> = ({
   const bgClass = darkMode ? 'bg-zinc-950/95 border-white/10 shadow-black backdrop-blur-3xl' : 'bg-white/95 border-white/60 shadow-lg backdrop-blur-3xl';
   const textClass = darkMode ? 'text-white' : 'text-emerald-950';
   const accentTextClass = phase === 'work' ? (darkMode ? 'text-emerald-500' : 'text-emerald-800') : (darkMode ? 'text-orange-500' : 'text-emerald-700');
-  const btnBgClass = darkMode ? 'bg-zinc-800 text-zinc-400 hover:bg-emerald-500 hover:text-white border-white/5 shadow-black' : 'bg-white/40 border-white/20 text-emerald-600 hover:bg-white/60';
+  const btnBgClass = darkMode ? 'bg-zinc-800 text-zinc-400 hover:bg-emerald-500 hover:text-white border-white/5 shadow-black' : 'bg-white/40 border-white/20 text-emerald-600 hover:bg-emerald-600 hover:text-white shadow-sm';
 
   return (
     <div 
@@ -92,24 +92,12 @@ const MiniMode: React.FC<MiniModeProps> = ({
                <button onClick={handleStopClick} title="Stop & Save" className={`p-2.5 rounded-2xl transition-all duration-300 shadow-sm border ${darkMode ? 'bg-zinc-800 text-zinc-400 border-white/5 hover:bg-red-500 hover:text-white' : 'bg-white/80 text-red-500 border-white/30 hover:bg-red-500 hover:text-white shadow-sm'} animate-in fade-in slide-in-from-right-2 duration-200`}><Square size={15} fill="currentColor" /></button>
              )}
              
-             {!isOvertime && isCurrentlyRecording && (
-               <button onClick={handleSkipToNextPhase} className={`p-2.5 rounded-2xl ${btnBgClass} backdrop-blur-md border shadow-sm transition-all duration-300 animate-in fade-in slide-in-from-right-3 duration-200`} title={phase === 'work' ? 'Start Rest' : 'Start Work'}>
-                 {phase === 'work' ? <Coffee size={15} strokeWidth={2.5} /> : <Briefcase size={15} strokeWidth={2.5} />}
-               </button>
-             )}
-
-             {isOvertime && (
-               <button onClick={handleSkipToNextPhase} className={`p-2.5 rounded-2xl ${btnBgClass} backdrop-blur-md border shadow-sm transition-all duration-300 animate-in fade-in slide-in-from-right-3 duration-200`} title="Next Phase">
-                 <RotateCcw size={15} strokeWidth={2.5} />
-               </button>
-             )}
-
              <button 
                onClick={handleStart} 
                className={`p-2.5 rounded-2xl shadow-md transition-all duration-300 cubic-bezier(0.34,1.56,0.64,1) active:scale-95 
                  ${isActive 
-                   ? (darkMode ? 'bg-orange-500 text-white shadow-black' : 'bg-orange-600 text-white shadow-orange-100/30') 
-                   : (darkMode ? 'bg-emerald-500 text-white shadow-black' : 'bg-emerald-600 text-white shadow-emerald-100/30')
+                   ? (darkMode ? 'bg-orange-500 text-white shadow-black hover:bg-orange-400' : 'bg-orange-600 text-white shadow-orange-100/30 hover:bg-orange-700') 
+                   : (darkMode ? 'bg-emerald-500 text-white shadow-black hover:bg-emerald-400' : 'bg-emerald-600 text-white shadow-emerald-100/30 hover:bg-emerald-700')
                  } border border-white/10`}
              >
                 {isActive ? (
@@ -118,6 +106,18 @@ const MiniMode: React.FC<MiniModeProps> = ({
                   <Play key="play" size={16} fill="currentColor" strokeWidth={3} className="animate-in fade-in zoom-in duration-200" />
                 )}
              </button>
+
+             {!isOvertime && isCurrentlyRecording && (
+               <button onClick={handleSkipToNextPhase} className={`p-2.5 rounded-2xl ${btnBgClass} backdrop-blur-md border shadow-sm transition-all duration-300 animate-in fade-in slide-in-from-right-3 duration-200`} title={phase === 'work' ? 'go rest' : 'go focus'}>
+                 {phase === 'work' ? <Coffee size={15} strokeWidth={2.5} /> : <Briefcase size={15} strokeWidth={2.5} />}
+               </button>
+             )}
+
+             {isOvertime && (
+               <button onClick={handleSkipToNextPhase} className={`p-2.5 rounded-2xl ${btnBgClass} backdrop-blur-md border shadow-sm transition-all duration-300 animate-in fade-in slide-in-from-right-3 duration-200`} title={phase === 'work' ? 'go rest' : 'go focus'}>
+                 <RotateCcw size={15} strokeWidth={2.5} />
+               </button>
+             )}
           </div>
         </div>
       </div>
