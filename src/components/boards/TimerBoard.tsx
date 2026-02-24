@@ -91,7 +91,8 @@ const TimerBoard: React.FC<TimerBoardProps> = ({
               <span className={`font-mono font-bold tabular-nums z-10 tracking-tighter ${isAndroid ? 'text-4xl' : 'text-3xl md:text-6xl'} ${darkMode ? 'text-white drop-shadow-[0_0_12px_rgba(0,0,0,0.4)]' : ''}`}>{formatTime(displayTime)}</span>
               {isOvertime && <span className={`text-orange-400 font-bold ${isAndroid ? 'text-[11px]' : 'text-xs'} animate-pulse mt-0.5 font-mono z-10 drop-shadow-[0_0_12px_rgba(251,146,60,0.6)]`}>+{formatTime(overtimeSeconds)}</span>}
               <div 
-                className={`mt-3 px-3 py-1 flex items-center gap-1.5 ${darkMode ? 'bg-zinc-900 border border-white/5 shadow-inner text-emerald-400' : 'bg-white border border-emerald-50 shadow-sm text-emerald-600'} rounded-[0.85rem] z-10 ${isAndroid ? 'max-w-[140px]' : 'max-w-[110px] md:max-w-[160px]'}`}
+                className={`mt-3 px-3 py-1 flex items-center gap-1.5 ${darkMode ? 'bg-zinc-900 border border-white/5 shadow-inner' : 'bg-white border border-emerald-50 shadow-sm'} rounded-[0.85rem] z-10 ${isAndroid ? 'max-w-[140px]' : 'max-w-[110px] md:max-w-[160px]'}`}
+                style={catColor ? { color: catColor } : {}}
               >
                 <CatIcon size={12} strokeWidth={2.5} />
                 <span className="text-[10px] font-black uppercase tracking-[0.1em] truncate">
