@@ -645,6 +645,23 @@ function EmeraldTimer() {
     return () => { if (interval) window.clearInterval(interval); };
   }, [isActive, isOvertime]);
 
+  const triggerTripleCompletionHaptic = useCallback(() => {
+    const pulses = [0, 160, 320];
+    pulses.forEach(delay => {
+      setTimeout(async () => {
+        if (isAndroid) {
+          try {
+            await Haptics.vibrate({ duration: 90 });
+          } catch (err) {
+            triggerHaptic(ImpactStyle.Medium);
+          }
+        } else {
+          triggerHaptic(ImpactStyle.Medium);
+        }
+      }, delay);
+    });
+  }, [isAndroid]);
+
   useEffect(() => {
     if (!isOvertime && timeLeft === 0 && isActive) {
       // Immediate alert (sound + vibration) when phase ends, even in foreground
@@ -663,11 +680,7 @@ function EmeraldTimer() {
           }
         ]
       }).catch(() => {});
-      [0, 150, 300].forEach(delay => {
-        setTimeout(() => {
-          triggerHaptic(ImpactStyle.Medium);
-        }, delay);
-      });
+      triggerTripleCompletionHaptic();
       setIsActive(false);
       setIsOvertime(false);
       setOvertimeSeconds(0);
@@ -680,7 +693,7 @@ function EmeraldTimer() {
       triggerAppNotification(title, body);
       setPhasePrompt({ phase, kind });
     }
-  }, [isActive, timeLeft, phase, isOvertime]);
+  }, [isActive, timeLeft, phase, isOvertime, triggerTripleCompletionHaptic]);
 
   useEffect(() => {
     if (isOvertime && overtimeSeconds >= nextReminderAt && !phasePrompt) {
