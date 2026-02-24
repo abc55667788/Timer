@@ -3,9 +3,9 @@ import {
   X, Settings, Clock, Palette, Timer as TimerIcon, 
   AlertCircle, CheckCircle2, Globe, Key, Database, RefreshCw, 
   Download, Upload, Cloud, Plus, Trash, Check, Maximize2, Minus,
-  Bell, BellOff, User, Moon, Sun
+  Bell, BellOff, User, Moon, Sun, Monitor
 } from 'lucide-react';
-import { CategoryData, CATEGORY_ICONS, NotificationStatus, IconKey } from '../../types';
+import { CategoryData, CATEGORY_ICONS, NotificationStatus, IconKey, ThemePreference } from '../../types';
 
 interface SetupModalProps {
   wasMiniModeBeforeModal: boolean;
@@ -38,7 +38,8 @@ interface SetupModalProps {
   uiScale: number;
   setUiScale: (val: number | ((prev: number) => number)) => void;
   darkMode: boolean;
-  setDarkMode: (val: boolean | ((prev: boolean) => boolean)) => void;
+  themePreference: ThemePreference;
+  setThemePreference: (val: ThemePreference) => void;
   autoContinueLog: boolean;
   setAutoContinueLog: (val: boolean | ((prev: boolean) => boolean)) => void;
   isPage?: boolean;
@@ -76,7 +77,8 @@ const SetupModal: React.FC<SetupModalProps> = ({
   uiScale,
   setUiScale,
   darkMode,
-  setDarkMode,
+  themePreference,
+  setThemePreference,
   autoContinueLog,
   setAutoContinueLog,
   isPage = false,
@@ -116,6 +118,27 @@ const SetupModal: React.FC<SetupModalProps> = ({
     newCats[index] = { ...newCats[index], ...updates };
     setCategories(newCats);
   };
+
+  const themeOptions: { id: ThemePreference; label: string; description: string; icon: React.ReactNode }[] = [
+    {
+      id: 'system',
+      label: 'System',
+      description: 'Follow device setting',
+      icon: <Monitor size={18} />
+    },
+    {
+      id: 'dark',
+      label: 'Dark',
+      description: 'True black glass',
+      icon: <Moon size={18} />
+    },
+    {
+      id: 'light',
+      label: 'Light',
+      description: 'Bright & airy',
+      icon: <Sun size={18} />
+    }
+  ];
 
   return (
     <div className={containerClasses}>
@@ -218,29 +241,45 @@ const SetupModal: React.FC<SetupModalProps> = ({
                   </div>
                 )}
 
-                {!isAndroid && (
-                  <section>
-                    <h3 className={`text-[15px] font-black tracking-tight ${darkMode ? 'text-zinc-400' : 'text-emerald-800'} mb-4 flex items-center gap-2.5`}><Maximize2 size={16}/> Interface & Content Zoom</h3>
-                   <div className={`${darkMode ? 'bg-zinc-900/40' : 'bg-emerald-50/30'} p-5 rounded-[1.8rem] border ${darkMode ? 'border-white/5' : 'border-emerald-50'} space-y-4`}>
-                      {/* Dark Mode Toggle */}
-                      <div className={`${darkMode ? 'bg-zinc-950 border-white/5 shadow-none' : 'bg-white border-emerald-100 shadow-sm'} p-4 rounded-2xl border flex items-center justify-between`}>
-                        <div className="flex items-center gap-3">
-                          <div className={`p-2 rounded-xl ${darkMode ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-600'}`}>
-                            {darkMode ? <Moon size={18} /> : <Sun size={18} />}
-                          </div>
-                          <div>
-                            <span className={`text-sm font-black ${darkMode ? 'text-zinc-50' : 'text-emerald-950'} block leading-tight`}>Dark Mode</span>
-                            <span className={`text-[10px] font-bold ${darkMode ? 'text-zinc-600' : 'text-emerald-500/60'} uppercase tracking-widest`}>Comfortable at night</span>
-                          </div>
+                <section>
+                  <h3 className={`text-[15px] font-black tracking-tight ${darkMode ? 'text-zinc-400' : 'text-emerald-800'} mb-4 flex items-center gap-2.5`}><Maximize2 size={16}/> Theme & Interface</h3>
+                  <div className={`${darkMode ? 'bg-zinc-900/40' : 'bg-emerald-50/30'} p-5 rounded-[1.8rem] border ${darkMode ? 'border-white/5' : 'border-emerald-50'} space-y-4`}>
+                    <div className={`${darkMode ? 'bg-zinc-950 border-white/5 shadow-none' : 'bg-white border-emerald-100 shadow-sm'} p-4 rounded-2xl border`}>
+                      <div className="flex items-center justify-between gap-4 flex-wrap">
+                        <div>
+                          <p className={`text-sm font-black ${darkMode ? 'text-zinc-50' : 'text-emerald-950'} tracking-tight`}>Theme Preference</p>
+                          <p className={`text-[11px] font-semibold ${darkMode ? 'text-zinc-500' : 'text-emerald-500/80'} uppercase tracking-widest`}>System / Light / Dark</p>
                         </div>
-                        <button 
-                          onClick={() => setDarkMode(!darkMode)}
-                          className={`w-14 h-8 rounded-full p-1 transition-all duration-300 relative ${darkMode ? 'bg-emerald-600' : 'bg-emerald-200'}`}
-                        >
-                          <div className={`w-6 h-6 bg-white rounded-full shadow-md transition-all duration-300 transform ${darkMode ? 'translate-x-6' : 'translate-x-0'}`} />
-                        </button>
+                        <span className={`text-xs font-bold px-3 py-1 rounded-full ${darkMode ? 'bg-white/5 text-emerald-300' : 'bg-emerald-50 text-emerald-700'}`}>Instantly applies</span>
                       </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-4">
+                        {themeOptions.map(opt => {
+                          const selected = themePreference === opt.id;
+                          return (
+                            <button
+                              key={opt.id}
+                              onClick={() => setThemePreference(opt.id)}
+                              className={`p-3 rounded-2xl border transition-all text-left flex flex-col gap-1 ${selected
+                                ? (darkMode ? 'border-emerald-400 bg-emerald-500/5 text-emerald-100 shadow-[0_12px_40px_rgba(0,0,0,0.45)]' : 'border-emerald-400 bg-emerald-50 text-emerald-800 shadow-[0_8px_24px_rgba(16,185,129,0.25)]')
+                                : (darkMode ? 'border-white/5 text-zinc-400 hover:border-emerald-500/40' : 'border-emerald-100 text-emerald-600 hover:border-emerald-400/70')}
+                              `}
+                            >
+                              <div className="flex items-center gap-2">
+                                <div className={`p-2 rounded-xl ${selected ? (darkMode ? 'bg-emerald-500/20 text-emerald-200' : 'bg-emerald-100 text-emerald-700') : (darkMode ? 'bg-white/5 text-zinc-500' : 'bg-emerald-50 text-emerald-500')}`}>
+                                  {opt.icon}
+                                </div>
+                                <span className="text-sm font-black tracking-tight">{opt.label}</span>
+                              </div>
+                              <span className={`text-[11px] font-semibold uppercase tracking-widest ${selected ? (darkMode ? 'text-emerald-300' : 'text-emerald-500') : (darkMode ? 'text-zinc-600' : 'text-emerald-400')}`}>
+                                {opt.description}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
 
+                    {!isAndroid && (
                       <div className={`${darkMode ? 'bg-zinc-950 border-white/5 shadow-none' : 'bg-white border-emerald-100 shadow-sm'} p-6 rounded-2xl border flex flex-col gap-6`}>
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
                            <div className="space-y-1.5 border-l-4 border-emerald-500 pl-4 py-1">
@@ -296,9 +335,9 @@ const SetupModal: React.FC<SetupModalProps> = ({
                           💡 <span className={darkMode ? 'text-zinc-100' : 'text-emerald-800'}>Pro Tip:</span> You can also use <span className={darkMode ? 'text-zinc-100 font-black' : 'text-emerald-700 font-black'}>Ctrl + Scroll Wheel</span> anywhere in the app to quickly adjust the font size and layout.
                         </p>
                       </div>
-                    </div>
-                  </section>
-                )}
+                    )}
+                  </div>
+                </section>
               </div>
 
               <div className="space-y-6">

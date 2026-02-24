@@ -25,7 +25,8 @@ import {
   APP_LOGO,
   Goal,
   Inspiration,
-  CategoryData
+  CategoryData,
+  ThemePreference
 } from './src/types';
 import { formatTime, formatClock, formatDate, formatDisplayDate, formatDisplayDateString, resolvePhaseTotals, pad2 } from './src/utils/time';
 import { compressImage } from './src/utils/media';
@@ -51,6 +52,34 @@ const triggerHaptic = async (style: ImpactStyle = ImpactStyle.Light) => {
   if (Capacitor.isNativePlatform()) {
     try { await Haptics.impact({ style }); } catch (e) { /* ignore */ }
   }
+};
+
+const isThemePreferenceValue = (value: string | null): value is ThemePreference => {
+  return value === 'system' || value === 'light' || value === 'dark';
+};
+
+const getInitialThemePreference = (platformIsAndroid: boolean): ThemePreference => {
+  if (typeof window === 'undefined') return 'system';
+  const savedPref = localStorage.getItem('emerald-theme-preference');
+  if (isThemePreferenceValue(savedPref)) {
+    return savedPref;
+  }
+
+  const legacy = localStorage.getItem('emerald-theme');
+  if (legacy === 'light' || legacy === 'dark') {
+    return legacy;
+  }
+
+  if (platformIsAndroid) {
+    return 'system';
+  }
+
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+};
+
+const getInitialSystemPrefersDark = () => {
+  if (typeof window === 'undefined') return false;
+  return window.matchMedia('(prefers-color-scheme: dark)').matches;
 };
 
 // --- Main App Component ---
@@ -379,18 +408,9 @@ function EmeraldTimer() {
     return /(Mi 17|Xiaomi 17|Redmi 17)/i.test(ua);
   }, [isAndroid]);
 
-  const [isDarkMode, setIsDarkMode] = useState(() => {
-    if (typeof window === 'undefined') return false;
-    // On Android we prefer to follow system theme by default (avoid persisting mobile user overrides)
-    if (isAndroid) return window.matchMedia('(prefers-color-scheme: dark)').matches;
-
-    // Check local storage first for desktop users
-    const saved = localStorage.getItem('emerald-theme');
-    if (saved) return saved === 'dark';
-    
-    // Fallback to system preference
-    return window.matchMedia('(prefers-color-scheme: dark)').matches;
-  });
+  const [themePreference, setThemePreference] = useState<ThemePreference>(() => getInitialThemePreference(isAndroid));
+  const [systemPrefersDark, setSystemPrefersDark] = useState<boolean>(() => getInitialSystemPrefersDark());
+  const isDarkMode = themePreference === 'dark' || (themePreference === 'system' && systemPrefersDark);
 
   const [isLandscape, setIsLandscape] = useState(() => {
     if (typeof window === 'undefined') return false;
@@ -403,20 +423,29 @@ function EmeraldTimer() {
     return saved === 'true';
   });
 
-  // Persist theme choice (desktop only) and sync with platform
+  // Persist theme preference + sync Android-specific class
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    // On Android we do not persist theme so the app follows system preference by default
+    localStorage.setItem('emerald-theme-preference', themePreference);
+
     if (!isAndroid) {
-      localStorage.setItem('emerald-theme', isDarkMode ? 'dark' : 'light');
+      if (themePreference === 'system') {
+        localStorage.removeItem('emerald-theme');
+      } else {
+        localStorage.setItem('emerald-theme', themePreference);
+      }
     }
 
-    // Apply Android class for styling regardless so CSS updates immediately
     const cls = 'android-dark';
-    const action = isDarkMode ? 'add' : 'remove';
-    document.documentElement.classList[action](cls);
-    document.body.classList[action](cls);
-  }, [isDarkMode, isAndroid]);
+    if (isAndroid) {
+      const action = isDarkMode ? 'add' : 'remove';
+      document.documentElement.classList[action](cls);
+      document.body.classList[action](cls);
+    } else {
+      document.documentElement.classList.remove(cls);
+      document.body.classList.remove(cls);
+    }
+  }, [themePreference, isDarkMode, isAndroid]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -437,12 +466,10 @@ function EmeraldTimer() {
     if (typeof window === 'undefined') return;
     const media = window.matchMedia('(prefers-color-scheme: dark)');
     const apply = (ev: MediaQueryList | MediaQueryListEvent) => {
-      // If no manual preference, follow system
-      if (!localStorage.getItem('emerald-theme')) {
-        setIsDarkMode(!!ev.matches);
-      }
+      setSystemPrefersDark(!!ev.matches);
     };
-    
+
+    setSystemPrefersDark(media.matches);
     media.addEventListener('change', apply);
     return () => media.removeEventListener('change', apply);
   }, []);
@@ -2282,7 +2309,8 @@ function EmeraldTimer() {
                   uiScale={uiScale}
                   setUiScale={setUiScale}
                   darkMode={isDarkMode}
-                  setDarkMode={setIsDarkMode}
+                  themePreference={themePreference}
+                  setThemePreference={setThemePreference}
                   autoContinueLog={autoContinueLog}
                   setAutoContinueLog={setAutoContinueLog}
                   isPage={true}

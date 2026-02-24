@@ -77,6 +77,7 @@ export type PhasePromptKind = 'phase-end' | 'reminder' | 'cycle-complete';
 export type StatsView = 'day' | 'week' | 'month' | 'year';
 export type ViewMode = 'charts' | 'grid';
 export type NotificationStatus = NotificationPermission | 'unsupported';
+export type ThemePreference = 'system' | 'light' | 'dark';
 
 export interface GitLabConfig {
   token: string;
