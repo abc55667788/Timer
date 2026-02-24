@@ -2258,9 +2258,17 @@ function EmeraldTimer() {
           </div>
 
           {/* Navigation - Always at the bottom for both Android and PC to save vertical space and improve habit consistency */}
-          <nav className={`flex border-t ${isDarkMode ? 'border-white/5 bg-zinc-950/40' : 'border-emerald-50 bg-white/40'} items-stretch justify-around px-2 z-50 transition-all duration-300 ease-in-out
+          <nav className={`flex border-t items-stretch justify-around px-2 z-50 transition-all duration-300 ease-in-out
+            ${isDarkMode 
+              ? (isAndroid 
+                  ? 'border-emerald-900/40 bg-gradient-to-t from-[#0a1519]/95 via-[#0b161c]/92 to-[#0b1215]/95 ring-1 ring-emerald-500/10 shadow-[0_-18px_60px_rgba(0,0,0,0.55)] backdrop-blur-2xl'
+                  : 'border-white/5 bg-zinc-950/40')
+              : (isAndroid 
+                  ? 'border-emerald-100/50 bg-white/85 shadow-[0_-10px_30px_rgba(0,0,0,0.06)] backdrop-blur-xl'
+                  : 'border-emerald-50 bg-white/40')
+            }
             ${isAndroid 
-              ? `pb-[env(safe-area-inset-bottom,16px)] pt-3 h-[76px] ${isDarkMode ? 'shadow-black' : 'shadow-[0_-10px_30px_rgba(0,0,0,0.03)]'} backdrop-blur-xl` 
+              ? 'pb-[env(safe-area-inset-bottom,16px)] pt-3 h-[76px]'
               : 'h-18 py-0 group/nav'
             }`}
           >
@@ -2278,12 +2286,16 @@ function EmeraldTimer() {
                 }} 
                 className={`flex-1 flex flex-col items-center justify-center tracking-tight relative transition-all duration-300 h-full
                   ${activeTab === tab.id 
-                    ? (isDarkMode ? 'text-white' : (isAndroid ? 'text-emerald-700' : 'text-emerald-600')) 
-                    : (isDarkMode ? 'text-zinc-600' : 'text-emerald-400') + ' group-hover/nav:text-emerald-500 hover:text-emerald-600'}`}
+                    ? (isAndroid 
+                        ? (isDarkMode ? 'text-emerald-50' : 'text-emerald-700')
+                        : (isDarkMode ? 'text-white' : 'text-emerald-600'))
+                    : (isAndroid 
+                        ? (isDarkMode ? 'text-emerald-400/80' : 'text-emerald-400')
+                        : (isDarkMode ? 'text-zinc-600' : 'text-emerald-400')) + ' group-hover/nav:text-emerald-500 hover:text-emerald-600'}`}
               >
                 <div className={`transition-all duration-300 flex items-center justify-center
                   ${isAndroid 
-                    ? `px-6 py-1.5 rounded-2xl ${activeTab === tab.id ? (isDarkMode ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-600/10 text-emerald-700') + ' scale-110 shadow-sm' : 'bg-transparent'}`
+                    ? `px-6 py-2 rounded-2xl border ${activeTab === tab.id ? (isDarkMode ? 'bg-emerald-500/15 border-emerald-900/60 text-emerald-50 shadow-[0_10px_35px_rgba(0,0,0,0.35)]' : 'bg-emerald-600/10 border-emerald-100 text-emerald-700 shadow-sm') + ' scale-110' : (isDarkMode ? 'border-transparent text-emerald-400/80' : 'border-transparent text-emerald-400')}`
                     : `px-4 py-1.5 rounded-full ${activeTab === tab.id ? (isDarkMode ? 'bg-zinc-800' : 'bg-white/60') + ' backdrop-blur-md text-emerald-600 scale-105 shadow-sm border border-white/10' : 'bg-transparent hover:bg-white/40'}`
                   }`}
                 >
@@ -2297,9 +2309,11 @@ function EmeraldTimer() {
                 
                 <span className={`font-bold transition-all duration-400 overflow-hidden text-center
                   ${isAndroid 
-                    ? `text-[10px] mt-1.5 line-clamp-1 ${activeTab === tab.id ? 'opacity-100 transform translate-y-0' : 'opacity-60 transform translate-y-0.5'}` 
+                    ? `text-[10px] mt-1.5 line-clamp-1 ${activeTab === tab.id 
+                        ? (isDarkMode ? 'text-emerald-100 opacity-100' : 'text-emerald-700 opacity-100')
+                        : (isDarkMode ? 'text-emerald-400/80 opacity-80' : 'text-emerald-400 opacity-80')}`
                     : 'text-[11px] max-h-0 opacity-0 group-hover/nav:max-h-4 group-hover/nav:opacity-100 group-hover/nav:mt-1'
-                  } ${isDarkMode ? 'text-emerald-500/80' : ''}`}
+                  }`}
                   style={!isAndroid ? { width: '100%' } : {}}
                 >
                   {tab.label}
