@@ -373,6 +373,12 @@ function EmeraldTimer() {
     return Capacitor.getPlatform() === 'android' || /Android/i.test(navigator.userAgent);
   }, []);
 
+  const isXiaomi17Series = useMemo(() => {
+    if (!isAndroid || typeof navigator === 'undefined') return false;
+    const ua = navigator.userAgent || '';
+    return /(Mi 17|Xiaomi 17|Redmi 17)/i.test(ua);
+  }, [isAndroid]);
+
   const [isDarkMode, setIsDarkMode] = useState(() => {
     if (typeof window === 'undefined') return false;
     // Check local storage first
@@ -381,6 +387,11 @@ function EmeraldTimer() {
     
     // Check system preference
     return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  });
+
+  const [isLandscape, setIsLandscape] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return window.matchMedia('(orientation: landscape)').matches;
   });
 
   const [autoContinueLog, setAutoContinueLog] = useState(() => {
@@ -407,6 +418,15 @@ function EmeraldTimer() {
     if (typeof window === 'undefined') return;
     localStorage.setItem('emerald-auto-continue-log', autoContinueLog.toString());
   }, [autoContinueLog]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const media = window.matchMedia('(orientation: landscape)');
+    const handleOrientation = (ev: MediaQueryListEvent) => setIsLandscape(ev.matches);
+    setIsLandscape(media.matches);
+    media.addEventListener('change', handleOrientation);
+    return () => media.removeEventListener('change', handleOrientation);
+  }, []);
 
   // Track system preference changes (only update if not manually overridden or just sync)
   useEffect(() => {
@@ -1939,6 +1959,17 @@ function EmeraldTimer() {
     }
   }, [isAndroid, isActive, timeLeft, phase]);
 
+  const androidBottomInsetClass = useMemo(() => {
+    if (!isAndroid) return '';
+    return isXiaomi17Series ? 'pb-[calc(env(safe-area-inset-bottom,16px)+22px)]' : 'pb-[env(safe-area-inset-bottom,16px)]';
+  }, [isAndroid, isXiaomi17Series]);
+
+  const navHeightClass = isAndroid
+    ? (isLandscape ? 'pt-1.5 h-[64px]' : 'pt-2.5 h-[72px]')
+    : 'h-18 py-0 group/nav';
+
+  const navInnerPadding = isAndroid ? 'px-2' : 'px-6';
+
   if (isInitialLoading) {
     return (
       <div className={`fixed inset-0 ${isDarkMode ? 'bg-[#0a0f12]' : 'bg-white'} flex flex-col items-center justify-center z-[500] animate-in fade-in duration-300 rounded-[1.5rem] border ${isDarkMode ? 'border-white/5' : 'border-white/10'} ring-1 ${isDarkMode ? 'ring-white/5' : 'ring-white/5'} overflow-hidden`}>
@@ -2087,11 +2118,11 @@ function EmeraldTimer() {
       )}
 
       {!hideShellForMiniPrompt && !isMiniMode && !wasMiniModeBeforeModal && (
-        <main className={`w-full ${isDarkMode ? 'bg-zinc-950/60' : 'bg-white/70'} backdrop-blur-2xl flex flex-col flex-1 overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-500 ease-out border-t ${isDarkMode ? 'border-white/5' : 'border-white/40'} ${isAndroid ? 'pt-[env(safe-area-inset-top,20px)]' : 'overflow-hidden'}`}>
+        <main className={`w-full ${isDarkMode ? 'bg-zinc-950/60' : 'bg-white/70'} backdrop-blur-2xl flex flex-col flex-1 overflow-hidden min-h-0 animate-in fade-in slide-in-from-bottom-2 duration-500 ease-out border-t ${isDarkMode ? 'border-white/5' : 'border-white/40'} ${isAndroid ? 'pt-[env(safe-area-inset-top,20px)]' : 'overflow-hidden'}`}>
           
           <div 
             ref={mainScrollRef}
-            className="flex-1 overflow-y-auto scrollbar-none relative flex flex-col"
+            className={`flex-1 overflow-y-auto scrollbar-none relative flex flex-col ${isAndroid ? 'pb-24' : 'pb-12'}`}
             style={{ zoom: (isMiniMode || isAndroid) ? 1.0 : uiScale } as any}
           >
             {activeTab === 'timer' && (
@@ -2258,72 +2289,76 @@ function EmeraldTimer() {
           </div>
 
           {/* Navigation - Always at the bottom for both Android and PC to save vertical space and improve habit consistency */}
-          <nav className={`flex border-t items-stretch justify-around px-2 z-50 transition-all duration-300 ease-in-out
+          <nav className={`flex items-stretch justify-center px-2 z-50 transition-all duration-300 ease-in-out border-t
             ${isDarkMode 
               ? (isAndroid 
-                  ? 'border-emerald-900/40 bg-gradient-to-t from-[#0a1519]/95 via-[#0b161c]/92 to-[#0b1215]/95 ring-1 ring-emerald-500/10 shadow-[0_-18px_60px_rgba(0,0,0,0.55)] backdrop-blur-2xl'
+                  ? 'border-emerald-900/40 bg-gradient-to-t from-[#071013]/95 via-[#07161b]/92 to-[#0b1215]/95 shadow-[0_-18px_60px_rgba(0,0,0,0.55)] backdrop-blur-2xl'
                   : 'border-white/5 bg-zinc-950/40')
               : (isAndroid 
                   ? 'border-emerald-100/50 bg-white/85 shadow-[0_-10px_30px_rgba(0,0,0,0.06)] backdrop-blur-xl'
                   : 'border-emerald-50 bg-white/40')
             }
-            ${isAndroid 
-              ? 'pb-[env(safe-area-inset-bottom,16px)] pt-3 h-[76px]'
-              : 'h-18 py-0 group/nav'
-            }`}
+            ${androidBottomInsetClass} ${navHeightClass}`}
           >
-            {[
-              { id: 'timer', icon: Play, label: 'Focus' },
-              { id: 'stats', icon: BarChart3, label: 'Analytics' },
-              { id: 'logs', icon: Clock, label: 'History' },
-              { id: 'settings', icon: Settings, label: 'Settings' }
-            ].map(tab => (
-              <button 
-                key={tab.id} 
-                onClick={() => {
-                  setActiveTab(tab.id as any);
-                  if (activeTab !== tab.id) triggerHaptic(ImpactStyle.Light);
-                }} 
-                className={`flex-1 flex flex-col items-center justify-center tracking-tight relative transition-all duration-300 h-full
-                  ${activeTab === tab.id 
-                    ? (isAndroid 
-                        ? (isDarkMode ? 'text-emerald-50' : 'text-emerald-700')
-                        : (isDarkMode ? 'text-white' : 'text-emerald-600'))
-                    : (isAndroid 
-                        ? (isDarkMode ? 'text-emerald-400/80' : 'text-emerald-400')
-                        : (isDarkMode ? 'text-zinc-600' : 'text-emerald-400')) + ' group-hover/nav:text-emerald-500 hover:text-emerald-600'}`}
-              >
-                <div className={`transition-all duration-300 flex items-center justify-center
-                  ${isAndroid 
-                    ? `px-6 py-2 rounded-2xl border ${activeTab === tab.id ? (isDarkMode ? 'bg-emerald-500/15 border-emerald-900/60 text-emerald-50 shadow-[0_10px_35px_rgba(0,0,0,0.35)]' : 'bg-emerald-600/10 border-emerald-100 text-emerald-700 shadow-sm') + ' scale-110' : (isDarkMode ? 'border-transparent text-emerald-400/80' : 'border-transparent text-emerald-400')}`
-                    : `px-4 py-1.5 rounded-full ${activeTab === tab.id ? (isDarkMode ? 'bg-zinc-800' : 'bg-white/60') + ' backdrop-blur-md text-emerald-600 scale-105 shadow-sm border border-white/10' : 'bg-transparent hover:bg-white/40'}`
-                  }`}
+            <div className={`flex w-full max-w-5xl items-center justify-between gap-1.5 ${navInnerPadding}`}>
+              {[
+                { id: 'timer', icon: Play, label: 'Focus' },
+                { id: 'stats', icon: BarChart3, label: 'Analytics' },
+                { id: 'logs', icon: Clock, label: 'History' },
+                { id: 'settings', icon: Settings, label: 'Settings' }
+              ].map(tab => (
+                <button 
+                  key={tab.id} 
+                  onClick={() => {
+                    setActiveTab(tab.id as any);
+                    if (activeTab !== tab.id) triggerHaptic(ImpactStyle.Light);
+                  }} 
+                  className={`flex-1 flex flex-col items-center justify-center tracking-tight relative transition-all duration-300 h-full
+                    ${activeTab === tab.id 
+                      ? (isAndroid 
+                          ? (isDarkMode ? 'text-emerald-50' : 'text-emerald-700')
+                          : (isDarkMode ? 'text-white' : 'text-emerald-600'))
+                      : (isAndroid 
+                          ? (isDarkMode ? 'text-emerald-400/80' : 'text-emerald-400')
+                          : (isDarkMode ? 'text-zinc-600' : 'text-emerald-400')) + ' group-hover/nav:text-emerald-500 hover:text-emerald-600'}`}
                 >
-                  <tab.icon 
-                    size={isAndroid ? 24 : 22} 
-                    strokeWidth={activeTab === tab.id ? 2.5 : 2} 
-                    fill={activeTab === tab.id ? "currentColor" : "none"}
-                    fillOpacity={activeTab === tab.id ? (isAndroid ? 0.2 : 0.15) : 0}
-                  />
-                </div>
-                
-                <span className={`font-bold transition-all duration-400 overflow-hidden text-center
-                  ${isAndroid 
-                    ? `text-[10px] mt-1.5 line-clamp-1 ${activeTab === tab.id 
-                        ? (isDarkMode ? 'text-emerald-100 opacity-100' : 'text-emerald-700 opacity-100')
-                        : (isDarkMode ? 'text-emerald-400/80 opacity-80' : 'text-emerald-400 opacity-80')}`
-                    : 'text-[11px] max-h-0 opacity-0 group-hover/nav:max-h-4 group-hover/nav:opacity-100 group-hover/nav:mt-1'
-                  }`}
-                  style={!isAndroid ? { width: '100%' } : {}}
-                >
-                  {tab.label}
-                </span>
-                
-                {isAndroid && activeTab === tab.id && (
-                  <div className={`absolute bottom-1 w-1 h-1 ${isDarkMode ? 'bg-emerald-400' : 'bg-emerald-500'} rounded-full`} />
-                )}
-              </button>
-            ))}
+                  <div className={`transition-all duration-300 flex items-center justify-center rounded-full
+                    ${isAndroid 
+                        ? `${activeTab === tab.id
+                          ? (isDarkMode ? 'text-emerald-50 drop-shadow-[0_8px_28px_rgba(0,0,0,0.45)]' : 'text-emerald-700 drop-shadow-[0_8px_22px_rgba(0,0,0,0.18)]') + ' scale-105'
+                          : (isDarkMode ? 'text-emerald-400/80 opacity-80' : 'text-emerald-500/80 opacity-80')}
+                        px-5 py-1.5`
+                      : `${activeTab === tab.id
+                          ? (isDarkMode ? 'bg-zinc-800' : 'bg-white/60') + ' backdrop-blur-md text-emerald-600 scale-105 shadow-sm border border-white/10'
+                          : 'bg-transparent hover:bg-white/40'} px-4 py-1.5`
+                    }`}
+                  >
+                    <tab.icon 
+                      size={isAndroid ? 24 : 22} 
+                      strokeWidth={activeTab === tab.id ? 2.5 : 2} 
+                      fill={activeTab === tab.id ? "currentColor" : "none"}
+                      fillOpacity={activeTab === tab.id ? (isAndroid ? 0.25 : 0.15) : 0}
+                    />
+                  </div>
+                  
+                  <span className={`font-bold transition-all duration-400 overflow-hidden text-center
+                    ${isAndroid 
+                      ? `text-[11px] mt-2 line-clamp-1 ${activeTab === tab.id 
+                          ? (isDarkMode ? 'text-emerald-100 opacity-100' : 'text-emerald-700 opacity-100')
+                          : (isDarkMode ? 'text-emerald-400/80 opacity-80' : 'text-emerald-400 opacity-80')}`
+                      : 'text-[11px] max-h-0 opacity-0 group-hover/nav:max-h-4 group-hover/nav:opacity-100 group-hover/nav:mt-1'
+                    }`}
+                    style={!isAndroid ? { width: '100%' } : {}}
+                  >
+                    {tab.label}
+                  </span>
+                  
+                  {isAndroid && activeTab === tab.id && (
+                    <div className={`absolute bottom-1 w-1 h-1 ${isDarkMode ? 'bg-emerald-400' : 'bg-emerald-500'} rounded-full`} />
+                  )}
+                </button>
+              ))}
+            </div>
           </nav>
         </main>
       )}
