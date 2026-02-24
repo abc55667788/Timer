@@ -663,7 +663,11 @@ function EmeraldTimer() {
           }
         ]
       }).catch(() => {});
-      triggerHaptic(ImpactStyle.Medium);
+      [0, 150, 300].forEach(delay => {
+        setTimeout(() => {
+          triggerHaptic(ImpactStyle.Medium);
+        }, delay);
+      });
       setIsActive(false);
       setIsOvertime(false);
       setOvertimeSeconds(0);
@@ -1996,10 +2000,10 @@ function EmeraldTimer() {
   }, [isAndroid, isXiaomi17Series]);
 
   const navHeightClass = isAndroid
-    ? (isLandscape ? 'pt-1.5 h-[64px]' : 'pt-2.5 h-[72px]')
+    ? (isLandscape ? 'pt-1 h-[58px]' : 'pt-2.5 h-[72px]')
     : 'h-18 py-0 group/nav';
 
-  const navInnerPadding = isAndroid ? 'px-2' : 'px-6';
+  const navInnerPadding = isAndroid ? (isLandscape ? 'px-1.5' : 'px-2') : 'px-6';
 
   if (isInitialLoading) {
     return (
@@ -2179,6 +2183,7 @@ function EmeraldTimer() {
                     getCategoryColor={getCategoryColor}
                     getCategoryIcon={getCategoryIcon}
                     isAndroid={isAndroid}
+                    isLandscape={isLandscape}
                     darkMode={isDarkMode}
                   />
                 </div>
@@ -2341,9 +2346,13 @@ function EmeraldTimer() {
               ].map(tab => (
                 <button 
                   key={tab.id} 
+                  aria-label={tab.label}
                   onClick={() => {
+                    if (activeTab === tab.id) return;
                     setActiveTab(tab.id as any);
-                    if (activeTab !== tab.id) triggerHaptic(ImpactStyle.Light);
+                    if (!isAndroid) {
+                      triggerHaptic(ImpactStyle.Light);
+                    }
                   }} 
                   className={`flex-1 flex flex-col items-center justify-center tracking-tight relative transition-all duration-300 h-full
                     ${activeTab === tab.id 
@@ -2356,9 +2365,9 @@ function EmeraldTimer() {
                 >
                   <div className={`transition-all duration-300 flex items-center justify-center rounded-full
                     ${isAndroid 
-                        ? `${activeTab === tab.id
-                          ? (isDarkMode ? 'text-emerald-50 drop-shadow-[0_8px_28px_rgba(0,0,0,0.45)]' : 'text-emerald-700 drop-shadow-[0_8px_22px_rgba(0,0,0,0.18)]') + ' scale-105'
-                          : (isDarkMode ? 'text-emerald-400/80 opacity-80' : 'text-emerald-500/80 opacity-80')}
+                      ? `${activeTab === tab.id
+                          ? (isDarkMode ? 'text-emerald-50 bg-emerald-500/15 border border-emerald-400/60 shadow-[0_12px_30px_rgba(0,0,0,0.45)]' : 'text-emerald-700 bg-emerald-100/10 border border-emerald-300 shadow-[0_10px_26px_rgba(0,0,0,0.18)]') + ' scale-105'
+                          : (isDarkMode ? 'text-emerald-400/80 opacity-80 border border-transparent' : 'text-emerald-500/80 opacity-80 border border-transparent')}
                         px-5 py-1.5`
                       : `${activeTab === tab.id
                           ? (isDarkMode ? 'bg-zinc-800' : 'bg-white/60') + ' backdrop-blur-md text-emerald-600 scale-105 shadow-sm border border-white/10'
@@ -2373,17 +2382,14 @@ function EmeraldTimer() {
                     />
                   </div>
                   
-                  <span className={`font-bold transition-all duration-400 overflow-hidden text-center
-                    ${isAndroid 
-                      ? `text-[11px] mt-2 line-clamp-1 ${activeTab === tab.id 
-                          ? (isDarkMode ? 'text-emerald-100 opacity-100' : 'text-emerald-700 opacity-100')
-                          : (isDarkMode ? 'text-emerald-400/80 opacity-80' : 'text-emerald-400 opacity-80')}`
-                      : 'text-[11px] max-h-0 opacity-0 group-hover/nav:max-h-4 group-hover/nav:opacity-100 group-hover/nav:mt-1'
-                    }`}
-                    style={!isAndroid ? { width: '100%' } : {}}
-                  >
-                    {tab.label}
-                  </span>
+                  {!isAndroid && (
+                    <span className={`font-bold transition-all duration-400 overflow-hidden text-center
+                      ${'text-[11px] max-h-0 opacity-0 group-hover/nav:max-h-4 group-hover/nav:opacity-100 group-hover/nav:mt-1'}`}
+                      style={{ width: '100%' }}
+                    >
+                      {tab.label}
+                    </span>
+                  )}
                   
                   {isAndroid && activeTab === tab.id && (
                     <div className={`absolute bottom-1 w-1 h-1 ${isDarkMode ? 'bg-emerald-400' : 'bg-emerald-500'} rounded-full`} />

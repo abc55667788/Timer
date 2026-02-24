@@ -23,6 +23,7 @@ interface TimerBoardProps {
   getCategoryColor: (cat: Category) => string;
   getCategoryIcon: (cat: Category) => any;
   isAndroid?: boolean;
+  isLandscape?: boolean;
   darkMode: boolean;
 }
 
@@ -46,13 +47,77 @@ const TimerBoard: React.FC<TimerBoardProps> = ({
   getCategoryColor,
   getCategoryIcon,
   isAndroid,
+  isLandscape,
   darkMode,
 }) => {
   const catColor = getCategoryColor(currentTask.category);
   const CatIcon = getCategoryIcon(currentTask.category);
+  const useLandscapeLayout = Boolean(isAndroid && isLandscape);
+  const containerPadding = isAndroid ? (useLandscapeLayout ? 'py-3 pb-5' : 'py-4 pb-12') : 'py-8';
+  const layoutWrapperClasses = [
+    'flex w-full',
+    useLandscapeLayout
+      ? 'flex-row items-center justify-center gap-6 max-w-4xl'
+      : 'flex-col items-center gap-6 md:gap-12 max-w-lg',
+    isAndroid ? 'py-1' : 'py-4',
+  ].filter(Boolean).join(' ');
+  const timerStackClasses = [
+    'flex flex-col items-center gap-4 md:gap-8',
+    useLandscapeLayout ? 'flex-1' : (isAndroid ? 'mt-0' : 'mt-2 md:mt-0'),
+  ].filter(Boolean).join(' ');
+  const controlsWrapperClasses = useLandscapeLayout
+    ? 'flex flex-col items-stretch gap-3 w-full max-w-[220px] justify-center'
+    : `flex items-center gap-4 md:gap-6 ${isAndroid ? 'mb-4' : 'mb-8 md:mb-0'}`;
+
+  const startButton = (
+    <button 
+      onClick={handleStart} 
+      className={`flex items-center justify-center transition-all duration-300 active:scale-90 shadow-2xl
+        ${isAndroid ? 'w-20 h-20' : 'w-16 h-16 md:w-20 md:h-20'} 
+        ${isActive 
+          ? (darkMode ? 'text-white bg-orange-500 border-white/10 hover:bg-orange-400 rounded-[1.4rem] shadow-orange-500/30' : 'text-white bg-orange-600 shadow-orange-200/50 hover:bg-orange-700 hover:scale-105 rounded-[1.4rem]') 
+          : (darkMode ? 'bg-emerald-500 text-white rounded-[50%] border-white/10 hover:bg-emerald-400 hover:scale-105 shadow-emerald-500/30' : 'bg-emerald-600 text-white hover:bg-emerald-700 hover:scale-105 shadow-emerald-200/50 rounded-[50%]')
+        }`}
+    >
+      {isActive ? (
+        <Pause key="pause" size={isAndroid ? 32 : 28} fill="currentColor" className="animate-in fade-in zoom-in spin-in-12 duration-500" />
+      ) : (
+        <Play key="play" size={isAndroid ? 32 : 28} fill="currentColor" className="ml-1 animate-in fade-in zoom-in spin-in-12 duration-500" />
+      )}
+    </button>
+  );
+
+  const stopButton = isCurrentlyRecording ? (
+    <button 
+      onClick={handleStopClick} 
+      className={`${isAndroid ? 'w-12 h-12' : 'w-11 h-11 md:w-13 md:h-13'} rounded-full ${darkMode ? 'bg-zinc-800 text-white border-white/5 hover:bg-red-500 shadow-black/40' : 'bg-emerald-50 text-emerald-600 border-emerald-100 hover:bg-red-50 hover:text-red-500 shadow-sm'} transition-all duration-300 ease-in-out border flex items-center justify-center group active:scale-90 animate-in fade-in slide-in-from-right-8 duration-500`}
+    >
+      <Square size={isAndroid ? 18 : 16} fill="currentColor" className="group-hover:scale-110 transition-transform"/>
+    </button>
+  ) : null;
+
+  const skipButton = (!isOvertime && isCurrentlyRecording)
+    ? (
+      <button 
+        onClick={handleSkipToNextPhase} 
+        className={`${isAndroid ? 'w-12 h-12' : 'w-11 h-11 md:w-13 md:h-13'} rounded-full ${darkMode ? 'bg-zinc-800 text-white border-white/5 hover:bg-emerald-500 shadow-black/40' : 'bg-emerald-50 text-emerald-600 border border-emerald-100 hover:bg-emerald-600 hover:text-white hover:border-emerald-600 shadow-sm'} transition-all duration-300 ease-in-out active:scale-90 flex items-center justify-center animate-in fade-in slide-in-from-left-8 duration-500`} 
+        title={phase === 'work' ? 'go rest' : 'go focus'}
+      >
+        {phase === 'work' ? <Coffee size={isAndroid ? 20 : 18} /> : <Briefcase size={isAndroid ? 20 : 18} />}
+      </button>
+    )
+    : (isOvertime ? (
+      <button 
+        onClick={handleSkipToNextPhase} 
+        className={`${isAndroid ? 'w-12 h-12' : 'w-11 h-11 md:w-13 md:h-13'} rounded-full ${darkMode ? 'bg-zinc-800 text-white border-white/5 hover:bg-emerald-500 shadow-black/40' : 'bg-emerald-50 text-emerald-600 border border-emerald-100 hover:bg-emerald-600 hover:text-white hover:border-emerald-600 shadow-sm'} transition-all duration-300 ease-in-out active:scale-90 flex items-center justify-center animate-in fade-in slide-in-from-left-8 duration-500`} 
+        title={phase === 'work' ? 'go rest' : 'go focus'}
+      >
+        <RotateCcw size={isAndroid ? 20 : 18} />
+      </button>
+    ) : null);
 
   return (
-    <div className={`flex flex-col items-center justify-center w-full flex-1 min-h-full animate-in fade-in duration-500 relative scrollbar-none px-4 ${isAndroid ? 'py-4 pb-12' : 'py-8'}`}>
+    <div className={`flex flex-col items-center justify-center w-full flex-1 min-h-full animate-in fade-in duration-500 relative scrollbar-none px-4 ${containerPadding}`}>
       {!isJournalOpen && (
         <div className={`absolute ${isAndroid ? 'top-2 right-2' : 'top-4 right-4 md:top-10 md:right-10'} z-[60]`}>
           <button 
@@ -65,8 +130,8 @@ const TimerBoard: React.FC<TimerBoardProps> = ({
         </div>
       )}
 
-      <div className={`flex flex-col items-center gap-6 md:gap-12 w-full max-w-lg ${isAndroid ? 'py-1' : 'py-4'}`}>
-        <div className={`flex flex-col items-center gap-4 md:gap-8 ${isAndroid ? 'mt-0' : 'mt-2 md:mt-0'}`}>
+      <div className={layoutWrapperClasses}>
+        <div className={timerStackClasses}>
           <div className={`flex items-center gap-2 px-5 py-2 ${darkMode ? 'bg-zinc-900 border-white/5 shadow-inner' : 'bg-emerald-50 border-emerald-100/50 shadow-sm'} rounded-full border`}>
             <div className={`w-2 h-2 rounded-full ${phase === 'work' ? (darkMode ? 'bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.5)]' : 'bg-emerald-500 shadow-[0_0_8px_#10b981]') : (darkMode ? 'bg-orange-500 shadow-[0_0_12px_rgba(249,115,22,0.5)]' : 'bg-emerald-400 shadow-[0_0_8px_#34d399]')} ${isActive ? 'animate-pulse' : ''}`} />
             <span className={`text-[10px] font-black uppercase tracking-[0.1em] ${darkMode ? 'text-zinc-500' : 'text-emerald-700'}`}>{isActive ? (phase === 'work' ? 'Focusing' : 'Resting') : 'Idle'}</span>
@@ -103,50 +168,25 @@ const TimerBoard: React.FC<TimerBoardProps> = ({
           </div>
         </div>
 
-        <div className={`flex items-center gap-4 md:gap-6 ${isAndroid ? 'mb-4' : 'mb-8 md:mb-0'}`}>
-          {isCurrentlyRecording && (
-            <button 
-              onClick={handleStopClick} 
-              className={`${isAndroid ? 'w-12 h-12' : 'w-11 h-11 md:w-13 md:h-13'} rounded-full ${darkMode ? 'bg-zinc-800 text-white border-white/5 hover:bg-red-500 shadow-black/40' : 'bg-emerald-50 text-emerald-600 border-emerald-100 hover:bg-red-50 hover:text-red-500 shadow-sm'} transition-all duration-300 ease-in-out border flex items-center justify-center group active:scale-90 animate-in fade-in slide-in-from-right-8 duration-500`}
-            >
-              <Square size={isAndroid ? 18 : 16} fill="currentColor" className="group-hover:scale-110 transition-transform"/>
-            </button>
-          )}
-
-          <button 
-            onClick={handleStart} 
-            className={`flex items-center justify-center transition-all duration-300 active:scale-90 shadow-2xl
-              ${isAndroid ? 'w-20 h-20' : 'w-16 h-16 md:w-20 md:h-20'} 
-              ${isActive 
-                ? (darkMode ? 'text-white bg-orange-500 border-white/10 hover:bg-orange-400 rounded-[1.4rem] shadow-orange-500/30' : 'text-white bg-orange-600 shadow-orange-200/50 hover:bg-orange-700 hover:scale-105 rounded-[1.4rem]') 
-                : (darkMode ? 'bg-emerald-500 text-white rounded-[50%] border-white/10 hover:bg-emerald-400 hover:scale-105 shadow-emerald-500/30' : 'bg-emerald-600 text-white hover:bg-emerald-700 hover:scale-105 shadow-emerald-200/50 rounded-[50%]')
-              }`}
-          >
-            {isActive ? (
-              <Pause key="pause" size={isAndroid ? 32 : 28} fill="currentColor" className="animate-in fade-in zoom-in spin-in-12 duration-500" />
-            ) : (
-              <Play key="play" size={isAndroid ? 32 : 28} fill="currentColor" className="ml-1 animate-in fade-in zoom-in spin-in-12 duration-500" />
-            )}
-          </button>
-
-          {!isOvertime && isCurrentlyRecording && (
-            <button 
-              onClick={handleSkipToNextPhase} 
-              className={`${isAndroid ? 'w-12 h-12' : 'w-11 h-11 md:w-13 md:h-13'} rounded-full ${darkMode ? 'bg-zinc-800 text-white border-white/5 hover:bg-emerald-500 shadow-black/40' : 'bg-emerald-50 text-emerald-600 border border-emerald-100 hover:bg-emerald-600 hover:text-white hover:border-emerald-600 shadow-sm'} transition-all duration-300 ease-in-out active:scale-90 flex items-center justify-center animate-in fade-in slide-in-from-left-8 duration-500`} 
-              title={phase === 'work' ? 'go rest' : 'go focus'}
-            >
-              {phase === 'work' ? <Coffee size={isAndroid ? 20 : 18} /> : <Briefcase size={isAndroid ? 20 : 18} />}
-            </button>
-          )}
-
-          {isOvertime && (
-            <button 
-              onClick={handleSkipToNextPhase} 
-              className={`${isAndroid ? 'w-12 h-12' : 'w-11 h-11 md:w-13 md:h-13'} rounded-full ${darkMode ? 'bg-zinc-800 text-white border-white/5 hover:bg-emerald-500 shadow-black/40' : 'bg-emerald-50 text-emerald-600 border border-emerald-100 hover:bg-emerald-600 hover:text-white hover:border-emerald-600 shadow-sm'} transition-all duration-300 ease-in-out active:scale-90 flex items-center justify-center animate-in fade-in slide-in-from-left-8 duration-500`} 
-              title={phase === 'work' ? 'go rest' : 'go focus'}
-            >
-              <RotateCcw size={isAndroid ? 20 : 18} />
-            </button>
+        <div className={controlsWrapperClasses}>
+          {useLandscapeLayout ? (
+            <>
+              {(stopButton || skipButton) && (
+                <div className="flex justify-center gap-3">
+                  {stopButton}
+                  {skipButton}
+                </div>
+              )}
+              <div className="flex justify-center">
+                {startButton}
+              </div>
+            </>
+          ) : (
+            <>
+              {stopButton}
+              {startButton}
+              {skipButton}
+            </>
           )}
         </div>
       </div>
