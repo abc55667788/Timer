@@ -11,6 +11,13 @@ import {
 import { LogEntry, StatsView, ViewMode, Category } from '../../types';
 import { formatTime, formatClock, formatDate, formatDisplayDateString, resolvePhaseTotals } from '../../utils/time';
 import MiniCalendar from '../MiniCalendar';
+import { WeeklyTimelineView } from '../Logs';
+import cutePlaceholderImage from '../../../assets/icon-only.png';
+
+const YEAR_FALLBACK_IMAGE = '/timer-play.png';
+const MONTH_FALLBACK_IMAGE = '/timer-play.png';
+const WEEK_FALLBACK_IMAGE = '/timer-play.png';
+const DEFAULT_FALLBACK_IMAGE = '/timer-play.png';
 
 interface StatsBoardProps {
   logs: LogEntry[];
@@ -183,7 +190,7 @@ const StatsBoard: React.FC<StatsBoardProps> = ({
            <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none pb-2 -mb-2 px-1">
              <button 
                onClick={() => setIsCalendarCollapsed(!isCalendarCollapsed)} 
-               className={`p-2.5 rounded-2xl transition-all shadow-sm flex-shrink-0 border active:scale-95 ${darkMode ? 'bg-zinc-800 text-zinc-400 border-white/5 hover:bg-emerald-500 hover:text-white hover:shadow-[0_8px_20px_-4px_rgba(16,185,129,0.3)]' : 'bg-white text-emerald-600 border-emerald-50 shadow-sm hover:shadow-lg hover:shadow-emerald-500/10 hover:border-emerald-200 hover:text-emerald-700'}`}
+               className={`p-2.5 rounded-2xl transition-all shadow-sm flex-shrink-0 border active:scale-95 ${darkMode ? 'bg-zinc-800 text-emerald-50 border-white/5 hover:bg-emerald-500 hover:text-white hover:shadow-[0_8px_20px_-4px_rgba(16,185,129,0.3)]' : 'bg-white text-emerald-800 border-emerald-50 shadow-sm hover:shadow-lg hover:shadow-emerald-500/10 hover:border-emerald-300 hover:text-emerald-900'}`}
              >
                {isCalendarCollapsed ? <PanelLeftOpen size={18} strokeWidth={2.5}/> : <PanelLeftClose size={18} strokeWidth={2.5}/>}
              </button>
@@ -199,7 +206,7 @@ const StatsBoard: React.FC<StatsBoardProps> = ({
                  className={`px-4 py-2 rounded-xl text-[10px] sm:text-[11px] font-black tracking-widest uppercase transition-all flex-shrink-0 active:scale-95
                    ${statsView === v.id 
                      ? (darkMode ? 'bg-emerald-500 text-white shadow-black' : 'bg-emerald-600 text-white shadow-lg shadow-emerald-200/50') 
-                     : (darkMode ? 'bg-zinc-800 text-zinc-500 hover:bg-emerald-500 hover:text-white' : 'text-emerald-500 hover:bg-white/50')}`}
+                     : (darkMode ? 'bg-zinc-800 text-emerald-50 hover:bg-emerald-500 hover:text-white' : 'text-emerald-800 hover:bg-white/60')}`}
                >
                 {v.label}
                </button>
@@ -224,7 +231,25 @@ const StatsBoard: React.FC<StatsBoardProps> = ({
                    </button>
                 </div>
               )}
-              <div className={`text-[11px] sm:text-xs font-black uppercase tracking-widest sm:pr-5 opacity-80 truncate ${darkMode ? 'text-zinc-500' : 'text-emerald-800'}`}>{formatDisplayDateString(selectedStatsDate)}</div>
+              {statsView === 'week' && (
+                <div className={`p-1 rounded-2xl flex border shadow-sm ${darkMode ? 'bg-zinc-950/50 border-white/5 shadow-inner' : 'bg-white/30 border-white/20'} backdrop-blur-md overflow-hidden`}>
+                   <button 
+                     onClick={() => setViewMode('timeline')} 
+                     className={`p-2 rounded-xl transition-all active:scale-95 ${viewMode === 'timeline' ? (darkMode ? 'bg-emerald-500 text-white shadow-black' : 'bg-emerald-600 text-white shadow-md') : (darkMode ? 'bg-zinc-800 text-zinc-600 hover:bg-emerald-500 hover:text-white' : 'text-emerald-400 hover:text-emerald-600')}`} 
+                     title="Timeline View"
+                   >
+                     <History size={16}/>
+                   </button>
+                   <button 
+                     onClick={() => setViewMode('charts')} 
+                     className={`ml-1 p-2 rounded-xl transition-all active:scale-95 ${viewMode === 'charts' ? (darkMode ? 'bg-emerald-500 text-white shadow-black' : 'bg-emerald-600 text-white shadow-md') : (darkMode ? 'bg-zinc-800 text-zinc-600 hover:bg-emerald-500 hover:text-white' : 'text-emerald-400 hover:text-emerald-600')}`} 
+                     title="Charts View"
+                   >
+                     <BarChart size={16}/>
+                   </button>
+                </div>
+              )}
+              <div className={`text-[11px] sm:text-xs font-black uppercase tracking-widest sm:pr-5 opacity-90 truncate ${darkMode ? 'text-emerald-50' : 'text-emerald-900'}`}>{formatDisplayDateString(selectedStatsDate)}</div>
            </div>
         </div>
         
@@ -233,7 +258,8 @@ const StatsBoard: React.FC<StatsBoardProps> = ({
             <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
                {dayViewMode === 'timeline' ? (
                  <div className="animate-in fade-in zoom-in-95 duration-500">
-                   <div className={`relative ${darkMode ? 'bg-zinc-950 border-white/10 shadow-[inset_0_4px_20px_rgba(0,0,0,0.8)]' : 'bg-white/40 border-white/20 shadow-sm'} backdrop-blur-3xl rounded-[3rem] border h-[240px] overflow-visible group flex-shrink-0 transition-all duration-700`}>
+                   <div className="px-2 sm:px-4 lg:px-8">
+                     <div className={`relative ${darkMode ? 'bg-gradient-to-br from-black/80 via-zinc-950 to-zinc-900 border-white/20 shadow-[0_35px_80px_-35px_rgba(0,0,0,0.9)]' : 'bg-white/90 border-white/70 shadow-[0_30px_80px_-35px_rgba(16,185,129,0.25)]'} backdrop-blur-3xl rounded-[1.25rem] border-[1px] h-[240px] overflow-visible group flex-shrink-0 transition-all duration-700`}>
                       <div 
                         ref={zoomToolRef}
                         className={`absolute top-3 right-3 z-30 flex items-center ${darkMode ? 'bg-zinc-900 border-white/5 backdrop-blur-3xl shadow-black' : 'bg-white/60 border-white/30 backdrop-blur-xl shadow-xl'} rounded-2xl border transition-all duration-500 overflow-hidden ${isZoomToolExpanded ? 'p-1.5 gap-2' : 'p-0 w-11 h-11 shadow-md transform hover:scale-110 hover:border-emerald-500/50 hover:shadow-black'}`}
@@ -248,9 +274,9 @@ const StatsBoard: React.FC<StatsBoardProps> = ({
                           </button>
                         ) : (
                           <>
-                            <button onClick={zoomOut} title="Zoom out" className={`p-2 rounded-xl transition-all active:scale-95 ${darkMode ? 'bg-zinc-800 text-zinc-500 hover:bg-emerald-500 hover:text-white hover:shadow-black' : 'text-emerald-600 hover:bg-white/40'} ${timelineZoom <= MIN_ZOOM ? 'opacity-20 cursor-not-allowed' : ''}`} disabled={timelineZoom <= MIN_ZOOM}><ZoomOut size={16} /></button>
-                            <div className={`text-[12px] font-mono font-black ${darkMode ? 'text-zinc-500' : 'text-emerald-950'} px-1 select-none pointer-events-none`}>{Math.round(timelineZoom * 100)}%</div>
-                            <button onClick={zoomIn} title="Zoom in" className={`p-2 rounded-xl transition-all active:scale-95 ${darkMode ? 'bg-zinc-800 text-zinc-500 hover:bg-emerald-500 hover:text-white hover:shadow-black' : 'text-emerald-600 hover:bg-white/40'} ${timelineZoom >= MAX_ZOOM ? 'opacity-20 cursor-not-allowed' : ''}`} disabled={timelineZoom >= MAX_ZOOM}><ZoomIn size={16} /></button>
+                            <button onClick={zoomOut} title="Zoom out" className={`p-2 rounded-xl transition-all active:scale-95 ${darkMode ? 'bg-zinc-800 text-emerald-50 hover:bg-emerald-500 hover:text-white hover:shadow-black' : 'text-emerald-800 hover:bg-white/50'} ${timelineZoom <= MIN_ZOOM ? 'opacity-20 cursor-not-allowed' : ''}`} disabled={timelineZoom <= MIN_ZOOM}><ZoomOut size={16} /></button>
+                            <div className={`text-[12px] font-mono font-black ${darkMode ? 'text-emerald-50' : 'text-emerald-950'} px-1 select-none pointer-events-none`}>{Math.round(timelineZoom * 100)}%</div>
+                            <button onClick={zoomIn} title="Zoom in" className={`p-2 rounded-xl transition-all active:scale-95 ${darkMode ? 'bg-zinc-800 text-emerald-50 hover:bg-emerald-500 hover:text-white hover:shadow-black' : 'text-emerald-800 hover:bg-white/50'} ${timelineZoom >= MAX_ZOOM ? 'opacity-20 cursor-not-allowed' : ''}`} disabled={timelineZoom >= MAX_ZOOM}><ZoomIn size={16} /></button>
                           </>
                         )}
                       </div>
@@ -277,7 +303,7 @@ const StatsBoard: React.FC<StatsBoardProps> = ({
                             const hourStr = hourDate.getHours().toString().padStart(2, '0');
                             return (
                               <div key={i} className={`absolute top-0 bottom-0 border-l ${darkMode ? 'border-white/5' : 'border-emerald-100/30'}`} style={{ left: `${i * 60 * 1.5 * timelineZoom + 40}px` }}>
-                                <span className={`absolute bottom-4 -left-4 text-[10px] font-black ${darkMode ? 'text-emerald-500/30' : 'text-emerald-300'} tracking-tighter select-none`}>
+                                <span className={`absolute bottom-4 -left-4 text-[10px] font-black ${darkMode ? 'text-white/80 drop-shadow-[0_0_6px_rgba(0,0,0,0.9)]' : 'text-emerald-300'} tracking-tighter select-none`}>
                                   {hourStr}
                                 </span>
                               </div>
@@ -298,8 +324,9 @@ const StatsBoard: React.FC<StatsBoardProps> = ({
                             ))}
                           </div>
                         </div>
-                      </div>
-                   </div>
+                       </div>
+                     </div>
+                     </div>
 
                    <div className="space-y-6 pt-2">
                      <div className={`flex items-center justify-between border-b ${darkMode ? 'border-white/5' : 'border-white/10'} pb-5`}>
@@ -368,7 +395,7 @@ const StatsBoard: React.FC<StatsBoardProps> = ({
 
                                 {/* Bottom Info Row */}
                                 <div className={`flex items-center justify-between pt-1 border-t ${darkMode ? 'border-white/5' : 'border-emerald-50/50'}`}>
-                                  <div className={`text-[10px] font-bold ${darkMode ? 'text-emerald-400/40' : 'text-emerald-400'} tracking-tighter tabular-nums opacity-60`}>
+                                   <div className={`text-[11px] font-bold ${darkMode ? 'text-emerald-50/90' : 'text-emerald-800'} tracking-tighter tabular-nums`}>
                                     {formatClock(log.startTime)} — {log.endTime ? formatClock(log.endTime) : 'NOW'}
                                   </div>
 
@@ -406,11 +433,15 @@ const StatsBoard: React.FC<StatsBoardProps> = ({
                        ))}
 
                        {selectedDayLogs.length === 0 && (
-                         <div className={`py-12 flex flex-col items-center justify-center gap-4 ${darkMode ? 'text-emerald-500/20' : 'text-emerald-200'} animate-in fade-in slide-in-from-bottom-8`}>
-                           <div className={`p-6 rounded-[2rem] border-2 border-dashed ${darkMode ? 'border-white/5 bg-black/20' : 'border-emerald-50/50 bg-emerald-50/20'}`}>
-                             <History size={32} className="opacity-40" />
+                         <div className={`py-16 flex flex-col items-center justify-center gap-6 relative overflow-hidden rounded-[2.5rem] border-2 border-dashed ${darkMode ? 'border-white/5 bg-black/20' : 'border-emerald-50/50 bg-emerald-50/10'} animate-in fade-in slide-in-from-bottom-8`}>
+                           <img src={DEFAULT_FALLBACK_IMAGE} className="absolute inset-0 w-full h-full object-cover opacity-[0.03] pointer-events-none" />
+                           <div className={`p-8 rounded-[2rem] relative z-10 ${darkMode ? 'bg-zinc-800/50 border-white/5 shadow-2xl' : 'bg-white border-emerald-50 shadow-sm'} border flex items-center justify-center`}>
+                             <History size={40} className={`${darkMode ? 'text-emerald-500/40' : 'text-emerald-200'} animate-pulse`} />
                            </div>
-                           <p className={`text-[10px] font-bold tracking-tight ${darkMode ? 'text-emerald-500/40' : 'text-emerald-300'}`}>No activity recorded for this day</p>
+                           <div className="text-center relative z-10">
+                             <p className={`text-xs font-black tracking-widest uppercase mb-1 ${darkMode ? 'text-emerald-500/60' : 'text-emerald-400'}`}>Fresh Start</p>
+                             <p className={`text-[10px] font-bold tracking-tight ${darkMode ? 'text-zinc-500' : 'text-emerald-300'} opacity-80 uppercase tracking-[0.2em]`}>No sessions recorded yet</p>
+                           </div>
                          </div>
                        )}
                      </div>
@@ -433,9 +464,7 @@ const StatsBoard: React.FC<StatsBoardProps> = ({
                            </div>
                          </div>
                          <div className={`px-5 py-0.5 text-[11px] font-bold ${darkMode ? 'text-emerald-400/60' : 'text-emerald-500'} tracking-tight`}>{selectedDayLogs.length} sessions Today</div>
-                         <div className={`px-5 py-1 text-[11px] font-bold ${darkMode ? 'text-emerald-400' : 'text-emerald-800'} tracking-tight flex items-center gap-2 mb-1 mt-2`}>
-                            <div className={`w-1 h-3 ${darkMode ? 'bg-emerald-500' : 'bg-emerald-500'} rounded-full`}/> Categories
-                         </div>
+                         {/* Removed redundant small 'Categories' label per user request */}
                       </div>
                       
                       <div className="lg:col-span-9 grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-2 pb-3">
@@ -492,7 +521,7 @@ const StatsBoard: React.FC<StatsBoardProps> = ({
                                 itemStyle={{ color: darkMode ? '#ffffff' : '#000000', fontWeight: '900', fontSize: '12px', textTransform: 'uppercase' }}
                                 labelStyle={{ color: darkMode ? '#34d399' : '#059669', marginBottom: '4px', fontWeight: '900', fontSize: '10px', letterSpacing: '0.05em' }}
                               />
-                              <Legend layout="horizontal" verticalAlign="bottom" wrapperStyle={{fontSize: '11px', fontWeight: 'bold', paddingTop: '15px'}} />
+                              <Legend layout="horizontal" verticalAlign="bottom" wrapperStyle={{fontSize: '13px', fontWeight: 900, paddingTop: '18px', color: darkMode ? '#f8fafc' : '#065f46'}} />
                             </PieChart>
                           </ResponsiveContainer>
                         ) : <div className={`h-full flex items-center justify-center ${darkMode ? 'text-emerald-500/20' : 'text-emerald-200'} font-bold tracking-tight`}>No Activity</div>}
@@ -502,8 +531,8 @@ const StatsBoard: React.FC<StatsBoardProps> = ({
                         <ResponsiveContainer width="100%" height="100%">
                           <ReBarChart data={statsData.filter(d => d.value > 0)}>
                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={darkMode ? "#ffffff05" : "#ffffff20"} />
-                            <XAxis dataKey="name" fontSize={10} fontWeight="black" axisLine={false} tickLine={false} tick={{fill: darkMode ? '#ffffff80' : '#94a3b8'}} />
-                            <YAxis fontSize={10} fontWeight="black" axisLine={false} tickLine={false} tick={{fill: darkMode ? '#ffffff80' : '#94a3b8'}} />
+                            <XAxis dataKey="name" fontSize={12} fontWeight="black" axisLine={false} tickLine={false} tick={{fill: darkMode ? '#f8fafc' : '#0f172a', fontSize: 12, fontWeight: 900}} />
+                            <YAxis fontSize={12} fontWeight="black" axisLine={false} tickLine={false} tick={{fill: darkMode ? '#f8fafc' : '#0f172a', fontSize: 12, fontWeight: 900}} />
                             <RechartsTooltip 
                               cursor={{fill: darkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)', radius: 10}} 
                               contentStyle={{
@@ -528,13 +557,13 @@ const StatsBoard: React.FC<StatsBoardProps> = ({
 
           {statsView === 'month' && (
             <div className={`pb-10 space-y-6 animate-in fade-in slide-in-from-top-4 duration-500 w-full ${darkMode ? 'text-emerald-100' : 'text-emerald-900'}`}>
-               <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
-                  {/* 统计网格天数卡片 - 占据左侧 8 列 */}
-                  <div className="xl:col-span-8">
+               <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
+                  {/* 统计网格天数卡片 - 占据左侧 */}
+                  <div className="md:col-span-8 w-full min-w-0">
                     <div className={`${darkMode ? 'bg-black/20 border-white/5 ring-white/5 shadow-inner' : 'bg-white border-emerald-50 ring-emerald-50/50 shadow-sm'} rounded-[2rem] p-3 border overflow-hidden ring-1`}>
-                      <div className="grid grid-cols-7 gap-1">
+                      <div className="grid grid-cols-7 gap-1 sm:gap-1.5 w-full min-w-0">
                         {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d => (
-                          <div key={d} className={`text-center text-[10px] font-black uppercase tracking-widest py-2 ${darkMode ? 'text-zinc-700' : 'text-emerald-500/60'}`}>{d}</div>
+                          <div key={d} className={`text-center text-[10px] font-black uppercase tracking-widest py-2 ${darkMode ? 'text-emerald-50/80' : 'text-emerald-700'}`}>{d}</div>
                         ))}
                         {calendarGridData.map((item, idx) => {
                           if (item.empty) return <div key={idx} className={`aspect-square opacity-20 ${darkMode ? 'bg-zinc-900/40' : 'bg-emerald-50/20'} rounded-xl`} />;
@@ -542,7 +571,19 @@ const StatsBoard: React.FC<StatsBoardProps> = ({
                           const isSelected = selectedStatsDate === item.dateStr;
                           const isToday = formatDate(Date.now()) === item.dateStr;
                           const hasLogs = item.duration > 0;
-                          const firstImage = item.images?.[0];
+                          const rawImages = (item.images ?? []).filter(Boolean);
+                          const heroImage = rawImages[0];
+                          const shouldUseFallbackImage = hasLogs && !heroImage;
+                          const displayImage = heroImage || MONTH_FALLBACK_IMAGE;
+                          const imageClass = `w-full h-full object-cover transition-all duration-700 ease-out group-hover:scale-110 ${hasLogs ? 'opacity-80 blur-[1.4px]' : 'opacity-[0.1] contrast-[0.8] grayscale-[0.5]'} group-hover:opacity-100 group-hover:blur-0 group-hover:grayscale-0`;
+                          const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
+                            if (e.currentTarget.dataset.fallback === 'true') {
+                              e.currentTarget.style.display = 'none';
+                              return;
+                            }
+                            e.currentTarget.dataset.fallback = 'true';
+                            e.currentTarget.src = cutePlaceholderImage;
+                          };
 
                           return (
                             <div 
@@ -551,39 +592,43 @@ const StatsBoard: React.FC<StatsBoardProps> = ({
                                 setSelectedStatsDate(item.dateStr || '');
                                 setStatsView('day');
                               }}
-                              className={`aspect-square rounded-[1.2rem] p-1.5 flex flex-col justify-between border transition-all cursor-pointer group relative overflow-hidden active:scale-95
-                                ${hasLogs ? (darkMode ? 'bg-zinc-900 border-white/5 shadow-black hover:border-emerald-500/30' : 'bg-white border-emerald-50 shadow-sm hover:border-emerald-200') : (darkMode ? 'bg-black/20 border-white/5 hover:bg-zinc-800' : 'bg-emerald-50/20 border-transparent')}
+                              className={`aspect-[5/6] sm:aspect-square rounded-[1rem] p-1 flex flex-col justify-between border transition-all duration-200 cursor-pointer group relative overflow-hidden active:scale-95 hover:-translate-y-0.5 hover:shadow-[0_20px_45px_-25px_rgba(16,185,129,0.9)]
+                                ${hasLogs ? (darkMode ? 'bg-zinc-900 border-white/5 shadow-black hover:border-emerald-500/30 hover:bg-zinc-900/80' : 'bg-white border-emerald-50 shadow-sm hover:border-emerald-200 hover:bg-emerald-50/40') : (darkMode ? 'bg-black/20 border-white/5 hover:bg-zinc-800/80' : 'bg-emerald-50/40 border-emerald-100/40 hover:bg-white')}
                                 ${isToday ? (darkMode ? 'ring-2 ring-emerald-500 ring-offset-2 ring-offset-zinc-950 shadow-emerald-500/20' : 'ring-2 ring-emerald-400 ring-offset-1 shadow-lg shadow-emerald-100') : ''}
+                                ${isSelected ? (darkMode ? 'ring-2 ring-white/40' : 'ring-2 ring-emerald-500/50') : ''}
                               `}
                             >
-                              <div className="absolute inset-0 z-0">
-                                   {firstImage ? (
-                                     <img src={firstImage} className="w-full h-full object-cover opacity-[0.2] transition-opacity" />
-                                   ) : hasLogs ? (
-                                     <div className={`w-full h-full ${darkMode ? 'bg-gradient-to-br from-white/5 to-transparent' : 'bg-gradient-to-br from-emerald-50 to-white'} opacity-40 flex items-center justify-center`}>
-                                        <History size={12} className={darkMode ? 'text-zinc-800' : 'text-emerald-200'} />
-                                     </div>
-                                   ) : null}
+                              <div className="absolute inset-0 z-0 rounded-[1rem] overflow-hidden">
+                                   <img 
+                                     src={displayImage} 
+                                     loading="lazy" 
+                                     data-fallback={(!heroImage && hasLogs) ? 'true' : undefined}
+                                     className={imageClass}
+                                     onError={handleImageError}
+                                   />
+                                   <div className={`absolute inset-0 ${darkMode ? 'bg-black/30' : 'bg-white/65 mix-blend-screen'} transition-opacity duration-300 ${hasLogs ? 'group-hover:opacity-40' : 'group-hover:opacity-20'}`} />
+                                   <div className={`absolute inset-0 pointer-events-none ${darkMode ? 'bg-gradient-to-b from-white/10 via-transparent to-black/30' : 'bg-gradient-to-b from-white via-emerald-50/40 to-white/10'} opacity-50 transition-opacity duration-300 group-hover:opacity-30`} />
+                                   {hasLogs && (
+                                     <div className={`absolute inset-0 pointer-events-none ${darkMode ? 'bg-gradient-to-b from-black/5 via-transparent to-black/25' : 'bg-gradient-to-b from-white/10 via-transparent to-white/40'} opacity-30 transition-opacity group-hover:opacity-60`} />
+                                   )}
                               </div>
 
                               <div className="flex justify-between items-start relative z-10">
-                                <span className={`text-[12px] font-black px-1.5 py-0.5 rounded-md ${isToday ? (darkMode ? 'text-emerald-400' : 'text-emerald-600') : (darkMode ? 'text-zinc-600' : 'text-emerald-900/40')}`}>
+                                <span className={`text-[15px] font-black px-2 py-0.5 rounded-xl shadow-sm border tracking-tight drop-shadow-sm ${isToday ? (darkMode ? 'text-emerald-50 bg-emerald-600/60 border-emerald-300/60' : 'text-emerald-800 bg-white border-emerald-200') : (darkMode ? 'text-emerald-100 bg-black/60 border-white/15' : 'text-emerald-700 bg-white border-emerald-100/70')}`}>
                                   {item.day}
                                 </span>
                                 {hasLogs && (
-                                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 drop-shadow" />
                                 )}
                               </div>
 
                               <div className="flex-1 flex flex-col justify-center items-center relative z-10 pointer-events-none px-0.5">
                                 {hasLogs ? (
-                                  <div className={`text-[8px] font-black uppercase tracking-tighter text-center leading-[1.1] ${darkMode ? 'text-emerald-400/60' : 'text-emerald-600/60'}`}>
-                                     {formatTime(item.duration)}
+                                  <div className={`text-[11px] font-black uppercase tracking-tighter text-center leading-[1.1] px-1.5 py-0.5 rounded-md ${darkMode ? 'text-emerald-50 bg-black/35' : 'text-emerald-700 bg-white/80'}`}>
+                                    {item.duration > 60 ? `${Math.floor(item.duration/60)}h ${item.duration % 60}m` : `${item.duration}m`}
                                   </div>
                                 ) : (
-                                  <div className={`text-[8px] font-black uppercase tracking-tighter text-center leading-[1.1] opacity-20 ${darkMode ? 'text-zinc-700' : 'text-emerald-300'}`}>
-                                     No logs
-                                  </div>
+                                  <div className="h-[18px]" />
                                 )}
                               </div>
                             </div>
@@ -593,25 +638,25 @@ const StatsBoard: React.FC<StatsBoardProps> = ({
                     </div>
                   </div>
 
-                  {/* 分类统计卡片 - 占据右侧 4 列 */}
-                  <div className="xl:col-span-4 space-y-4 animate-in slide-in-from-right duration-700">
-                    <div className="grid grid-cols-2 gap-3">
-                       <div className={`${darkMode ? 'bg-zinc-800 border-white/5 shadow-black shadow-lg' : 'bg-emerald-600 shadow-emerald-100/50'} text-white px-4 py-3 rounded-2xl relative overflow-hidden group min-h-[70px] flex flex-col justify-center border border-transparent`}>
+                  {/* 分类统计卡片 - 占据右侧 */}
+                  <div className="md:col-span-4 space-y-4 animate-in slide-in-from-right duration-700">
+                    <div className="grid grid-cols-2 gap-2">
+                       <div className={`${darkMode ? 'bg-zinc-800 border-white/5 shadow-black shadow-lg' : 'bg-emerald-600 shadow-emerald-100/50'} text-white px-3 py-3 rounded-2xl relative overflow-hidden group min-h-[64px] flex flex-col justify-center border border-transparent`}>
                          <span className={`text-[9px] font-bold tracking-tight opacity-80 relative z-10 ${darkMode ? 'text-emerald-400' : 'text-emerald-50'}`}>Focus</span>
-                         <div className="text-xl font-bold tracking-tighter relative z-10 font-mono">
+                         <div className="text-lg font-bold tracking-tighter relative z-10 font-mono">
                            {formatTime(statsData.filter(item => item.name !== 'Rest').reduce((acc, item) => acc + item.value * 60, 0))}
                          </div>
                        </div>
-                       <div className={`${darkMode ? 'bg-zinc-900 border-white/10 shadow-black shadow-lg' : 'bg-white border-emerald-50 shadow-sm'} px-4 py-3 rounded-2xl relative overflow-hidden border group min-h-[70px] flex flex-col justify-center`}>
+                       <div className={`${darkMode ? 'bg-zinc-900 border-white/10 shadow-black shadow-lg' : 'bg-white border-emerald-50 shadow-sm'} px-3 py-3 rounded-2xl relative overflow-hidden border group min-h-[64px] flex flex-col justify-center`}>
                          <span className={`text-[9px] font-bold tracking-tight ${darkMode ? 'text-zinc-500' : 'text-emerald-600'} relative z-10`}>Rest</span>
-                         <div className={`text-xl font-bold tracking-tighter relative z-10 font-mono ${darkMode ? 'text-white' : 'text-emerald-900'}`}>
+                         <div className={`text-lg font-bold tracking-tighter relative z-10 font-mono ${darkMode ? 'text-white' : 'text-emerald-900'}`}>
                            {formatTime(restTimeTotal)}
                          </div>
                        </div>
                     </div>
 
                     <div className="grid grid-cols-1 gap-2">
-                       <div className={`px-1 text-[11px] font-bold ${darkMode ? 'text-zinc-500' : 'text-emerald-800'} tracking-tight flex items-center gap-2 mb-1`}>
+                         <div className={`px-1 text-[11px] font-bold ${darkMode ? 'text-emerald-50' : 'text-emerald-900'} tracking-tight flex items-center gap-2 mb-1`}>
                           <div className={`w-1.5 h-4 ${darkMode ? 'bg-zinc-800' : 'bg-emerald-600'} rounded-full`}/> Category Breakdown
                        </div>
                        {statsData.filter(item => item.name !== 'Rest').map((item, idx) => (
@@ -621,7 +666,7 @@ const StatsBoard: React.FC<StatsBoardProps> = ({
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex justify-between items-end mb-1">
-                              <span className={`text-[11px] font-bold ${darkMode ? 'text-zinc-300 group-hover:text-white' : 'text-emerald-700'} tracking-tight truncate`}>{item.name}</span>
+                              <span className={`text-[11px] font-bold ${darkMode ? 'text-emerald-50 group-hover:text-white' : 'text-emerald-900'} tracking-tight truncate`}>{item.name}</span>
                               <span className={`text-xs font-bold ${darkMode ? 'text-emerald-400 group-hover:text-emerald-200' : 'text-emerald-950'} font-mono tracking-tight`}>{item.value}m</span>
                             </div>
                             <div className={`w-full h-1.5 ${darkMode ? 'bg-black/50 overflow-hidden' : 'bg-emerald-50'} rounded-full`}>
@@ -630,122 +675,101 @@ const StatsBoard: React.FC<StatsBoardProps> = ({
                           </div>
                         </div>
                       ))}
-                      <div className={`px-5 py-2 text-[10px] font-bold ${darkMode ? 'text-zinc-600' : 'text-emerald-500'} tracking-tight text-center`}>{relevantLogs.length} sessions in this period</div>
+                      <div className={`px-5 py-2 text-[10px] font-bold ${darkMode ? 'text-emerald-50/90' : 'text-emerald-700'} tracking-tight text-center`}>{relevantLogs.length} sessions in this period</div>
                     </div>
                   </div>
                </div>
             </div>
           )}
 
-          {statsView === 'week' && (
+          {statsView === 'week' && viewMode === 'timeline' && (
             <div className={`pb-10 space-y-6 animate-in fade-in slide-in-from-top-4 duration-500 w-full ${darkMode ? 'text-zinc-100' : 'text-emerald-900'}`}>
-               <div className={`${darkMode ? 'bg-zinc-950/40 border-white/5 ring-white/5 shadow-inner' : 'bg-white border-emerald-50 ring-emerald-50/50 shadow-sm'} rounded-[2rem] p-3 border overflow-hidden ring-1`}>
-                 <div className="grid grid-cols-7 gap-2">
-                   {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d => (
-                       <div key={d} className={`text-center text-[10px] font-black uppercase tracking-widest py-2 ${darkMode ? 'text-zinc-700' : 'text-emerald-500/60'}`}>{d}</div>
-                   ))}
-                   {calendarGridData.map((item, idx) => {
-                     if (item.empty) return <div key={idx} className={`aspect-[1.8/1] opacity-20 ${darkMode ? 'bg-zinc-800' : 'bg-emerald-900'} rounded-xl`} />;
-                     
-                     const isSelected = selectedStatsDate === item.dateStr;
-                     const isToday = formatDate(Date.now()) === item.dateStr;
-                     const hasLogs = item.duration > 0;
-                     const firstImage = item.images?.[0];
+               <WeeklyTimelineView 
+                 logs={relevantLogs}
+                 selectedDate={selectedStatsDate}
+                 getCategoryColor={getCategoryColor}
+                 darkMode={darkMode}
+                 onViewLog={handleViewLog}
+                 onSelectDate={setSelectedStatsDate}
+               />
 
-                     return (
-                       <div 
-                         key={idx} 
-                         onClick={() => {
-                           setSelectedStatsDate(item.dateStr || '');
-                           setStatsView('day');
-                         }}
-                         className={`aspect-[1.8/1] rounded-xl p-1.5 sm:p-2 flex flex-col justify-between border transition-all cursor-pointer group relative overflow-hidden active:scale-95
-                             ${hasLogs ? (darkMode ? 'bg-zinc-900 border-white/5 shadow-black hover:border-emerald-500/30' : 'bg-white border-emerald-50 shadow-sm hover:border-emerald-200') : (darkMode ? 'bg-black/20 border-white/5 hover:bg-zinc-800' : 'bg-emerald-50/20 border-transparent')}
-                           ${isToday ? (darkMode ? 'ring-2 ring-emerald-500 ring-offset-2 ring-offset-zinc-950 shadow-emerald-500/20' : 'ring-1 ring-emerald-400 ring-offset-1 shadow-lg shadow-emerald-100') : ''}
-                         `}
-                       >
-                         <div className="absolute inset-0 z-0">
-                            {firstImage ? (
-                              <img src={firstImage} className="w-full h-full object-cover opacity-[0.1] group-hover:opacity-30 transition-opacity" />
-                            ) : hasLogs ? (
-                              <div className={`w-full h-full ${darkMode ? 'bg-gradient-to-br from-white/5 to-transparent' : 'bg-gradient-to-br from-emerald-50 to-white'} opacity-40 flex items-center justify-center`}>
-                                 <History size={16} className={darkMode ? 'text-zinc-800' : 'text-emerald-200'} />
-                              </div>
-                            ) : null}
-                         </div>
-
-                         <div className="flex justify-between items-start relative z-10">
-                           <span className={`text-[10px] sm:text-[12px] font-black px-1 sm:px-1.5 rounded-md ${isToday ? (darkMode ? 'text-emerald-400' : 'text-emerald-600') : (darkMode ? 'text-zinc-600' : 'text-emerald-900/40')}`}>
-                             {item.day}
-                           </span>
-                           {hasLogs && (
-                             <div className="w-1.5 sm:w-2 h-1.5 sm:h-2 rounded-full bg-emerald-500" />
-                           )}
-                         </div>
-
-                         <div className="flex-1 flex flex-col justify-center items-center relative z-10 pointer-events-none">
-                            {hasLogs ? (
-                              <div className="flex flex-col items-center">
-                                 <span className={`text-[10px] sm:text-[13px] font-black tracking-tighter leading-none ${darkMode ? 'text-emerald-400' : 'text-emerald-700'}`}>
-                                   {item.duration > 60 ? `${Math.floor(item.duration/60)}h ${item.duration%60}m` : `${item.duration}m`}
-                                 </span>
-                                 <div className={`w-8 sm:w-12 h-1 mt-1 sm:mt-1.5 rounded-full ${darkMode ? 'bg-black/40' : 'bg-emerald-50'}`}>
-                                    <div className="h-full rounded-full transition-all duration-700 bg-emerald-500" style={{width: `${Math.min((item.duration/480)*100, 100)}%`}} />
-                                 </div>
-                              </div>
-                            ) : (
-                              <span className={`text-[10px] font-black opacity-20 uppercase tracking-tighter ${darkMode ? 'text-zinc-700' : 'text-emerald-200'}`}>No logs</span>
-                            )}
-                         </div>
-
-                         <div className="flex -space-x-1 relative z-10 pointer-events-none justify-center">
-                           {item.images && item.images.slice(0, 4).map((img, imgIdx) => (
-                             <div key={imgIdx} className={`w-3 sm:w-4 h-3 sm:h-4 rounded-md overflow-hidden border ${darkMode ? 'border-white/20' : 'border-white'} shadow-sm ring-1 ring-emerald-900/5 transition-all`}>
-                               <img src={img} className="w-full h-full object-cover" />
-                             </div>
-                           ))}
-                         </div>
-                       </div>
-                     );
-                   })}
-                 </div>
-               </div>
-
-               <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-                  <div className="lg:col-span-3 space-y-3">
-                     <div className={`${darkMode ? 'bg-zinc-800 border-white/5 shadow-black shadow-lg' : 'bg-emerald-600 shadow-emerald-100/50'} text-white px-5 py-4 rounded-[1.5rem] relative overflow-hidden group min-h-[80px] flex flex-col justify-center border border-transparent`}>
-                       <span className={`text-[10px] font-bold tracking-tight opacity-80 relative z-10 ${darkMode ? 'text-emerald-400' : 'text-emerald-50'}`}>Focus</span>
-                       <div className="text-2xl font-bold tracking-tighter relative z-10 font-mono">
-                         {formatTime(statsData.filter(item => item.name !== 'Rest').reduce((acc, item) => acc + item.value * 60, 0))}
-                       </div>
-                     </div>
-                     <div className={`${darkMode ? 'bg-zinc-900 border-white/10 shadow-black shadow-lg' : 'bg-white border-emerald-50 shadow-sm'} px-5 py-4 rounded-[1.5rem] relative overflow-hidden border group min-h-[80px] flex flex-col justify-center`}>
-                       <span className={`text-[10px] font-bold tracking-tight ${darkMode ? 'text-zinc-500' : 'text-emerald-300'} relative z-10`}>Rest</span>
-                       <div className={`text-2xl font-bold tracking-tighter relative z-10 font-mono ${darkMode ? 'text-white' : 'text-emerald-900'}`}>
-                         {formatTime(restTimeTotal)}
-                       </div>
-                     </div>
-                  </div>
-                  
-                  <div className="lg:col-span-9 grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-2 pb-1">
-                    {statsData.filter(item => item.name !== 'Rest').map((item, idx) => (
-                      <div key={item.name} className={`${darkMode ? 'bg-zinc-900 border-white/5 transition-all hover:-translate-y-1 hover:bg-zinc-800' : 'bg-white border-emerald-50 shadow-sm hover:shadow-md hover:-translate-y-0.5'} px-3 py-2 rounded-xl border flex flex-col justify-center`} style={{ animationDelay: `${idx * 20}ms` }}>
-                        <div className="flex items-center gap-2 mb-1.5">
-                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs shadow-sm flex-shrink-0`} style={{ backgroundColor: darkMode ? `${getCategoryColor(item.name as Category)}20` : `${getCategoryColor(item.name as Category)}15`, color: getCategoryColor(item.name as Category) }}>
-                            {React.createElement(getCategoryIcon(item.name as Category), { size: 14 })}
-                          </div>
-                          <div className="flex flex-col min-w-0">
-                            <span className={`text-[11px] font-bold ${darkMode ? 'text-zinc-600' : 'text-emerald-900/40'} tracking-tight leading-none mb-1 truncate`}>{item.name}</span>
-                            <div className={`text-sm font-bold ${darkMode ? 'text-zinc-100' : 'text-emerald-950'} truncate leading-none tracking-tight`}>{item.value}m</div>
-                          </div>
-                        </div>
-                        <div className={`w-full h-1.5 ${darkMode ? 'bg-black/50 overflow-hidden' : 'bg-emerald-50/70'} rounded-full`}>
-                           <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${(item.value / Math.max(1, statsData.reduce((a,b)=>a+b.value,0)))*100}%`, backgroundColor: getCategoryColor(item.name as Category) }} />
-                        </div>
+               {/* Selected Day Logs Detail List - Sync logic with daily view's Life Timeline */}
+               <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                  <div className={`flex items-center justify-between border-b ${darkMode ? 'border-white/5' : 'border-emerald-100/10'} pb-3`}>
+                    <div className="flex items-center gap-3">
+                      <div className={`p-2 ${darkMode ? 'bg-zinc-800/80 shadow-black' : 'bg-emerald-600'} text-white rounded-xl shadow-lg shadow-emerald-500/10`}>
+                        <History size={16} className={darkMode ? 'text-emerald-500' : 'text-white'} />
                       </div>
-                    ))}
+                      <div className="flex flex-col">
+                        <h4 className={`text-sm font-black ${darkMode ? 'text-white' : 'text-emerald-950'} tracking-tight leading-none`}>
+                          Daily Life Log
+                        </h4>
+                        <span className={`text-[9px] font-black ${darkMode ? 'text-emerald-500/50' : 'text-emerald-500/60'} uppercase tracking-[0.1em] mt-1`}>
+                          {formatDisplayDateString(selectedStatsDate)}
+                        </span>
+                      </div>
+                    </div>
+                    {selectedDayLogs.length > 0 && (
+                      <button 
+                        onClick={() => setStatsView('day')}
+                        className={`px-3 py-1.5 rounded-xl text-[9px] font-black ${darkMode ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 hover:bg-emerald-500 hover:text-white' : 'bg-emerald-50 text-emerald-600 border-emerald-100 hover:bg-emerald-600 hover:text-white'} border uppercase tracking-widest transition-all active:scale-95 flex items-center gap-2`}
+                      >
+                        View Full Day <ExternalLink size={10} strokeWidth={3}/>
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="space-y-3">
+                    {selectedDayLogs.length > 0 ? (
+                      selectedDayLogs.map((log, idx) => (
+                        <div
+                          key={log.id}
+                          onClick={() => handleViewLog(log)}
+                          className={`${darkMode ? 'bg-zinc-900/40 border-white/5 hover:bg-zinc-800/60 hover:border-emerald-500/30' : 'bg-white border-emerald-50 shadow-sm hover:shadow-md hover:border-emerald-200/50'} p-3 rounded-2xl border transition-all cursor-pointer group flex items-center gap-4 relative overflow-hidden`}
+                          style={{ animationDelay: `${idx * 50}ms` }}
+                        >
+                          <div className="absolute left-0 top-0 bottom-0 w-1 group-hover:w-1.5 transition-all opacity-40 group-hover:opacity-100" style={{ backgroundColor: getCategoryColor(log.category) }} />
+                          
+                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-110`} style={{ backgroundColor: darkMode ? `${getCategoryColor(log.category)}15` : `${getCategoryColor(log.category)}10`, color: getCategoryColor(log.category) }}>
+                            {React.createElement(getCategoryIcon(log.category), { size: 18 })}
+                          </div>
+
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-0.5">
+                              <span className={`text-[8px] font-black ${darkMode ? 'text-emerald-400/50' : 'text-emerald-500/60'} uppercase tracking-widest`}>{log.category}</span>
+                              <div className={`w-1 h-1 rounded-full ${darkMode ? 'bg-white/10' : 'bg-emerald-100'}`} />
+                              <span className={`text-[10px] font-bold ${darkMode ? 'text-zinc-500' : 'text-emerald-900/40'} tabular-nums`}>
+                                {formatClock(log.startTime)} — {log.endTime ? formatClock(log.endTime) : 'NOW'}
+                              </span>
+                            </div>
+                            <h5 className={`text-base font-black ${darkMode ? 'text-emerald-50 group-hover:text-white' : 'text-emerald-950 group-hover:text-emerald-700'} truncate tracking-tight transition-colors`}>{log.description || 'Focus Session'}</h5>
+                          </div>
+
+                          <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                            <div className={`${darkMode ? 'bg-emerald-500/20 text-emerald-300' : 'bg-emerald-50 text-emerald-600'} px-2.5 py-1 rounded-lg text-xs font-black tabular-nums border ${darkMode ? 'border-emerald-500/30' : 'border-emerald-100/50'}`}>
+                              {formatTime(resolvePhaseTotals(log).total)}
+                            </div>
+                            {log.images.length > 0 && (
+                                <div className="flex -space-x-1.5">
+                                    {log.images.slice(0, 2).map((img, i) => (
+                                        <div key={i} className={`w-5 h-5 rounded-md border ${darkMode ? 'border-white/20' : 'border-white'} overflow-hidden shadow-sm`}>
+                                            <img src={img} className="w-full h-full object-cover" />
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className={`py-12 flex flex-col items-center justify-center gap-3 ${darkMode ? 'bg-zinc-900/20' : 'bg-emerald-50/20'} rounded-[2rem] border-2 border-dashed ${darkMode ? 'border-white/5' : 'border-emerald-100/30'}`}>
+                         <History size={24} className={`${darkMode ? 'text-emerald-500/20' : 'text-emerald-200'}`} />
+                         <p className={`text-[10px] font-black uppercase tracking-[0.2em] ${darkMode ? 'text-emerald-500/30' : 'text-emerald-300'}`}>No recorded activities</p>
+                      </div>
+                    )}
                   </div>
                </div>
+
             </div>
           )}
 
@@ -766,7 +790,7 @@ const StatsBoard: React.FC<StatsBoardProps> = ({
                       className={`${darkMode ? 'bg-zinc-900 border-white/5 hover:bg-zinc-800 hover:shadow-2xl shadow-black/80' : 'bg-white border-emerald-50 shadow-sm'} p-3 rounded-[1.5rem] border flex flex-col hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer group ring-1 ${darkMode ? 'ring-white/5' : 'ring-emerald-50/20'}`}
                     >
                       <div className="flex items-center justify-between mb-2 px-1">
-                        <div className={`text-[11px] font-black uppercase tracking-widest ${darkMode ? 'text-zinc-400 group-hover:text-white' : 'text-emerald-950'} truncate pr-2`}>
+                        <div className={`text-[11px] font-black uppercase tracking-widest ${darkMode ? 'text-emerald-50 group-hover:text-white' : 'text-emerald-950'} truncate pr-2`}>
                            {new Date(new Date(selectedStatsDate).getFullYear(), m.month).toLocaleString(undefined, { month: 'short' })}
                         </div>
                         <div className={`text-[9px] font-black tracking-widest uppercase ${darkMode ? 'text-emerald-400 bg-black/40' : 'text-emerald-400 bg-emerald-50'} px-2 py-0.5 rounded-full`}>{m.totalMinutes}m</div>
@@ -775,17 +799,29 @@ const StatsBoard: React.FC<StatsBoardProps> = ({
                         <div className={`w-full h-20 ${darkMode ? 'bg-black/40 border-white/5' : 'bg-gradient-to-br from-emerald-50/50 to-white border-emerald-100/30 shadow-inner'} rounded-xl overflow-hidden border flex items-center justify-center relative group-hover:border-emerald-200/50 transition-colors`}>
                           {m.sampleImage ? (
                             <img src={m.sampleImage} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"/>
-                          ) : m.totalMinutes > 0 ? (
-                            <div className="flex flex-col items-center gap-1.5 opacity-30 group-hover:scale-110 transition-transform">
-                              <div className={`w-8 h-8 rounded-full ${darkMode ? 'bg-emerald-500/20' : 'bg-emerald-100'} flex items-center justify-center`}>
-                                <History size={16} className={darkMode ? 'text-emerald-500' : 'text-emerald-400'} />
-                              </div>
-                              <span className={`text-[8px] font-bold tracking-tight ${darkMode ? 'text-emerald-400' : 'text-emerald-600'}`}>Active</span>
-                            </div>
                           ) : (
-                            <div className="flex flex-col items-center gap-1 opacity-10">
-                              <ImageIcon size={14} className={darkMode ? 'text-emerald-500' : 'text-emerald-300'} />
-                              <span className="text-[8px] font-bold tracking-tight">Empty</span>
+                            <div className="w-full h-full relative overflow-hidden group">
+                               <img 
+                                 src={YEAR_FALLBACK_IMAGE} 
+                                 className={`w-full h-full object-cover transition-all duration-700 group-hover:scale-110 blur-[1.5px] group-hover:blur-0 ${m.totalMinutes > 0 ? 'opacity-30 group-hover:opacity-60' : 'opacity-[0.08] grayscale group-hover:opacity-20'}`}
+                               />
+                               <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 opacity-60 group-hover:opacity-40 transition-opacity">
+                                  {m.totalMinutes > 0 ? (
+                                    <>
+                                      <div className={`w-8 h-8 rounded-full ${darkMode ? 'bg-emerald-500/20' : 'bg-emerald-100'} flex items-center justify-center shadow-lg border border-white/10`}>
+                                        <History size={16} className={darkMode ? 'text-emerald-500' : 'text-emerald-400'} />
+                                      </div>
+                                      <span className={`text-[8px] font-bold tracking-tight ${darkMode ? 'text-emerald-400' : 'text-emerald-600'}`}>Active</span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <div className={`w-7 h-7 rounded-full ${darkMode ? 'bg-zinc-800/50' : 'bg-gray-50'} flex items-center justify-center border border-white/5 opacity-40`}>
+                                        <ImageIcon size={14} className={darkMode ? 'text-zinc-600' : 'text-zinc-300'} />
+                                      </div>
+                                      <span className={`text-[8px] font-bold tracking-tight ${darkMode ? 'text-zinc-600' : 'text-zinc-400'}`}>Quiet</span>
+                                    </>
+                                  )}
+                               </div>
                             </div>
                           )}
                           <div className={`absolute inset-0 ${darkMode ? 'bg-gradient-to-t from-black/40 to-transparent' : 'bg-gradient-to-t from-emerald-900/10 to-transparent'} opacity-0 group-hover:opacity-100 transition-opacity`} />
@@ -862,18 +898,18 @@ const StatsBoard: React.FC<StatsBoardProps> = ({
                            itemStyle={{ color: darkMode ? '#ffffff' : '#000000', fontWeight: '900', fontSize: '12px', textTransform: 'uppercase' }}
                            labelStyle={{ color: darkMode ? '#34d399' : '#059669', marginBottom: '4px', fontWeight: '900', fontSize: '10px', letterSpacing: '0.05em' }}
                          />
-                         <Legend layout="horizontal" verticalAlign="bottom" wrapperStyle={{fontSize: '10px', fontWeight: 'black', paddingTop: '15px', color: darkMode ? '#ffffff' : '#065f46'}} />
+                         <Legend layout="horizontal" verticalAlign="bottom" wrapperStyle={{fontSize: '13px', fontWeight: 900, paddingTop: '18px', color: darkMode ? '#f8fafc' : '#065f46'}} />
                        </PieChart>
                      </ResponsiveContainer>
-                   ) : <div className={`h-full flex items-center justify-center ${darkMode ? 'text-emerald-500/20' : 'text-emerald-200'} font-bold tracking-tight`}>No Activity</div>}
+                        ) : <div className={`h-full flex items-center justify-center ${darkMode ? 'text-emerald-400/70' : 'text-emerald-500'} font-bold tracking-tight`}>No Activity</div>}
                  </div>
                  <div className={`${darkMode ? 'bg-zinc-900 border-white/10 backdrop-blur-xl' : 'bg-white border-emerald-50'} p-6 rounded-[2.5rem] border h-[360px] shadow-sm flex flex-col relative overflow-hidden group ring-1 ${darkMode ? 'ring-white/5' : 'ring-emerald-50/50'}`}>
                    <h3 className={`text-sm font-black mb-4 ${darkMode ? 'text-white' : 'text-emerald-800'} uppercase tracking-widest relative z-10 flex items-center gap-2`}><div className={`w-1.5 h-4 ${darkMode ? 'bg-emerald-500' : 'bg-emerald-600'} rounded-full`}/> Time Spent (Min)</h3>
                    <ResponsiveContainer width="100%" height="100%">
                      <ReBarChart data={yearHistory}>
                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={darkMode ? '#ffffff10' : '#f1f5f9'} />
-                       <XAxis dataKey="name" fontSize={9} fontWeight="black" axisLine={false} tickLine={false} tick={{fill: darkMode ? '#ffffff' : '#94a3b8'}} />
-                       <YAxis fontSize={9} fontWeight="black" axisLine={false} tickLine={false} tick={{fill: darkMode ? '#ffffff' : '#94a3b8'}} />
+                       <XAxis dataKey="name" fontSize={12} fontWeight="black" axisLine={false} tickLine={false} tick={{fill: darkMode ? '#f8fafc' : '#0f172a', fontSize: 12, fontWeight: 900}} />
+                       <YAxis fontSize={12} fontWeight="black" axisLine={false} tickLine={false} tick={{fill: darkMode ? '#f8fafc' : '#0f172a', fontSize: 12, fontWeight: 900}} />
                        <RechartsTooltip 
                          cursor={{fill: darkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)', radius: 10}} 
                          contentStyle={{
@@ -895,54 +931,187 @@ const StatsBoard: React.FC<StatsBoardProps> = ({
           )}
 
           {(statsView === 'month' || statsView === 'week') && viewMode === 'charts' && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-20 animate-in zoom-in-95 duration-500">
-               <div className={`${darkMode ? 'bg-zinc-900 border-white/10 backdrop-blur-xl' : 'bg-white border-emerald-50'} p-5 rounded-[2.5rem] border h-[340px] shadow-sm flex flex-col relative overflow-hidden group`}>
-                 <h3 className={`text-sm font-black mb-4 ${darkMode ? 'text-white' : 'text-emerald-800'} uppercase tracking-widest relative z-10 flex items-center gap-2`}><div className={`w-1.5 h-4 ${darkMode ? 'bg-emerald-500' : 'bg-emerald-600'} rounded-full`}/> Category Breakdown</h3>
-                 {statsData.length > 0 ? (
+            <div className="space-y-6 pb-20 animate-in zoom-in-95 duration-500">
+              {statsView === 'week' && (
+                <>
+                  <div className={`${darkMode ? 'bg-zinc-950/40 border-white/5 ring-white/5 shadow-inner' : 'bg-white border-emerald-50 ring-emerald-50/50 shadow-sm'} rounded-[2rem] p-3 border overflow-hidden ring-1`}>
+                    <div className="grid grid-cols-7 gap-2">
+                      {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d => (
+                          <div key={d} className={`text-center text-[10px] font-black uppercase tracking-widest py-2 ${darkMode ? 'text-emerald-50/80' : 'text-emerald-700'}`}>{d}</div>
+                      ))}
+                      {calendarGridData.map((item, idx) => {
+                        if (item.empty) return <div key={idx} className={`aspect-[1.8/1] opacity-20 ${darkMode ? 'bg-zinc-800' : 'bg-emerald-900'} rounded-xl`} />;
+                        
+                        const isSelected = selectedStatsDate === item.dateStr;
+                        const isToday = formatDate(Date.now()) === item.dateStr;
+                        const hasLogs = item.duration > 0;
+                        const firstImage = item.images?.[0] || WEEK_FALLBACK_IMAGE;
+
+                        return (
+                          <div 
+                            key={idx} 
+                            onClick={() => {
+                              setSelectedStatsDate(item.dateStr || '');
+                              setStatsView('day');
+                            }}
+                            className={`aspect-[1.8/1] rounded-xl p-1.5 sm:p-2 flex flex-col justify-between border transition-all cursor-pointer group relative overflow-hidden active:scale-95
+                                ${isSelected 
+                                  ? (darkMode ? 'bg-emerald-500 border-emerald-400' : 'bg-emerald-600 border-emerald-500')
+                                  : hasLogs 
+                                    ? (darkMode ? 'bg-zinc-800/60 border-white/5 shadow-black hover:border-emerald-500/30' : 'bg-white border-emerald-50 shadow-sm hover:border-emerald-200') 
+                                    : (darkMode ? 'bg-black/10 border-white/5 hover:bg-zinc-800' : 'bg-emerald-50/20 border-transparent')}
+                              ${isToday ? (darkMode ? 'ring-2 ring-emerald-500 ring-offset-2 ring-offset-zinc-950 shadow-emerald-500/20' : 'ring-1 ring-emerald-400 ring-offset-1 shadow-lg shadow-emerald-100') : ''}
+                            `}
+                          >
+                            <div className="absolute inset-0 z-0">
+                               <img 
+                                 src={firstImage} 
+                                 className={`w-full h-full object-cover transition-opacity transition-transform duration-700 group-hover:scale-110 ${hasLogs ? (item.images?.[0] ? 'opacity-[0.3] group-hover:opacity-50' : 'opacity-[0.15] group-hover:opacity-40') : 'opacity-[0.05] grayscale group-hover:opacity-10'}`} 
+                               />
+                               <div className={`absolute inset-0 ${darkMode ? 'bg-black/30' : 'bg-white/40 mix-blend-screen'} transition-opacity duration-300 ${hasLogs ? 'group-hover:opacity-20' : 'group-hover:opacity-10'}`} />
+                            </div>
+
+                            <div className="flex justify-between items-start relative z-10">
+                              <span className={`text-[10px] sm:text-[12px] font-black px-1 sm:px-1.5 rounded-md ${isSelected ? 'text-white' : isToday ? (darkMode ? 'text-emerald-400' : 'text-emerald-600') : (darkMode ? 'text-zinc-600' : 'text-emerald-900/40')}`}>
+                                {item.day}
+                              </span>
+                              {hasLogs && (
+                                <div className={`w-1.5 sm:w-2 h-1.5 sm:h-2 rounded-full ${isSelected ? 'bg-white' : 'bg-emerald-500'}`} />
+                              )}
+                            </div>
+
+                            <div className="flex-1 flex flex-col justify-center items-center relative z-10 pointer-events-none">
+                               {hasLogs ? (
+                                 <div className="flex flex-col items-center">
+                                    <span className={`text-[10px] sm:text-[13px] font-black tracking-tighter leading-none ${isSelected ? 'text-white' : (darkMode ? 'text-emerald-400' : 'text-emerald-700')}`}>
+                                      {item.duration > 60 ? `${Math.floor(item.duration/60)}h ${item.duration%60}m` : `${item.duration}m`}
+                                    </span>
+                                    <div className={`w-8 sm:w-12 h-1 mt-1 sm:mt-1.5 rounded-full ${isSelected ? 'bg-white/30' : (darkMode ? 'bg-black/40' : 'bg-emerald-50')}`}>
+                                       <div className={`h-full rounded-full transition-all duration-700 ${isSelected ? 'bg-white' : 'bg-emerald-500'}`} style={{width: `${Math.min((item.duration/480)*100, 100)}%`}} />
+                                    </div>
+                                 </div>
+                               ) : (
+                                 <span className={`text-[10px] font-black opacity-20 uppercase tracking-tighter ${darkMode ? 'text-zinc-700' : 'text-emerald-200'}`}>0m</span>
+                               )}
+                            </div>
+
+                            <div className="flex -space-x-1 relative z-10 pointer-events-none justify-center">
+                              {item.images && item.images.slice(0, 4).map((img, imgIdx) => (
+                                <div key={imgIdx} className={`w-3 sm:w-4 h-3 sm:h-4 rounded-md overflow-hidden border ${darkMode ? 'border-white/20' : 'border-white'} shadow-sm ring-1 ring-emerald-900/5 transition-all`}>
+                                  <img src={img} className="w-full h-full object-cover" />
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+                    <div className="lg:col-span-3 space-y-2">
+                       <div className={`${darkMode ? 'bg-zinc-800 border-white/5 shadow-black shadow-lg' : 'bg-emerald-600 shadow-emerald-100/50'} text-white px-4 py-3 rounded-[1.25rem] relative overflow-hidden group min-h-[70px] flex flex-col justify-center border border-transparent`}>
+                         <span className={`text-[10px] font-bold tracking-tight opacity-80 relative z-10 ${darkMode ? 'text-emerald-400' : 'text-emerald-50'}`}>Focus</span>
+                         <div className="text-xl font-bold tracking-tighter relative z-10 font-mono">
+                           {formatTime(statsData.filter(item => item.name !== 'Rest').reduce((acc, item) => acc + item.value * 60, 0))}
+                         </div>
+                       </div>
+                       <div className={`${darkMode ? 'bg-zinc-900 border-white/10 shadow-black shadow-lg' : 'bg-white border-emerald-50 shadow-sm'} px-4 py-3 rounded-[1.25rem] relative overflow-hidden border group min-h-[70px] flex flex-col justify-center`}>
+                         <span className={`text-[10px] font-bold tracking-tight ${darkMode ? 'text-emerald-50/90' : 'text-emerald-700'} relative z-10`}>Rest</span>
+                         <div className={`text-xl font-bold tracking-tighter relative z-10 font-mono ${darkMode ? 'text-white' : 'text-emerald-900'}`}>
+                           {formatTime(restTimeTotal)}
+                         </div>
+                       </div>
+                    </div>
+                    
+                    <div className="lg:col-span-9 space-y-3">
+                      <div className={`px-1 text-[11px] font-bold ${darkMode ? 'text-emerald-50' : 'text-emerald-900'} tracking-tight flex items-center gap-2`}> 
+                        <div className={`w-1.5 h-4 ${darkMode ? 'bg-zinc-800' : 'bg-emerald-600'} rounded-full`}/> Category Breakdown
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                        {statsData.filter(item => item.name !== 'Rest').map((item, idx) => (
+                          <div key={item.name} className={`${darkMode ? 'bg-zinc-900 border-white/5 hover:bg-zinc-800 hover:border-emerald-500/30' : 'bg-white border-emerald-50 hover:border-emerald-200 shadow-sm'} px-3 py-2.5 rounded-xl border transition-all hover:-translate-x-1 hover:shadow-lg flex items-center gap-3 group/item`} style={{ animationDelay: `${idx * 20}ms` }}>
+                            <div className="w-8 h-8 rounded-lg flex items-center justify-center text-xs shadow-sm flex-shrink-0 transition-transform group-hover/item:scale-110" style={{ backgroundColor: darkMode ? `${getCategoryColor(item.name as Category)}20` : `${getCategoryColor(item.name as Category)}15`, color: getCategoryColor(item.name as Category) }}>
+                              {React.createElement(getCategoryIcon(item.name as Category), { size: 16 })}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex justify-between items-end mb-1">
+                                <span className={`text-[11px] font-bold ${darkMode ? 'text-emerald-50 group-hover:text-white' : 'text-emerald-900'} tracking-tight truncate`}>{item.name}</span>
+                                <span className={`text-xs font-bold ${darkMode ? 'text-emerald-400 group-hover:text-emerald-200' : 'text-emerald-950'} font-mono tracking-tight`}>{item.value}m</span>
+                              </div>
+                              <div className={`w-full h-1.5 ${darkMode ? 'bg-black/50 overflow-hidden' : 'bg-emerald-50'} rounded-full`}>
+                                 <div className="h-full rounded-full transition-all duration-1000 group-hover:brightness-125" style={{ width: `${(item.value / Math.max(1, statsData.reduce((a,b)=>a+b.value,0)))*100}%`, backgroundColor: getCategoryColor(item.name as Category) }} />
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      <div className={`px-5 py-2 text-[10px] font-bold ${darkMode ? 'text-emerald-50/90' : 'text-emerald-700'} tracking-tight text-center`}>{relevantLogs.length} sessions in this period</div>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                 <div className={`${darkMode ? 'bg-zinc-900 border-white/10 backdrop-blur-xl' : 'bg-white border-emerald-50'} p-5 rounded-[2.5rem] border h-[340px] shadow-sm flex flex-col relative overflow-hidden group`}>
+                   <h3 className={`text-sm font-black mb-4 ${darkMode ? 'text-white' : 'text-emerald-800'} uppercase tracking-widest relative z-10 flex items-center gap-2`}><div className={`w-1.5 h-4 ${darkMode ? 'bg-emerald-500' : 'bg-emerald-600'} rounded-full`}/> Category Breakdown</h3>
+                   {statsData.length > 0 ? (
+                     <ResponsiveContainer width="100%" height="100%">
+                       <PieChart>
+                       <Pie data={statsData.filter(d => d.value > 0)} innerRadius={70} outerRadius={95} paddingAngle={8} dataKey="value" stroke="none">
+                         {statsData.filter(d => d.value > 0).map(entry => <Cell key={entry.name} fill={getCategoryColor(entry.name as Category)} />)}
+                       </Pie>
+                         <RechartsTooltip 
+                           contentStyle={{
+                             borderRadius: '20px', 
+                             border: darkMode ? '1px solid rgba(255,255,255,0.1)' : 'none', 
+                             boxShadow: darkMode ? '0 25px 50px -12px rgba(0, 0, 0, 0.8)' : '0 25px 50px -12px rgba(0, 0, 0, 0.15)', 
+                             padding: '12px 20px', 
+                             backgroundColor: darkMode ? '#18181b' : '#ffffff'
+                           }} 
+                           itemStyle={{ color: darkMode ? '#ffffff' : '#000000', fontWeight: '900', fontSize: '12px', textTransform: 'uppercase' }}
+                           labelStyle={{ color: darkMode ? '#34d399' : '#059669', marginBottom: '4px', fontWeight: '900', fontSize: '10px', letterSpacing: '0.05em' }}
+                         />
+                         <Legend layout="horizontal" verticalAlign="bottom" wrapperStyle={{fontSize: '13px', fontWeight: 900, paddingTop: '18px', color: darkMode ? '#f8fafc' : '#065f46'}} />
+                       </PieChart>
+                     </ResponsiveContainer>
+                   ) : <div className={`h-full flex items-center justify-center ${darkMode ? 'text-emerald-500/20' : 'text-emerald-200'} font-bold tracking-tight`}>No Activity</div>}
+                 </div>
+                 <div className={`${darkMode ? 'bg-zinc-900 border-white/10 backdrop-blur-xl' : 'bg-white border-emerald-50'} p-5 rounded-[2.5rem] border h-[340px] shadow-sm flex flex-col relative overflow-hidden group`}>
+                   <h3 className={`text-sm font-black mb-4 ${darkMode ? 'text-white' : 'text-emerald-800'} uppercase tracking-widest relative z-10 flex items-center gap-2`}><div className={`w-1.5 h-4 ${darkMode ? 'bg-emerald-500' : 'bg-emerald-600'} rounded-full`}/> Time Spent (Min)</h3>
                    <ResponsiveContainer width="100%" height="100%">
-                     <PieChart>
-                     <Pie data={statsData.filter(d => d.value > 0)} innerRadius={70} outerRadius={95} paddingAngle={8} dataKey="value" stroke="none">
-                       {statsData.filter(d => d.value > 0).map(entry => <Cell key={entry.name} fill={getCategoryColor(entry.name as Category)} />)}
-                     </Pie>
+                     <ReBarChart 
+                       data={statsView === 'week' ? weekHistory : monthHistory}
+                       onClick={(data: any) => {
+                          if (data && data.activePayload && data.activePayload.length > 0) {
+                            const payload = data.activePayload[0].payload;
+                            if (payload.fullDate) {
+                              setSelectedStatsDate(payload.fullDate);
+                              setStatsView('day');
+                            }
+                          }
+                       }}
+                     >
+                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={darkMode ? '#ffffff10' : '#f1f5f9'} />
+                       <XAxis dataKey="name" fontSize={12} fontWeight="black" axisLine={false} tickLine={false} tick={{fill: darkMode ? '#f8fafc' : '#0f172a', fontSize: 12, fontWeight: 900}} />
+                       <YAxis fontSize={12} fontWeight="black" axisLine={false} tickLine={false} tick={{fill: darkMode ? '#f8fafc' : '#0f172a', fontSize: 12, fontWeight: 900}} />
                        <RechartsTooltip 
+                         cursor={{fill: darkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)', radius: 10}} 
                          contentStyle={{
                            borderRadius: '20px', 
                            border: darkMode ? '1px solid rgba(255,255,255,0.1)' : 'none', 
                            boxShadow: darkMode ? '0 25px 50px -12px rgba(0, 0, 0, 0.8)' : '0 25px 50px -12px rgba(0, 0, 0, 0.15)', 
                            padding: '12px 20px', 
                            backgroundColor: darkMode ? '#18181b' : '#ffffff'
-                         }} 
+                         }}
                          itemStyle={{ color: darkMode ? '#ffffff' : '#000000', fontWeight: '900', fontSize: '12px', textTransform: 'uppercase' }}
                          labelStyle={{ color: darkMode ? '#34d399' : '#059669', marginBottom: '4px', fontWeight: '900', fontSize: '10px', letterSpacing: '0.05em' }}
                        />
-                       <Legend layout="horizontal" verticalAlign="bottom" wrapperStyle={{fontSize: '10px', fontWeight: 'black', paddingTop: '15px', color: darkMode ? '#ffffff' : '#065f46'}} />
-                     </PieChart>
+                       <Bar dataKey="minutes" fill={darkMode ? '#10b981' : '#10b981'} radius={[8, 8, 8, 8]} barSize={20} className="cursor-pointer" />
+                     </ReBarChart>
                    </ResponsiveContainer>
-                 ) : <div className={`h-full flex items-center justify-center ${darkMode ? 'text-emerald-500/20' : 'text-emerald-200'} font-bold tracking-tight`}>No Activity</div>}
-               </div>
-               <div className={`${darkMode ? 'bg-zinc-900 border-white/10 backdrop-blur-xl' : 'bg-white border-emerald-50'} p-5 rounded-[2.5rem] border h-[340px] shadow-sm flex flex-col relative overflow-hidden group`}>
-                 <h3 className={`text-sm font-black mb-4 ${darkMode ? 'text-white' : 'text-emerald-800'} uppercase tracking-widest relative z-10 flex items-center gap-2`}><div className={`w-1.5 h-4 ${darkMode ? 'bg-emerald-500' : 'bg-emerald-600'} rounded-full`}/> Time Spent (Min)</h3>
-                 <ResponsiveContainer width="100%" height="100%">
-                   <ReBarChart data={statsView === 'week' ? weekHistory : monthHistory}>
-                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={darkMode ? '#ffffff10' : '#f1f5f9'} />
-                     <XAxis dataKey="name" fontSize={9} fontWeight="black" axisLine={false} tickLine={false} tick={{fill: darkMode ? '#ffffff' : '#94a3b8'}} />
-                     <YAxis fontSize={9} fontWeight="black" axisLine={false} tickLine={false} tick={{fill: darkMode ? '#ffffff' : '#94a3b8'}} />
-                     <RechartsTooltip 
-                       cursor={{fill: darkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)', radius: 10}} 
-                       contentStyle={{
-                         borderRadius: '20px', 
-                         border: darkMode ? '1px solid rgba(255,255,255,0.1)' : 'none', 
-                         boxShadow: darkMode ? '0 25px 50px -12px rgba(0, 0, 0, 0.8)' : '0 25px 50px -12px rgba(0, 0, 0, 0.15)', 
-                         padding: '12px 20px', 
-                         backgroundColor: darkMode ? '#18181b' : '#ffffff'
-                       }}
-                       itemStyle={{ color: darkMode ? '#ffffff' : '#000000', fontWeight: '900', fontSize: '12px', textTransform: 'uppercase' }}
-                       labelStyle={{ color: darkMode ? '#34d399' : '#059669', marginBottom: '4px', fontWeight: '900', fontSize: '10px', letterSpacing: '0.05em' }}
-                     />
-                     <Bar dataKey="minutes" fill={darkMode ? '#10b981' : '#10b981'} radius={[8, 8, 8, 8]} barSize={20} />
-                   </ReBarChart>
-                 </ResponsiveContainer>
-               </div>
+                 </div>
+              </div>
             </div>
           )}
         </div>

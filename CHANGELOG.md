@@ -2,6 +2,21 @@
 
 All notable changes to the Emerald Timer project will be documented in this file.
 
+## [1.5.0] - 2026-02-27
+
+### 📊 Interactive Stats & Visual Polish
+- **Enhanced Navigation**:
+  - **Timeline-to-Editor**: Clicking any activity block in the weekly timeline now directly opens the session editor for quick adjustments.
+  - **Calendar-to-Day**: The side calendar in the weekly stats view now supports clicking dates to jump instantly to that specific daily view.
+- **Unified Placeholder Assets**:
+  - Implemented a global fallback system using `/timer-play.png` for all Year, Month, and Week views when no activity or photos are present. Added low-opacity grayscale styling for "Quiet" (no data) periods to maintain a polished look.
+- **UI/UX Refinements**:
+  - **Redesigned Close Button**: Moved the modal "Close" to the top-right corner, updated to a green 'X' with a subtle circular hover effect for better discoverability.
+  - **Balanced layouts**: Adjusted `CategoryPicker` grid density and removed redundant metadata labels from the daily stats board for a cleaner, modern look.
+  - **Theme Improvements**: Refined dark mode mask transparency (`bg-black/60`) on calendar grids for improved readability and contrast.
+- **Maintenance**:
+  - Removed internal "run", "read", and "cooking" fallback constants in favor of the unified "play" asset for all empty states.
+
 ## [1.4.1] - 2026-02-22
 
 ### 📱 Android Notification & Dark Mode Polish

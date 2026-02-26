@@ -75,7 +75,11 @@ const useStats = (logs: LogEntry[], selectedStatsDate: string, statsView: StatsV
         history[day] += duration;
       }
     });
-    return Object.entries(history).map(([name, value]) => ({ name: name.split('-').slice(1).join('/'), minutes: Math.round(value / 60) }));
+    return Object.entries(history).map(([name, value]) => ({ 
+      name: name.split('-').slice(1).join('/'), 
+      fullDate: name,
+      minutes: Math.round(value / 60) 
+    }));
   }, [logs, selectedStatsDate]);
 
   const monthHistory = useMemo(() => {
@@ -86,7 +90,7 @@ const useStats = (logs: LogEntry[], selectedStatsDate: string, statsView: StatsV
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     for (let i = 1; i <= daysInMonth; i++) {
       const d = new Date(year, month, i);
-      history[d.toISOString().split('T')[0]] = 0;
+      history[formatDate(d.getTime())] = 0; // use local date to avoid UTC shift
     }
     logs.forEach(log => {
       const d = formatDate(log.startTime);

@@ -18,7 +18,7 @@ interface LogsBoardProps {
   setFilterStartDate: (date: string) => void;
   setFilterEndDate: (date: string) => void;
   setShowManualModal: (show: boolean) => void;
-  handleViewLog: (log: LogEntry) => void;
+  handleViewLog: (log: LogEntry, openEdit?: boolean) => void;
   getCategoryColor: (cat: Category) => string;
   getCategoryIcon: (cat: Category) => any;
   setPreviewImage: (img: string | null) => void;

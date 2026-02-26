@@ -75,7 +75,7 @@ export interface LogEntry {
 export type TimerPhase = 'work' | 'rest';
 export type PhasePromptKind = 'phase-end' | 'reminder' | 'cycle-complete';
 export type StatsView = 'day' | 'week' | 'month' | 'year';
-export type ViewMode = 'charts' | 'grid';
+export type ViewMode = 'charts' | 'grid' | 'timeline';
 export type NotificationStatus = NotificationPermission | 'unsupported';
 export type ThemePreference = 'system' | 'light' | 'dark';
 
@@ -126,5 +126,7 @@ export const DEFAULT_CATEGORIES: CategoryData[] = [
   { name: 'Eat', icon: 'Utensils', color: '#f97316' },
   { name: 'Entertainment', icon: 'Tv', color: '#22d3ee' },
 ];
+
+export const CATEGORIES = DEFAULT_CATEGORIES.map(c => c.name);
 
 export const APP_LOGO = 'logo.png';

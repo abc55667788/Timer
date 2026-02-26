@@ -836,10 +836,10 @@ function EmeraldTimer() {
     setShowConfirmModal('stop');
   };
 
-  const handleViewLog = (log: LogEntry) => {
+  const handleViewLog = (log: LogEntry, openEdit = false) => {
     if (timelineDragMoved) return;
     setViewingLog(log);
-    setIsEditMode(false);
+    setIsEditMode(openEdit);
     setPhaseEditTouched(false);
   };
 
@@ -1820,7 +1820,18 @@ function EmeraldTimer() {
   }, [manualLog]);
 
   const selectedDayLogs = useMemo(() => {
-    return logs.filter(l => formatDate(l.startTime) === selectedStatsDate).sort((a,b) => a.startTime - b.startTime);
+    const START_HOUR = 6;
+    return logs.filter(l => {
+      const d = new Date(l.startTime);
+      const h = d.getHours();
+      let logicalDateStr = formatDate(l.startTime);
+      if (h < START_HOUR) {
+        const prev = new Date(l.startTime);
+        prev.setDate(prev.getDate() - 1);
+        logicalDateStr = formatDate(prev.getTime());
+      }
+      return logicalDateStr === selectedStatsDate;
+    }).sort((a,b) => a.startTime - b.startTime);
   }, [logs, selectedStatsDate]);
 
   const continueButtonLabel = 'Continue current session log';
@@ -2046,11 +2057,11 @@ function EmeraldTimer() {
   const rootBgClass = (isMiniMode || wasMiniModeBeforeModal)
     ? 'bg-transparent border-0'
     : (isDarkMode 
-      ? 'bg-gradient-to-br from-[#0d1a1f] via-[#0a161b] to-[#0b1215] border border-emerald-900/40 ring-1 ring-emerald-500/10 shadow-[0_24px_90px_rgba(0,0,0,0.45)] backdrop-blur-xl'
-      : 'bg-gradient-to-br from-white/95 via-emerald-50/90 to-white/95 border border-white/40 ring-1 ring-white/20');
+      ? 'bg-gradient-to-br from-black via-slate-950 to-zinc-950 border border-emerald-900/50 ring-1 ring-emerald-500/25 shadow-[0_32px_120px_rgba(0,0,0,0.85)] backdrop-blur-2xl'
+      : 'bg-gradient-to-br from-[#f6f8fb] via-[#f1fbf6] to-[#f9fafb] border border-emerald-50 ring-1 ring-emerald-400/12 shadow-[0_28px_80px_rgba(15,23,42,0.12)] backdrop-blur-2xl');
   
   const rootTextClass = isDarkMode ? 'text-emerald-50' : 'text-emerald-900';
-  const rootRoundedClass = isAndroid ? 'rounded-[1.25rem] shadow-lg' : 'rounded-[1.5rem]';
+  const rootRoundedClass = isAndroid ? '' : 'rounded-[1.5rem]';
 
   return (
     <div 
@@ -2063,8 +2074,8 @@ function EmeraldTimer() {
     >
       {!isMiniMode && !wasMiniModeBeforeModal && (
         <>
-          <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-emerald-200/20 blur-[120px] rounded-full -z-10 animate-pulse" />
-          <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-emerald-300/10 blur-[120px] rounded-full -z-10" />
+          <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-emerald-100/14 blur-[120px] rounded-full -z-10 animate-pulse" />
+          <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-emerald-100/10 blur-[120px] rounded-full -z-10" />
         </>
       )}
 
@@ -2166,7 +2177,7 @@ function EmeraldTimer() {
       )}
 
       {!hideShellForMiniPrompt && !isMiniMode && !wasMiniModeBeforeModal && (
-        <main className={`w-full ${isDarkMode ? 'bg-zinc-950/60' : 'bg-white/70'} backdrop-blur-2xl flex flex-col flex-1 overflow-hidden min-h-0 animate-in fade-in slide-in-from-bottom-2 duration-500 ease-out border-t ${isDarkMode ? 'border-white/5' : 'border-white/40'} ${isAndroid ? 'pt-[env(safe-area-inset-top,20px)]' : 'overflow-hidden'}`}>
+        <main className={`w-full ${isDarkMode ? 'bg-black/80' : 'bg-[#f4fbf7]'} backdrop-blur-2xl flex flex-col flex-1 overflow-hidden min-h-0 animate-in fade-in slide-in-from-bottom-2 duration-500 ease-out border-t ${isDarkMode ? 'border-white/5' : 'border-emerald-50'} ${isAndroid ? 'pt-[env(safe-area-inset-top,20px)]' : 'overflow-hidden'}`}>
           
           <div 
             ref={mainScrollRef}
@@ -2376,24 +2387,43 @@ function EmeraldTimer() {
                           ? (isDarkMode ? 'text-emerald-400/80' : 'text-emerald-400')
                           : (isDarkMode ? 'text-zinc-600' : 'text-emerald-400')) + ' group-hover/nav:text-emerald-500 hover:text-emerald-600'}`}
                 >
-                  <div className={`transition-all duration-300 flex items-center justify-center rounded-full
-                    ${isAndroid 
-                      ? `${activeTab === tab.id
-                          ? (isDarkMode ? 'text-emerald-50 bg-emerald-500/15 border border-emerald-400/60 shadow-[0_12px_30px_rgba(0,0,0,0.45)]' : 'text-emerald-700 bg-emerald-100/10 border border-emerald-300 shadow-[0_10px_26px_rgba(0,0,0,0.18)]') + ' scale-105'
-                          : (isDarkMode ? 'text-emerald-400/80 opacity-80 border border-transparent' : 'text-emerald-500/80 opacity-80 border border-transparent')}
-                        px-5 py-1.5`
-                      : `${activeTab === tab.id
-                          ? (isDarkMode ? 'bg-zinc-800' : 'bg-white/60') + ' backdrop-blur-md text-emerald-600 scale-105 shadow-sm border border-white/10'
-                          : 'bg-transparent hover:bg-white/40'} px-4 py-1.5`
-                    }`}
-                  >
-                    <tab.icon 
-                      size={isAndroid ? 24 : 22} 
-                      strokeWidth={activeTab === tab.id ? 2.5 : 2} 
-                      fill={activeTab === tab.id ? "currentColor" : "none"}
-                      fillOpacity={activeTab === tab.id ? (isAndroid ? 0.25 : 0.15) : 0}
-                    />
-                  </div>
+                  {isAndroid ? (
+                    activeTab === tab.id ? (
+                      <div className={`transition-all duration-300 flex items-center justify-center rounded-full px-5 py-1.5 scale-105
+                        ${isDarkMode 
+                          ? 'text-emerald-50 bg-emerald-500/15 border border-emerald-400/60 shadow-[0_12px_30px_rgba(0,0,0,0.45)]'
+                          : 'text-emerald-700 bg-emerald-100/10 border border-emerald-300 shadow-[0_10px_26px_rgba(0,0,0,0.18)]'
+                        }`}>
+                        <tab.icon 
+                          size={24} 
+                          strokeWidth={activeTab === tab.id ? 2.5 : 2} 
+                          fill="currentColor"
+                          fillOpacity={0.25}
+                        />
+                      </div>
+                    ) : (
+                      <div className={`flex items-center justify-center transition-all duration-300 ${isDarkMode ? 'text-emerald-400/80 opacity-80' : 'text-emerald-500/80 opacity-80'}`}>
+                        <tab.icon 
+                          size={24} 
+                          strokeWidth={2} 
+                          fill="none"
+                        />
+                      </div>
+                    )
+                  ) : (
+                    <div className={`transition-all duration-300 flex items-center justify-center rounded-full
+                      ${activeTab === tab.id
+                        ? (isDarkMode ? 'bg-zinc-800' : 'bg-white/60') + ' backdrop-blur-md text-emerald-600 scale-105 shadow-sm border border-white/10'
+                        : 'bg-transparent hover:bg-white/40'} px-4 py-1.5`}
+                    >
+                      <tab.icon 
+                        size={22} 
+                        strokeWidth={activeTab === tab.id ? 2.5 : 2} 
+                        fill={activeTab === tab.id ? "currentColor" : "none"}
+                        fillOpacity={activeTab === tab.id ? 0.15 : 0}
+                      />
+                    </div>
+                  )}
                   
                   {!isAndroid && (
                     <span className={`font-bold transition-all duration-400 overflow-hidden text-center

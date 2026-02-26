@@ -33,7 +33,7 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
             </button>
             <button 
               onClick={() => confirmAction(false)} 
-              className={`w-full py-4 rounded-2xl font-black uppercase tracking-widest active:scale-[0.97] text-[11px] transition-all ${darkMode ? 'bg-red-600 hover:bg-red-700 shadow-black' : 'bg-red-500 hover:bg-red-600 shadow-xl shadow-red-100/50'} text-white`}
+              className={`w-full py-4 rounded-2xl font-black uppercase tracking-widest active:scale-[0.97] text-[11px] transition-all ${darkMode ? 'bg-red-500/10 text-red-400 border border-red-500/40 hover:bg-red-600 hover:text-white shadow-black' : 'bg-red-50 text-red-500 border border-red-200 hover:bg-red-500 hover:text-white shadow-xl shadow-red-100/60'}`}
             >
               Discard Activity
             </button>

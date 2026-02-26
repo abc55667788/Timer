@@ -134,6 +134,7 @@ function MiniCalendar({ logs, selectedDate, onSelectDate, viewType, compact = fa
           if (!d) return <div key={`empty-${i}`} />;
           const dateStr = `${currentYear}-${(currentMonth + 1).toString().padStart(2, '0')}-${d.toString().padStart(2, '0')}`;
           const isSelected = selectedDate === dateStr;
+          const isToday = formatDate(Date.now()) === dateStr;
           const isInWeek = isDateInSelectedWeek(dateStr);
           const hasRecord = recordedDays.has(dateStr);
 
@@ -142,11 +143,12 @@ function MiniCalendar({ logs, selectedDate, onSelectDate, viewType, compact = fa
               key={dateStr}
               onClick={() => onSelectDate(dateStr)}
               className={`relative ${compact ? 'h-7 w-7' : 'h-8 w-8'} m-auto rounded-[0.75rem] ${compact ? 'text-[10px]' : 'text-xs'} font-black transition-all flex items-center justify-center
-                ${isSelected ? 'bg-emerald-600 text-white shadow-md ring-2 ring-emerald-500/50 ring-offset-2 ring-offset-zinc-900' :
+                ${isToday ? (darkMode ? 'bg-emerald-500/80 text-white shadow-lg ring-2 ring-emerald-400 shadow-emerald-500/20' : 'bg-emerald-600 text-white shadow-md ring-2 ring-emerald-400 shadow-emerald-100') :
+                  isSelected ? (darkMode ? 'bg-zinc-800 text-emerald-400' : 'bg-emerald-50/50 text-emerald-900 font-black') :
                   isInWeek ? (darkMode ? 'bg-zinc-800 text-emerald-500' : 'bg-emerald-50 text-emerald-800') : (darkMode ? 'hover:bg-zinc-800 text-zinc-400 hover:text-white' : 'hover:bg-emerald-50 text-emerald-900')}`}
             >
               {d}
-              {hasRecord && !isSelected && <div className={`absolute ${compact ? 'bottom-0.5 w-1 h-1' : 'bottom-1 w-1 h-1'} bg-emerald-500 rounded-full ring-1 ${darkMode ? 'ring-zinc-900' : 'ring-white'}`} />}
+              {hasRecord && !isToday && !isSelected && <div className={`absolute ${compact ? 'bottom-0.5 w-1 h-1' : 'bottom-1 w-1 h-1'} bg-emerald-500 rounded-full ring-1 ${darkMode ? 'ring-zinc-900' : 'ring-white'}`} />}
             </button>
           );
         })}

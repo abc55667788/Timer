@@ -82,7 +82,7 @@ const PhasePromptModal: React.FC<PhasePromptModalProps> = ({
           
           <button 
             onClick={handleExitAndSave} 
-            className={`w-full py-4 ${darkMode ? 'bg-red-600 hover:bg-red-700 shadow-black' : 'bg-red-500 hover:bg-red-600 shadow-xl shadow-red-100/50'} text-white text-[11px] font-black uppercase tracking-widest rounded-2xl transition-all active:scale-[0.97]`}
+            className={`w-full py-4 ${darkMode ? 'bg-red-500/10 text-red-400 border border-red-500/40 hover:bg-red-600 hover:text-white shadow-black' : 'bg-red-50 text-red-500 border border-red-200 hover:bg-red-500 hover:text-white shadow-xl shadow-red-100/60'} text-[11px] font-black uppercase tracking-widest rounded-2xl transition-all active:scale-[0.97]`}
           >
             Stop & Save log
           </button>

@@ -53,20 +53,20 @@ const TimerBoard: React.FC<TimerBoardProps> = ({
   const catColor = getCategoryColor(currentTask.category);
   const CatIcon = getCategoryIcon(currentTask.category);
   const useLandscapeLayout = Boolean(isAndroid && isLandscape);
-  const containerPadding = isAndroid ? (useLandscapeLayout ? 'py-3 pb-5' : 'py-4 pb-12') : 'py-8';
+  const containerPadding = isAndroid ? (useLandscapeLayout ? 'py-2 pb-4' : 'py-4 pb-12') : 'py-8';
   const layoutWrapperClasses = [
     'flex w-full',
     useLandscapeLayout
-      ? 'flex-row items-center justify-center gap-6 max-w-4xl'
-      : 'flex-col items-center gap-6 md:gap-12 max-w-lg',
+      ? 'flex-row items-center justify-center gap-4 px-4 lg:px-8 max-w-[1200px]'
+      : 'flex-col items-center gap-6 md:gap-12 w-full max-w-lg',
     isAndroid ? 'py-1' : 'py-4',
   ].filter(Boolean).join(' ');
   const timerStackClasses = [
     'flex flex-col items-center gap-4 md:gap-8',
-    useLandscapeLayout ? 'flex-1' : (isAndroid ? 'mt-0' : 'mt-2 md:mt-0'),
+    useLandscapeLayout ? 'flex-1 min-w-0 px-2 sm:px-4' : (isAndroid ? 'mt-0' : 'mt-2 md:mt-0'),
   ].filter(Boolean).join(' ');
   const controlsWrapperClasses = useLandscapeLayout
-    ? 'flex flex-col items-stretch gap-3 w-full max-w-[220px] justify-center'
+    ? 'flex flex-col items-center justify-center gap-3 px-4 flex-shrink-0 min-w-[180px]'
     : `flex items-center gap-4 md:gap-6 ${isAndroid ? 'mb-4' : 'mb-8 md:mb-0'}`;
 
   const startButton = (
@@ -122,7 +122,7 @@ const TimerBoard: React.FC<TimerBoardProps> = ({
         <div className={`absolute ${isAndroid ? 'top-2 right-2' : 'top-4 right-4 md:top-10 md:right-10'} z-[60]`}>
           <button 
             onClick={() => setIsJournalOpen(true)} 
-            className={`${isAndroid ? 'p-3 rounded-2xl' : 'p-3.5 md:p-5 rounded-2xl md:rounded-[1.5rem]'} ${darkMode ? 'bg-zinc-900/80 text-zinc-400 border-white/5 hover:text-emerald-500 hover:bg-zinc-800 shadow-[0_20px_50px_rgba(0,0,0,0.5)]' : 'bg-white/95 text-emerald-600 border-emerald-50 shadow-[0_12px_44px_-8px_rgba(0,0,0,0.15)] hover:bg-emerald-600 hover:text-white hover:border-emerald-600'} backdrop-blur-md transition-all duration-300 active:scale-95 group border`}
+            className={`${isAndroid ? 'p-3 rounded-2xl' : 'p-3.5 md:p-5 rounded-2xl md:rounded-[1.5rem]'} ${darkMode ? 'bg-zinc-900/80 text-emerald-50 border-white/5 hover:text-emerald-400 hover:bg-zinc-800 shadow-[0_20px_50px_rgba(0,0,0,0.5)]' : 'bg-white/95 text-emerald-800 border-emerald-50 shadow-[0_12px_44px_-8px_rgba(0,0,0,0.15)] hover:bg-emerald-600 hover:text-white hover:border-emerald-600'} backdrop-blur-md transition-all duration-300 active:scale-95 group border`}
             title="Open Journal"
           >
             <Library size={isAndroid ? 18 : 22} className="group-hover:rotate-6 group-hover:scale-110 transition-transform"/>
@@ -132,9 +132,9 @@ const TimerBoard: React.FC<TimerBoardProps> = ({
 
       <div className={layoutWrapperClasses}>
         <div className={timerStackClasses}>
-          <div className={`flex items-center gap-2 px-5 py-2 ${darkMode ? 'bg-zinc-900 border-white/5 shadow-inner' : 'bg-emerald-50 border-emerald-100/50 shadow-sm'} rounded-full border`}>
+          <div className={`flex items-center gap-2 px-5 py-2 ${darkMode ? 'bg-zinc-900 border-white/5 shadow-inner' : 'bg-white border-emerald-100/60 shadow-sm'} rounded-full border`}>
             <div className={`w-2 h-2 rounded-full ${phase === 'work' ? (darkMode ? 'bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.5)]' : 'bg-emerald-500 shadow-[0_0_8px_#10b981]') : (darkMode ? 'bg-orange-500 shadow-[0_0_12px_rgba(249,115,22,0.5)]' : 'bg-emerald-400 shadow-[0_0_8px_#34d399]')} ${isActive ? 'animate-pulse' : ''}`} />
-            <span className={`text-[10px] font-black uppercase tracking-[0.1em] ${darkMode ? 'text-zinc-500' : 'text-emerald-700'}`}>{isActive ? (phase === 'work' ? 'Focusing' : 'Resting') : 'Idle'}</span>
+            <span className={`text-[10px] font-black uppercase tracking-[0.1em] ${darkMode ? 'text-emerald-50' : 'text-emerald-900'}`}>{isActive ? (phase === 'work' ? 'Focusing' : 'Resting') : 'Idle'}</span>
           </div>
 
           <div onClick={() => setShowLoggingModal(true)} className="relative group cursor-pointer active:scale-[0.98] transition-all">
@@ -147,8 +147,8 @@ const TimerBoard: React.FC<TimerBoardProps> = ({
                 strokeLinecap="round"
               />
             </svg>
-            <div className={`absolute inset-0 flex flex-col items-center justify-center ${darkMode ? 'bg-zinc-950/40 text-emerald-50 shadow-[inset_0_4px_20px_rgba(0,0,0,0.4)]' : 'bg-white/60 text-slate-800'} backdrop-blur-3xl rounded-full m-3.5 md:m-5 shadow-2xl border ${darkMode ? 'border-white/10' : 'border-white/40'} overflow-hidden`}>
-              <div className={`absolute inset-0 rounded-full ${darkMode ? 'bg-zinc-900/90' : 'bg-emerald-50/90'} flex flex-col items-center justify-center transition-all opacity-0 group-hover:opacity-100 backdrop-blur-[6px] z-20`}>
+            <div className={`absolute inset-0 flex flex-col items-center justify-center ${darkMode ? 'bg-zinc-900/90 text-emerald-50 shadow-[0_24px_80px_rgba(0,0,0,0.9)]' : 'bg-white text-slate-800 shadow-[0_28px_80px_rgba(15,23,42,0.14)]'} backdrop-blur-3xl rounded-full m-3.5 md:m-5 border ${darkMode ? 'border-white/12' : 'border-emerald-100/70'} overflow-hidden`}>
+              <div className={`absolute inset-0 rounded-full ${darkMode ? 'bg-zinc-800/90' : 'bg-white/95'} flex flex-col items-center justify-center transition-all opacity-0 group-hover:opacity-100 backdrop-blur-[6px] z-20`}>
                 <Edit3 size={32} className={`${darkMode ? 'text-emerald-500' : 'text-emerald-600'} mb-3 drop-shadow-[0_0_10px_rgba(16,185,129,0.3)] animate-in zoom-in-50 duration-300`} />
                 <span className={`text-[10px] md:text-[11px] font-black ${darkMode ? 'text-emerald-500 font-bold' : 'text-emerald-600'} uppercase tracking-[0.2em]`}>Edit Session</span>
               </div>
