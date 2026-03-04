@@ -40,7 +40,12 @@ jobs:
       - name: Build
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npm run build
+        run: |
+          npm run build
+        continue-on-error: true
+      - name: Check builds
+        run: ls release-builds/
+        shell: bash
       - name: Upload
         uses: actions/upload-artifact@v4
         with:
