@@ -117,6 +117,25 @@ export interface Inspiration {
   images?: string[];
 }
 
+export interface NewsConfig {
+  repoUrl: string; // ssh or https repo URL
+  branch: string;
+  basePath: string; // folder containing markdown news files
+  token?: string; // optional GitHub PAT for private repos
+}
+
+export interface NewsArticle {
+  title: string;
+  summary?: string;
+  url?: string;
+}
+
+export interface NewsDay {
+  id: string; // e.g. 2026-03-02
+  dateLabel: string;
+  articles: NewsArticle[];
+}
+
 export const DEFAULT_CATEGORIES: CategoryData[] = [
   { name: 'Work', icon: 'Briefcase', color: '#3b82f6' },
   { name: 'Study', icon: 'GraduationCap', color: '#10b981' },

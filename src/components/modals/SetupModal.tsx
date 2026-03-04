@@ -3,9 +3,9 @@ import {
   X, Settings, Clock, Palette, Timer as TimerIcon, 
   AlertCircle, CheckCircle2, Globe, Key, Database, RefreshCw, 
   Download, Upload, Cloud, Plus, Trash, Check, Maximize2, Minus,
-  Bell, BellOff, User, Moon, Sun, Monitor
+  Bell, BellOff, User, Moon, Sun, Monitor, BookOpen
 } from 'lucide-react';
-import { CategoryData, CATEGORY_ICONS, NotificationStatus, IconKey, ThemePreference } from '../../types';
+import { CategoryData, CATEGORY_ICONS, NotificationStatus, IconKey, ThemePreference, NewsConfig } from '../../types';
 
 interface SetupModalProps {
   wasMiniModeBeforeModal: boolean;
@@ -42,6 +42,10 @@ interface SetupModalProps {
   setThemePreference: (val: ThemePreference) => void;
   autoContinueLog: boolean;
   setAutoContinueLog: (val: boolean | ((prev: boolean) => boolean)) => void;
+  newsConfig: NewsConfig;
+  setNewsConfig: (val: NewsConfig | ((prev: NewsConfig) => NewsConfig)) => void;
+  newsStatus: { loading: boolean; error: string; lastFetched: string };
+  refreshNews: () => void;
   isPage?: boolean;
   isAndroid?: boolean;
 }
@@ -81,11 +85,19 @@ const SetupModal: React.FC<SetupModalProps> = ({
   setThemePreference,
   autoContinueLog,
   setAutoContinueLog,
+  newsConfig,
+  setNewsConfig,
+  newsStatus,
+  refreshNews,
   isPage = false,
   isAndroid = false,
 }) => {
   const [editingIconIndex, setEditingIconIndex] = useState<number | null>(null);
   const [scaleInputValue, setScaleInputValue] = useState((uiScale * 100).toFixed(0));
+
+  const updateNewsConfig = (patch: Partial<NewsConfig>) => {
+    setNewsConfig(prev => ({ ...prev, ...patch }));
+  };
 
   React.useEffect(() => {
     setScaleInputValue((uiScale * 100).toFixed(0));
@@ -533,6 +545,66 @@ const SetupModal: React.FC<SetupModalProps> = ({
                          Last {syncMethod === 'gitlab' ? 'GitLab' : 'WebDAV'} Sync: {lastSyncedAt}
                        </p>
                      )}
+                  </div>
+                </section>
+
+                <section>
+                  <h3 className={`text-sm font-bold tracking-tight ${darkMode ? 'text-emerald-400' : 'text-emerald-800'} mb-4 flex items-center gap-2`}><BookOpen size={14}/> News Source (GitHub)</h3>
+                  <div className={`${darkMode ? 'bg-emerald-950/20' : 'bg-emerald-50/30'} p-5 rounded-[1.8rem] border ${darkMode ? 'border-white/5' : 'border-emerald-50'} space-y-3`}>
+                    <div className="relative">
+                      <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-emerald-400"><Globe size={13} /></div>
+                      <input 
+                        type="text" 
+                        placeholder="git@github.com:owner/repo.git or https URL"
+                        value={newsConfig.repoUrl}
+                        onChange={(e) => updateNewsConfig({ repoUrl: e.target.value })}
+                        className={`w-full ${darkMode ? 'bg-white/5 border-white/5 text-emerald-100 placeholder:text-emerald-900' : 'bg-white border-emerald-100 text-emerald-900 placeholder:text-emerald-300'} rounded-xl py-3 pl-10 pr-4 text-[11px] font-bold outline-none focus:ring-2 focus:ring-emerald-500/10`}
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <input 
+                        type="text" 
+                        placeholder="Branch (main)"
+                        value={newsConfig.branch}
+                        onChange={(e) => updateNewsConfig({ branch: e.target.value })}
+                        className={`w-full ${darkMode ? 'bg-white/5 border-white/5 text-emerald-100 placeholder:text-emerald-900' : 'bg-white border-emerald-100 text-emerald-800 placeholder:text-emerald-300'} rounded-xl py-2.5 px-4 text-[11px] font-bold outline-none focus:ring-2 focus:ring-emerald-500/10`}
+                      />
+                      <input 
+                        type="text" 
+                        placeholder="Folder (optional)"
+                        value={newsConfig.basePath}
+                        onChange={(e) => updateNewsConfig({ basePath: e.target.value })}
+                        className={`w-full ${darkMode ? 'bg-white/5 border-white/5 text-emerald-100 placeholder:text-emerald-900' : 'bg-white border-emerald-100 text-emerald-800 placeholder:text-emerald-300'} rounded-xl py-2.5 px-4 text-[11px] font-bold outline-none focus:ring-2 focus:ring-emerald-500/10`}
+                      />
+                      <input 
+                        type="password" 
+                        placeholder="GitHub Token (optional)"
+                        value={newsConfig.token || ''}
+                        onChange={(e) => updateNewsConfig({ token: e.target.value })}
+                        className={`w-full ${darkMode ? 'bg-white/5 border-white/5 text-emerald-100 placeholder:text-emerald-900' : 'bg-white border-emerald-100 text-emerald-800 placeholder:text-emerald-300'} rounded-xl py-2.5 px-4 text-[11px] font-bold outline-none focus:ring-2 focus:ring-emerald-500/10`}
+                      />
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className={`text-[10px] font-bold ${darkMode ? 'text-emerald-400' : 'text-emerald-700'} uppercase tracking-widest`}>
+                          {newsStatus.lastFetched ? `Last fetched: ${newsStatus.lastFetched}` : 'Not fetched yet'}
+                        </span>
+                        {newsStatus.loading && <RefreshCw size={14} className="animate-spin text-emerald-400" />}
+                      </div>
+                      <button 
+                        onClick={refreshNews}
+                        disabled={newsStatus.loading}
+                        className={`${darkMode ? 'bg-zinc-800 text-white border border-white/10 hover:bg-emerald-500 hover:border-emerald-400' : 'bg-emerald-600 text-white shadow-md shadow-emerald-100/50 hover:bg-emerald-700'} px-4 py-2 rounded-xl text-[11px] font-black tracking-widest uppercase transition-all active:scale-95 disabled:opacity-60`}
+                      >
+                        Refresh News
+                      </button>
+                    </div>
+
+                    {newsStatus.error && (
+                      <div className={`${darkMode ? 'bg-red-900/30 border-red-700/40 text-red-200' : 'bg-red-50 border-red-200 text-red-700'} text-[11px] font-bold px-3 py-2 rounded-xl border`}>{newsStatus.error}</div>
+                    )}
                   </div>
                 </section>
 

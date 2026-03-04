@@ -26,7 +26,9 @@ import {
   Goal,
   Inspiration,
   CategoryData,
-  ThemePreference
+  ThemePreference,
+  NewsConfig,
+  NewsDay
 } from './src/types';
 import { formatTime, formatClock, formatDate, formatDisplayDate, formatDisplayDateString, resolvePhaseTotals, pad2 } from './src/utils/time';
 import { compressImage } from './src/utils/media';
@@ -37,6 +39,7 @@ import TimerBoard from './src/components/boards/TimerBoard';
 import StatsBoard from './src/components/boards/StatsBoard';
 import LogsBoard from './src/components/boards/LogsBoard';
 import JournalBoard from './src/components/boards/JournalBoard';
+import NewsBoard from './src/components/boards/NewsBoard';
 import SetupModal from './src/components/modals/SetupModal';
 import LoggingModal from './src/components/modals/LoggingModal';
 import ManualLogModal from './src/components/modals/ManualLogModal';
@@ -82,11 +85,93 @@ const getInitialSystemPrefersDark = () => {
   return window.matchMedia('(prefers-color-scheme: dark)').matches;
 };
 
+// --- News helpers ---
+const NEWS_CONFIG_KEY = 'emerald-news-config';
+const NEWS_CACHE_KEY = 'emerald-news-cache';
+const NEWS_LAST_FETCHED_KEY = 'emerald-news-last-fetched';
+
+const parseGitHubRepo = (repoUrl: string) => {
+  const sshMatch = repoUrl.match(/git@github.com:([^/]+)\/(.+?)(\.git)?$/);
+  if (sshMatch) {
+    return { owner: sshMatch[1], repo: sshMatch[2] };
+  }
+  try {
+    const url = new URL(repoUrl.replace(/^git\+/, ''));
+    if (url.hostname !== 'github.com') return null;
+    const parts = url.pathname.replace(/^\//, '').replace(/\.git$/, '').split('/');
+    if (parts.length >= 2) {
+      return { owner: parts[0], repo: parts[1] };
+    }
+  } catch (e) {
+    return null;
+  }
+  return null;
+};
+
+const parseNewsMarkdown = (filePath: string, content: string): NewsDay | null => {
+  const filename = (filePath.split('/').pop() || filePath).replace(/\.md$/, '');
+  const dateMatch = filename.match(/\d{4}-\d{2}-\d{2}/);
+  const id = dateMatch ? dateMatch[0] : filename;
+  const dateLabel = id.replace(/-/g, '.');
+
+  const normalize = (text: string) => {
+    // strip markdown links to readable text
+    return text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1');
+  };
+
+  type DraftArticle = { title: string; url?: string; body: string[] };
+  const articles: DraftArticle[] = [];
+  let current: DraftArticle | null = null;
+
+  const pushCurrent = () => {
+    if (!current) return;
+    if (!current.title) current.title = id;
+    articles.push(current);
+  };
+
+  const lines = content.split(/\r?\n/);
+  for (const raw of lines) {
+    const line = raw.trim();
+    if (!line) continue;
+
+    const heading = line.match(/^#{1,3}\s+(.+)$/);
+    if (heading) {
+      pushCurrent();
+      current = { title: normalize(heading[1]).trim(), body: [] };
+      const linkInHeading = heading[1].match(/\((https?:[^)]+)\)/);
+      if (linkInHeading && current) current.url = linkInHeading[1];
+      continue;
+    }
+
+    const bullet = line.match(/^[-*]\s+(.*)$/);
+    const text = normalize(bullet ? bullet[1] : line);
+    if (!current) {
+      current = { title: text, body: [] };
+    } else {
+      current.body.push(text);
+    }
+
+    const link = (line.match(/\((https?:[^)]+)\)/) || [])[1];
+    if (link && !current.url) current.url = link;
+  }
+  pushCurrent();
+
+  if (!articles.length) return null;
+
+  const finalized = articles.map(a => {
+    const summaryText = a.body.join(' ').trim();
+    const summary = summaryText ? (summaryText.length > 240 ? summaryText.slice(0, 237) + '...' : summaryText) : undefined;
+    return { title: a.title, url: a.url, summary };
+  });
+
+  return { id, dateLabel, articles: finalized };
+};
+
 // --- Main App Component ---
 function EmeraldTimer() {
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [isMiniMode, setIsMiniMode] = useState(false);
-  const [activeTab, setActiveTab] = useState<'timer' | 'stats' | 'logs' | 'settings'>('timer');
+  const [activeTab, setActiveTab] = useState<'news' | 'timer' | 'stats' | 'logs' | 'settings'>('timer');
   const [isJournalOpen, setIsJournalOpen] = useState(false);
   const [phase, setPhase] = useState<TimerPhase>('work');
   const [isActive, setIsActive] = useState(false);
@@ -383,6 +468,38 @@ function EmeraldTimer() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [lastSyncedAt, setLastSyncedAt] = useState(() => localStorage.getItem('emerald-last-synced') || '');
 
+  const [newsConfig, setNewsConfig] = useState<NewsConfig>(() => {
+    const saved = localStorage.getItem(NEWS_CONFIG_KEY);
+    const defaults: NewsConfig = {
+      repoUrl: 'git@github.com:abc55667788/news_valut.git',
+      branch: 'main',
+      basePath: '',
+      token: ''
+    };
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        return { ...defaults, ...parsed };
+      } catch (e) {
+        return defaults;
+      }
+    }
+    return defaults;
+  });
+
+  const [newsItems, setNewsItems] = useState<NewsDay[]>(() => {
+    const saved = localStorage.getItem(NEWS_CACHE_KEY);
+    if (saved) {
+      try { return JSON.parse(saved); } catch (e) { return []; }
+    }
+    return [];
+  });
+  const [newsStatus, setNewsStatus] = useState<{ loading: boolean; error: string; lastFetched: string }>(() => ({
+    loading: false,
+    error: '',
+    lastFetched: localStorage.getItem(NEWS_LAST_FETCHED_KEY) || ''
+  }));
+
   const [uiScale, setUiScale] = useState(() => {
     const saved = localStorage.getItem('emerald-ui-scale');
     if (saved) return parseFloat(saved);
@@ -451,6 +568,11 @@ function EmeraldTimer() {
     if (typeof window === 'undefined') return;
     localStorage.setItem('emerald-auto-continue-log', autoContinueLog.toString());
   }, [autoContinueLog]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    localStorage.setItem(NEWS_CONFIG_KEY, JSON.stringify(newsConfig));
+  }, [newsConfig]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -859,6 +981,69 @@ function EmeraldTimer() {
     }
     setActiveTab('settings');
   };
+
+  const refreshNews = useCallback(async (manual = false) => {
+    if (!newsConfig.repoUrl) {
+      setNewsStatus(prev => ({ ...prev, error: 'News repo URL is empty.', loading: false }));
+      return;
+    }
+
+    const parsed = parseGitHubRepo(newsConfig.repoUrl.trim());
+    if (!parsed) {
+      setNewsStatus(prev => ({ ...prev, error: 'Invalid GitHub repository URL.', loading: false }));
+      return;
+    }
+
+    const headers: Record<string, string> = {
+      'Accept': 'application/vnd.github+json'
+    };
+    if (newsConfig.token) {
+      headers['Authorization'] = `Bearer ${newsConfig.token}`;
+    }
+
+    setNewsStatus(prev => ({ ...prev, loading: true, error: manual ? '' : prev.error }));
+    try {
+      const cleanPath = (newsConfig.basePath || '').replace(/^\/+/, '').replace(/\/+$/, '');
+      const pathPart = cleanPath ? `/contents/${encodeURI(cleanPath)}` : '/contents';
+      const branch = newsConfig.branch || 'main';
+      const listUrl = `https://api.github.com/repos/${parsed.owner}/${parsed.repo}${pathPart}?ref=${encodeURIComponent(branch)}`;
+      const listRes = await fetch(listUrl, { headers });
+      if (!listRes.ok) {
+        throw new Error(`List failed (${listRes.status})`);
+      }
+      const listJson = await listRes.json();
+      const entries = Array.isArray(listJson) ? listJson : [listJson];
+      const mdFiles = entries.filter((f: any) => f && f.type === 'file' && typeof f.name === 'string' && f.name.toLowerCase().endsWith('.md'));
+      mdFiles.sort((a: any, b: any) => b.name.localeCompare(a.name));
+      const limited = mdFiles.slice(0, 25);
+
+      const collected: NewsDay[] = [];
+      for (const file of limited) {
+        const rawUrl = `https://raw.githubusercontent.com/${parsed.owner}/${parsed.repo}/${encodeURIComponent(branch)}/${encodeURI(file.path)}`;
+        const rawRes = await fetch(rawUrl, { headers });
+        if (!rawRes.ok) continue;
+        const text = await rawRes.text();
+        const parsedDay = parseNewsMarkdown(file.path, text);
+        if (parsedDay) collected.push(parsedDay);
+      }
+
+      if (!collected.length) {
+        throw new Error('No markdown news files found.');
+      }
+
+      setNewsItems(collected);
+      const fetchedAt = new Date().toISOString();
+      setNewsStatus({ loading: false, error: '', lastFetched: fetchedAt });
+      localStorage.setItem(NEWS_CACHE_KEY, JSON.stringify(collected));
+      localStorage.setItem(NEWS_LAST_FETCHED_KEY, fetchedAt);
+    } catch (err: any) {
+      setNewsStatus(prev => ({ ...prev, loading: false, error: err?.message || 'Unable to fetch news.' }));
+    }
+  }, [newsConfig]);
+
+  useEffect(() => {
+    refreshNews(false);
+  }, [refreshNews]);
 
   const confirmAction = (save: boolean) => {
     if (save) {
@@ -2104,7 +2289,7 @@ function EmeraldTimer() {
         />
       )}
 
-      {!isMiniMode && !wasMiniModeBeforeModal && !isAndroid && (
+      {!isMiniMode && !wasMiniModeBeforeModal && (
         <header 
           className={`w-full h-12 flex justify-between items-center px-4 flex-shrink-0 ${isDarkMode ? 'bg-zinc-950/40 border-b border-white/5' : 'bg-white/40 border-b border-white/20'} backdrop-blur-xl relative z-[60] animate-in fade-in slide-in-from-top-12 duration-500 ease-out`} 
           style={{ WebkitAppRegion: 'drag', transform: 'translateZ(0)' } as any}
@@ -2120,6 +2305,10 @@ function EmeraldTimer() {
           <div className="flex items-center gap-1.5" style={{ WebkitAppRegion: 'no-drag' } as any}>
             <button onClick={() => setIsMiniMode(true)} className={`p-1.5 ${isDarkMode ? 'bg-zinc-900 border-white/5 text-emerald-400 hover:bg-zinc-800' : 'bg-white border-emerald-100 text-emerald-600 hover:bg-emerald-600 hover:text-white'} rounded-lg border flex items-center gap-2 text-xs font-bold shadow-sm transition-all active:scale-95`}>
               <Minimize2 size={14} /> <span className="hidden lg:inline">Mini Mode</span>
+            </button>
+
+            <button onClick={() => setActiveTab('settings')} className={`p-1.5 ${isDarkMode ? 'bg-zinc-900 border-white/5 text-emerald-300 hover:bg-zinc-800' : 'bg-white border-emerald-100 text-emerald-700 hover:bg-emerald-600 hover:text-white'} rounded-lg border flex items-center gap-2 text-xs font-bold shadow-sm transition-all active:scale-95`}>
+              <Settings size={14} /> <span className="hidden lg:inline">Settings</span>
             </button>
 
             {/* Window Controls Group - Hide on Android */}
@@ -2184,6 +2373,19 @@ function EmeraldTimer() {
             className={`flex-1 overflow-y-auto scrollbar-none relative flex flex-col ${isAndroid ? 'pb-24' : 'pb-12'}`}
             style={{ zoom: (isMiniMode || isAndroid) ? 1.0 : uiScale } as any}
           >
+            {activeTab === 'news' && (
+              <div className="flex-1 p-4 md:p-6 scrollbar-none animate-in fade-in duration-200">
+                <NewsBoard 
+                  darkMode={isDarkMode}
+                  newsItems={newsItems}
+                  loading={newsStatus.loading}
+                  error={newsStatus.error}
+                  lastFetched={newsStatus.lastFetched}
+                  onRefresh={() => refreshNews(true)}
+                />
+              </div>
+            )}
+
             {activeTab === 'timer' && (
               <div className="flex flex-1 w-full overflow-hidden relative animate-in fade-in duration-200">
                 <div className={`flex-1 flex flex-col items-center justify-center transition-all duration-500 ease-in-out ${isJournalOpen ? 'md:mr-[400px]' : 'mr-0'}`}>
@@ -2342,6 +2544,10 @@ function EmeraldTimer() {
                   setThemePreference={setThemePreference}
                   autoContinueLog={autoContinueLog}
                   setAutoContinueLog={setAutoContinueLog}
+                  newsConfig={newsConfig}
+                  setNewsConfig={setNewsConfig}
+                  newsStatus={newsStatus}
+                  refreshNews={() => refreshNews(true)}
                   isPage={true}
                   isAndroid={isAndroid}
                 />
@@ -2363,10 +2569,10 @@ function EmeraldTimer() {
           >
             <div className={`flex w-full max-w-5xl items-center justify-between gap-1.5 ${navInnerPadding}`}>
               {[
+                { id: 'news', icon: BookOpen, label: 'News' },
                 { id: 'timer', icon: Play, label: 'Focus' },
                 { id: 'stats', icon: BarChart3, label: 'Analytics' },
-                { id: 'logs', icon: Clock, label: 'History' },
-                { id: 'settings', icon: Settings, label: 'Settings' }
+                { id: 'logs', icon: Clock, label: 'History' }
               ].map(tab => (
                 <button 
                   key={tab.id} 
