@@ -8,6 +8,7 @@ contextBridge.exposeInMainWorld('electron', {
     ipcRenderer.on('mini-dock-state', listener);
     return () => ipcRenderer.removeListener('mini-dock-state', listener);
   },
+  requestMiniDockRestore: (payload) => ipcRenderer.send('mini-dock-restore', payload),
   requestMiniDockExpand: () => ipcRenderer.send('mini-dock-expand'),
   requestMiniDockCollapse: () => ipcRenderer.send('mini-dock-collapse'),
   requestMiniDockUndock: () => ipcRenderer.send('mini-dock-undock')

@@ -2,6 +2,19 @@
 
 All notable changes to the Emerald Timer project will be documented in this file.
 
+## [1.6.0] - 2026-03-07
+
+### 🚀 Mini Mode & Desktop Experience 
+- **Smart Docking Interaction**: 
+  - **Interaction-based Undocking**: Clicking anywhere on the expanded component (except buttons) now undocks it from the screen edge for more intuitive manual positioning.
+  - **Protected Button Zones**: Clicking timer controls (Play/Pause/Stop) no longer triggers accidental undocking, keeping the dock stable during active use.
+  - **Auto-Restore State**: The application now intelligently remembers and restores its dock state after closing setting modals or session popups.
+- **Visual & Performance**:
+  - **Cross-Platform Assets**: Fixed a critical issue where images (Logo, Play icons) failed to load in the Electron environment due to absolute pathing; migrated all internal assets to local relative paths.
+  - **Layout Refinement**: Relocated overtime counters in Mini Mode to prevent UI overlap with task names, ensuring clear readability during long sessions.
+- **Session Management**:
+  - **Dynamic Time Adjustments**: Changing session durations while a timer is active now offers a smart choice: restart the session or continue with elapsed time preserved (if valid).
+
 ## [1.5.0] - 2026-02-27
 
 ### 📊 Interactive Stats & Visual Polish

@@ -65,6 +65,17 @@ function createWindow() {
     const workArea = display.workArea;
 
     if (miniDockMode === 'expanded') {
+      // Check if the window is actually being dragged (position changed significantly)
+      const dockX = miniDockSide === 'left' ? workArea.x : workArea.x + workArea.width - bounds.width;
+      const expectedX = dockX;
+      const deltaX = Math.abs(bounds.x - expectedX);
+      
+      // If dragged away from dock position, undock
+      if (deltaX > 10) {
+        undockMini();
+        return;
+      }
+      
       miniExpandedBounds = bounds;
       return;
     }
@@ -355,6 +366,18 @@ ipcMain.on('mini-dock-collapse', () => {
 
 ipcMain.on('mini-dock-undock', () => {
   undockMini();
+});
+
+ipcMain.on('mini-dock-restore', (_event, payload) => {
+  if (!mainWindow || !isCurrentlyMini || !payload || !payload.side) return;
+  const side = payload.side === 'right' ? 'right' : 'left';
+  const mode = payload.mode === 'expanded' ? 'expanded' : 'peek';
+  dockMiniToSide(side);
+  if (mode === 'expanded') {
+    setTimeout(() => {
+      expandMiniDock();
+    }, 140);
+  }
 });
 
 app.whenReady().then(() => {

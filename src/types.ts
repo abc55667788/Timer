@@ -151,4 +151,4 @@ export const DEFAULT_CATEGORIES: CategoryData[] = [
 
 export const CATEGORIES = DEFAULT_CATEGORIES.map(c => c.name);
 
-export const APP_LOGO = 'logo.png';
+export const APP_LOGO = './logo.png';

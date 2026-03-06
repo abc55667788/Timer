@@ -1,6 +1,6 @@
-﻿import React from 'react';
+﻿import React, { useRef, useEffect } from 'react';
 import { 
-  Maximize2, Edit3, Square, Coffee, Briefcase, RotateCcw, Pause, Play, Library, ChevronLeft, ChevronRight, Settings
+  Maximize2, Edit3, Square, Coffee, Briefcase, RotateCcw, Pause, Play, ChevronLeft, ChevronRight, Settings
 } from 'lucide-react';
 import { TimerPhase, Task } from '../types';
 
@@ -64,14 +64,55 @@ const MiniMode: React.FC<MiniModeProps> = ({
   const isDockPeek = miniDockState.mode === 'peek';
   const isDockExpanded = miniDockState.mode === 'expanded';
   const dockArrow = miniDockState.side === 'left' ? ChevronRight : ChevronLeft;
+  
+  const collapseTimerRef = useRef<number | null>(null);
+  
+  const handleExpandHover = () => {
+    if (collapseTimerRef.current) {
+      clearTimeout(collapseTimerRef.current);
+      collapseTimerRef.current = null;
+    }
+    onDockExpand();
+  };
+
+  const handleExpandLeave = () => {
+    if (collapseTimerRef.current) {
+      clearTimeout(collapseTimerRef.current);
+    }
+    collapseTimerRef.current = window.setTimeout(() => {
+      onDockCollapse();
+    }, 200);
+  };
+
+  const handleExpandedContainerClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (!isDockExpanded) return;
+    const target = event.target as HTMLElement | null;
+    if (target?.closest('button')) return;
+    onDockUndock();
+  };
+  
+  useEffect(() => {
+    if (miniDockState.mode !== 'expanded' && collapseTimerRef.current) {
+      clearTimeout(collapseTimerRef.current);
+      collapseTimerRef.current = null;
+    }
+  }, [miniDockState.mode]);
+
+  useEffect(() => {
+    return () => {
+      if (collapseTimerRef.current) {
+        clearTimeout(collapseTimerRef.current);
+      }
+    };
+  }, []);
 
   if (isDockPeek) {
     const DockIcon = dockArrow;
     return (
       <div
         className={`w-full h-full max-w-full max-h-full ${bgClass} flex items-center justify-center z-40 overflow-hidden select-none rounded-[1rem] border`}
-        style={{ WebkitAppRegion: 'drag', transform: 'translateZ(0)' } as any}
-        onMouseEnter={onDockExpand}
+        style={{ WebkitAppRegion: 'no-drag', transform: 'translateZ(0)' } as any}
+        onMouseEnter={handleExpandHover}
         onClick={onDockUndock}
       >
         <button
@@ -86,11 +127,19 @@ const MiniMode: React.FC<MiniModeProps> = ({
   }
 
   return (
-    <div 
-      className={`w-full h-full max-w-full max-h-full ${bgClass} flex flex-col z-40 overflow-hidden select-none rounded-[1.5rem] border`} 
-      style={{ WebkitAppRegion: 'drag', transform: 'translateZ(0)' } as any}
-      onMouseLeave={isDockExpanded ? onDockCollapse : undefined}
-    >
+    <>
+      <div 
+        className={`w-full h-full max-w-full max-h-full ${bgClass} flex flex-col z-40 overflow-hidden select-none rounded-[1.5rem] border`} 
+        style={{ WebkitAppRegion: 'drag', transform: 'translateZ(0)' } as any}
+        onMouseEnter={() => {
+          if (collapseTimerRef.current) {
+            clearTimeout(collapseTimerRef.current);
+            collapseTimerRef.current = null;
+          }
+        }}
+        onMouseLeave={isDockExpanded ? handleExpandLeave : undefined}
+        onClick={handleExpandedContainerClick}
+      >
       <div className="flex-1 flex items-center px-4 md:px-6">
         <div className="flex items-center justify-between w-full h-full">
           <div className="flex flex-col flex-1 min-w-0 animate-in fade-in slide-in-from-left-2 duration-200">
@@ -107,19 +156,18 @@ const MiniMode: React.FC<MiniModeProps> = ({
                 <Maximize2 size={13} strokeWidth={2.5} />
               </button>
             </div>
-            <div className="flex items-baseline gap-1 flex-wrap-0 whitespace-nowrap">
+            <div className="flex items-baseline gap-1 whitespace-nowrap">
               <span className={`${displayTime >= 3600 ? 'text-2xl' : 'text-3xl'} font-mono font-black ${textClass} tabular-nums tracking-tighter leading-none mb-1 whitespace-nowrap`}>
                 {formatTime(displayTime)}
               </span>
-              {isOvertime && (
-                <span className={`text-[10px] ${darkMode ? 'text-orange-400' : 'text-orange-600'} font-black ml-1 whitespace-nowrap animate-pulse`}>
-                  +{formatTime(overtimeSeconds)}
-                </span>
-              )}
             </div>
+            {isOvertime && (
+              <div className={`text-[10px] ${darkMode ? 'text-orange-400' : 'text-orange-600'} font-black leading-none whitespace-nowrap animate-pulse -mt-0.5`}>
+                +{formatTime(overtimeSeconds)}
+              </div>
+            )}
           </div>
           <div className="flex gap-3 flex-shrink-0 ml-4" style={{ WebkitAppRegion: 'no-drag' } as any}>
-             <button title="Journal Sidebar" onClick={() => { setIsMiniMode(false); setActiveTab('timer'); setIsJournalOpen(true); }} className={`p-2.5 rounded-2xl ${btnBgClass} backdrop-blur-md border shadow-sm transition-all duration-300`}><Library size={15} strokeWidth={2.5}/></button>
              <button title="Settings" onClick={() => { setIsMiniMode(false); onOpenSettings(); }} className={`p-2.5 rounded-2xl ${btnBgClass} backdrop-blur-md border shadow-sm transition-all duration-300`}><Settings size={15} strokeWidth={2.5}/></button>
              <button onClick={() => setShowLoggingModal(true)} title="Quick Log" className={`p-2.5 rounded-2xl ${btnBgClass} backdrop-blur-md border shadow-sm transition-all duration-300`}><Edit3 size={15} strokeWidth={2.5}/></button>
              
@@ -159,7 +207,8 @@ const MiniMode: React.FC<MiniModeProps> = ({
       <div className={`w-full h-1 ${darkMode ? 'bg-white/5' : 'bg-white/20'} flex-shrink-0`}>
         <div className={`h-full transition-all duration-1000 ${phase === 'work' ? 'bg-emerald-500' : 'bg-orange-500'}`} style={{ width: `${(timeLeft / (phase === 'work' ? settings.workDuration : settings.restDuration)) * 100}%` }} />
       </div>
-    </div>
+      </div>
+    </>
   );
 };
 

@@ -15,10 +15,10 @@ import MiniCalendar from '../MiniCalendar';
 import { WeeklyTimelineView } from '../Logs';
 import cutePlaceholderImage from '../../../assets/icon-only.png';
 
-const YEAR_FALLBACK_IMAGE = '/timer-play.png';
-const MONTH_FALLBACK_IMAGE = '/timer-play.png';
-const WEEK_FALLBACK_IMAGE = '/timer-play.png';
-const DEFAULT_FALLBACK_IMAGE = '/timer-play.png';
+const YEAR_FALLBACK_IMAGE = './timer-play.png';
+const MONTH_FALLBACK_IMAGE = './timer-play.png';
+const WEEK_FALLBACK_IMAGE = './timer-play.png';
+const DEFAULT_FALLBACK_IMAGE = './timer-play.png';
 
 interface StatsBoardProps {
   logs: LogEntry[];

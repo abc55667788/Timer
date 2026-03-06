@@ -10,7 +10,7 @@ import {
   YAxis,
   Tooltip,
 } from 'recharts';
-import { CategoryData, EventProject, LogEntry } from '../../types';
+import { APP_LOGO, CategoryData, EventProject, LogEntry } from '../../types';
 import { formatDate, formatTime } from '../../utils/time';
 import { compressImage } from '../../utils/media';
 import DatePicker from '../DatePicker';
@@ -87,7 +87,7 @@ const EventsBoard: React.FC<EventsBoardProps> = ({
     },
   ] as const;
 
-  const publicPreviewImages = ['/timer-play.png', '/timer-read.png', '/timer-run.png', '/timer-coding.png'];
+  const publicPreviewImages = ['./timer-play.png', './timer-read.png', './timer-run.png', './timer-coding.png'];
   const getTodayDateInput = () => formatDate(Date.now());
   const [showNewEventModal, setShowNewEventModal] = useState(false);
   const [editingEventId, setEditingEventId] = useState<string | null>(null);
@@ -607,7 +607,7 @@ const EventsBoard: React.FC<EventsBoardProps> = ({
         <div className={`absolute -top-8 -right-10 w-44 h-44 rounded-full blur-3xl ${darkMode ? 'bg-emerald-500/20' : 'bg-emerald-200/70'}`} />
         <div className={`absolute -bottom-10 -left-8 w-40 h-40 rounded-full blur-3xl ${darkMode ? 'bg-blue-500/10' : 'bg-blue-100/80'}`} />
         <div className="relative flex flex-col md:flex-row md:items-center gap-4 md:gap-6">
-          <img src="/logo.png" alt="Events" className={`w-14 h-14 rounded-2xl object-cover border ${darkMode ? 'border-white/10 bg-black/40' : 'border-emerald-100 bg-white'} p-1`} />
+          <img src={APP_LOGO} alt="Events" className={`w-14 h-14 rounded-2xl object-cover border ${darkMode ? 'border-white/10 bg-black/40' : 'border-emerald-100 bg-white'} p-1`} />
           <div className="flex-1">
             <h2 className={`text-base md:text-lg font-black tracking-tight flex items-center gap-2 ${darkMode ? 'text-emerald-200' : 'text-emerald-800'}`}>
               <Sparkles size={16} /> Event Analytics
@@ -658,7 +658,7 @@ const EventsBoard: React.FC<EventsBoardProps> = ({
       <div className={`rounded-[2rem] border p-4 ${darkMode ? 'bg-zinc-900 border-white/5' : 'bg-white border-emerald-100 shadow-sm'}`}>
         <div className="flex items-center justify-between gap-3 mb-3">
           <div className="flex items-center gap-3 min-w-0">
-            <img src="/timer-play.png" alt="chart" className={`w-10 h-10 rounded-xl object-cover border ${darkMode ? 'border-white/10' : 'border-emerald-100'}`} />
+            <img src="./timer-play.png" alt="chart" className={`w-10 h-10 rounded-xl object-cover border ${darkMode ? 'border-white/10' : 'border-emerald-100'}`} />
             <Target size={16} className={darkMode ? 'text-emerald-400' : 'text-emerald-600'} />
             <h4 className={`text-sm font-black tracking-wide truncate ${darkMode ? 'text-emerald-200' : 'text-emerald-800'}`}>
               {chartView === 'trend' ? 'Centered 30-Day Window · Completed vs Expected' : 'Recurring Check-ins · Last 30 Days'}

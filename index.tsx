@@ -294,6 +294,12 @@ function EmeraldTimer() {
     }
   };
 
+  const requestMiniDockRestore = (payload: { side: 'left' | 'right'; mode: 'peek' | 'expanded' }) => {
+    if ((window as any).electron?.requestMiniDockRestore) {
+      (window as any).electron.requestMiniDockRestore(payload);
+    }
+  };
+
   // --- Window Resize for Mini Mode ---
   useEffect(() => {
     if ((window as any).electron) {
@@ -647,19 +653,42 @@ function EmeraldTimer() {
   const REMINDER_INTERVAL = 10 * 60;
   const [nextReminderAt, setNextReminderAt] = useState(REMINDER_INTERVAL);
   const [sessionStartTime, setSessionStartTime] = useState<number | null>(null);
-  const [pendingSettingsChange, setPendingSettingsChange] = useState<{ workDuration: number; restDuration: number } | null>(null);
+  const [pendingSettingsChange, setPendingSettingsChange] = useState<{
+    workDuration: number;
+    restDuration: number;
+    mode: 'restart-only' | 'save-or-continue';
+    elapsed: number;
+    phase: TimerPhase;
+  } | null>(null);
+  const pendingDockRestoreRef = useRef<{ side: 'left' | 'right'; mode: 'peek' | 'expanded' } | null>(null);
 
   // Exit mini mode when opening modals or editing, and restore it when done
   useEffect(() => {
     const isAnyModalOpen = !!(showLoggingModal || showManualModal || showConfirmModal || showLogContinuationPrompt || viewingLog || phasePrompt || showInspirationModal || pendingSettingsChange);
     if (isMiniMode && isAnyModalOpen) {
+      if (miniDockState.mode !== 'none' && miniDockState.side) {
+        pendingDockRestoreRef.current = {
+          side: miniDockState.side,
+          mode: miniDockState.mode === 'expanded' ? 'expanded' : 'peek'
+        };
+      }
       setWasMiniModeBeforeModal(true);
       setIsMiniMode(false);
     } else if (!isAnyModalOpen && wasMiniModeBeforeModal) {
       setIsMiniMode(true);
       setWasMiniModeBeforeModal(false);
     }
-  }, [showLoggingModal, showManualModal, showConfirmModal, showLogContinuationPrompt, viewingLog, phasePrompt, showInspirationModal, pendingSettingsChange, isMiniMode, wasMiniModeBeforeModal]);
+  }, [showLoggingModal, showManualModal, showConfirmModal, showLogContinuationPrompt, viewingLog, phasePrompt, showInspirationModal, pendingSettingsChange, isMiniMode, wasMiniModeBeforeModal, miniDockState.mode, miniDockState.side]);
+
+  useEffect(() => {
+    if (!isMiniMode || !pendingDockRestoreRef.current) return;
+    const target = pendingDockRestoreRef.current;
+    pendingDockRestoreRef.current = null;
+    const timer = window.setTimeout(() => {
+      requestMiniDockRestore(target);
+    }, 120);
+    return () => window.clearTimeout(timer);
+  }, [isMiniMode]);
 
   const timerRef = useRef<number | null>(null);
   const timelineRef = useRef<HTMLDivElement>(null);
@@ -1191,15 +1220,49 @@ function EmeraldTimer() {
     }
 
     if (isCurrentlyRecording) {
-      setPendingSettingsChange(newSettings);
+      const currentPhaseDuration = phase === 'work' ? settings.workDuration : settings.restDuration;
+      const elapsed = Math.max(0, (currentPhaseDuration - timeLeft) + overtimeSeconds);
+      const newPhaseDuration = phase === 'work' ? newSettings.workDuration : newSettings.restDuration;
+      const mode: 'restart-only' | 'save-or-continue' = newPhaseDuration < elapsed ? 'restart-only' : 'save-or-continue';
+      setPendingSettingsChange({
+        ...newSettings,
+        mode,
+        elapsed,
+        phase,
+      });
       return;
     }
     applySettingsChange(newSettings);
   };
 
-  const handleSettingsSaveDecision = (shouldSave: boolean) => {
-    if (shouldSave && pendingSettingsChange) {
+  const handleSettingsSaveDecision = (decision: 'restart' | 'continue' | 'cancel') => {
+    if (!pendingSettingsChange) return;
+    if (decision === 'restart') {
       applySettingsChange(pendingSettingsChange);
+      return;
+    }
+    if (decision === 'continue') {
+      const nextSettings = {
+        workDuration: pendingSettingsChange.workDuration,
+        restDuration: pendingSettingsChange.restDuration,
+      };
+      const activePhase = pendingSettingsChange.phase;
+      const newPhaseDuration = activePhase === 'work' ? nextSettings.workDuration : nextSettings.restDuration;
+      const elapsed = pendingSettingsChange.elapsed;
+      const remaining = Math.max(0, newPhaseDuration - elapsed);
+
+      setSettings(nextSettings);
+      setPhase(activePhase);
+      setTimeLeft(remaining);
+      setIsOvertime(elapsed >= newPhaseDuration);
+      setOvertimeSeconds(elapsed >= newPhaseDuration ? elapsed - newPhaseDuration : 0);
+      setIsActive(true);
+      setIsPausedBySettings(false);
+      setShowConfirmModal(null);
+      setTempWorkMin((nextSettings.workDuration / 60).toString());
+      setTempRestMin((nextSettings.restDuration / 60).toString());
+      setPendingSettingsChange(null);
+      showNotice('Settings saved, session continued with elapsed time preserved.');
       return;
     }
     setPendingSettingsChange(null);
