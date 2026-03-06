@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { 
   History, Settings, PanelLeftOpen, PanelLeftClose, LayoutGrid, BarChart, 
   ZoomOut, ZoomIn, ExternalLink, Image as ImageIcon, Link as LinkIcon,
@@ -6,7 +6,8 @@ import {
 } from 'lucide-react';
 import { 
   PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip,
-  BarChart as ReBarChart, Bar, XAxis, YAxis, CartesianGrid, Legend, Tooltip
+  BarChart as ReBarChart, Bar, XAxis, YAxis, CartesianGrid, Legend, Tooltip,
+  AreaChart as ReAreaChart, Area
 } from 'recharts';
 import { LogEntry, StatsView, ViewMode, Category } from '../../types';
 import { formatTime, formatClock, formatDate, formatDisplayDateString, resolvePhaseTotals } from '../../utils/time';
@@ -110,12 +111,123 @@ const StatsBoard: React.FC<StatsBoardProps> = ({
   isAndroid,
   darkMode,
 }) => {
+  const toHours = (seconds: number) => Number((seconds / 3600).toFixed(2));
+  const formatHourTick = (value: number) => `${value}h`;
+
   const getTimelineWidth = (zoom: number) => {
     return Math.max(800, ((timelineRange.end - timelineRange.start) / 60000) * 1.5 * zoom + 120);
   };
 
   const [isZoomToolExpanded, setIsZoomToolExpanded] = useState(false);
   const zoomToolRef = useRef<HTMLDivElement>(null);
+
+  const tagLineCategories = useMemo(() => {
+    const set = new Set<string>();
+    relevantLogs.forEach(log => {
+      if (log.category && log.category !== 'Untagged') set.add(log.category);
+    });
+    return Array.from(set);
+  }, [relevantLogs]);
+
+  const tagDailyLineData = useMemo(() => {
+    const dayMap = new Map<string, Record<string, string | number>>();
+    const baseDate = new Date(selectedStatsDate);
+    const startOfWeek = new Date(baseDate);
+    startOfWeek.setDate(baseDate.getDate() - baseDate.getDay());
+    startOfWeek.setHours(0, 0, 0, 0);
+
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(startOfWeek);
+      d.setDate(startOfWeek.getDate() + i);
+      const key = formatDate(d.getTime());
+      const name = key.slice(5).replace('-', '/');
+      dayMap.set(key, { key, name });
+    }
+
+    relevantLogs.forEach(log => {
+      const key = formatDate(log.startTime);
+      const name = key.slice(5).replace('-', '/');
+      const current = dayMap.get(key) || { key, name };
+      const currentValue = typeof current[log.category] === 'number' ? (current[log.category] as number) : 0;
+      current[log.category] = currentValue + toHours(resolvePhaseTotals(log).total);
+      dayMap.set(key, current);
+    });
+
+    const sorted = Array.from(dayMap.values()).sort((a, b) => {
+      const aKey = String(a.key || '');
+      const bKey = String(b.key || '');
+      return aKey.localeCompare(bKey);
+    });
+
+    return sorted.map((row) => {
+      const next: Record<string, string | number> = { name: row.name || '' };
+      tagLineCategories.forEach(cat => {
+        next[cat] = typeof row[cat] === 'number' ? (row[cat] as number) : 0;
+      });
+      return next;
+    });
+  }, [relevantLogs, tagLineCategories, selectedStatsDate]);
+
+  const tagWeeklyLineData = useMemo(() => {
+    const weekMap = new Map<number, Record<string, string | number>>();
+    const date = new Date(selectedStatsDate);
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const monthStart = new Date(year, month, 1);
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const startOffset = monthStart.getDay();
+    const weeksInMonth = Math.ceil((startOffset + daysInMonth) / 7);
+
+    for (let i = 1; i <= weeksInMonth; i++) {
+      weekMap.set(i, { week: i, name: `W${i}` });
+    }
+
+    relevantLogs.forEach(log => {
+      const currentDate = new Date(log.startTime);
+      const dayOfMonth = currentDate.getDate();
+      const weekIndex = Math.floor((startOffset + dayOfMonth - 1) / 7) + 1;
+      const current = weekMap.get(weekIndex) || { week: weekIndex, name: `W${weekIndex}` };
+      const currentValue = typeof current[log.category] === 'number' ? (current[log.category] as number) : 0;
+      current[log.category] = currentValue + toHours(resolvePhaseTotals(log).total);
+      weekMap.set(weekIndex, current);
+    });
+
+    const sorted = Array.from(weekMap.values()).sort((a, b) => Number(a.week || 0) - Number(b.week || 0));
+    return sorted.map((row) => {
+      const next: Record<string, string | number> = { name: row.name || '' };
+      tagLineCategories.forEach(cat => {
+        next[cat] = typeof row[cat] === 'number' ? (row[cat] as number) : 0;
+      });
+      return next;
+    });
+  }, [relevantLogs, tagLineCategories, selectedStatsDate]);
+
+  const tagMonthlyLineData = useMemo(() => {
+    const monthMap = new Map<number, Record<string, string | number>>();
+    for (let i = 0; i < 12; i++) {
+      const monthName = new Date(2000, i, 1).toLocaleString(undefined, { month: 'short' });
+      monthMap.set(i, { month: i, name: monthName });
+    }
+
+    relevantLogs.forEach(log => {
+      const date = new Date(log.startTime);
+      const monthIndex = date.getMonth();
+      const monthName = date.toLocaleString(undefined, { month: 'short' });
+      const current = monthMap.get(monthIndex) || { month: monthIndex, name: monthName };
+      const currentValue = typeof current[log.category] === 'number' ? (current[log.category] as number) : 0;
+      current[log.category] = currentValue + toHours(resolvePhaseTotals(log).total);
+      monthMap.set(monthIndex, current);
+    });
+
+    const sorted = Array.from(monthMap.values()).sort((a, b) => Number(a.month || 0) - Number(b.month || 0));
+    return sorted.map((row) => {
+      const next: Record<string, string | number> = { name: row.name || '' };
+      tagLineCategories.forEach(cat => {
+        next[cat] = typeof row[cat] === 'number' ? (row[cat] as number) : 0;
+      });
+      return next;
+    });
+  }, [relevantLogs, tagLineCategories]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -878,7 +990,7 @@ const StatsBoard: React.FC<StatsBoardProps> = ({
                   </div>
                </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-20">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 pb-20">
                  <div className={`${darkMode ? 'bg-zinc-900 border-white/10 backdrop-blur-xl' : 'bg-white border-emerald-50'} p-6 rounded-[2.5rem] border h-[360px] shadow-sm flex flex-col relative overflow-hidden group ring-1 ${darkMode ? 'ring-white/5' : 'ring-emerald-50/50'}`}>
                    <h3 className={`text-sm font-black mb-4 ${darkMode ? 'text-white' : 'text-emerald-800'} uppercase tracking-widest relative z-10 flex items-center gap-2`}><div className={`w-1.5 h-4 ${darkMode ? 'bg-emerald-500' : 'bg-emerald-600'} rounded-full`}/> Category Breakdown</h3>
                    {statsData.length > 0 ? (
@@ -904,13 +1016,14 @@ const StatsBoard: React.FC<StatsBoardProps> = ({
                         ) : <div className={`h-full flex items-center justify-center ${darkMode ? 'text-emerald-400/70' : 'text-emerald-500'} font-bold tracking-tight`}>No Activity</div>}
                  </div>
                  <div className={`${darkMode ? 'bg-zinc-900 border-white/10 backdrop-blur-xl' : 'bg-white border-emerald-50'} p-6 rounded-[2.5rem] border h-[360px] shadow-sm flex flex-col relative overflow-hidden group ring-1 ${darkMode ? 'ring-white/5' : 'ring-emerald-50/50'}`}>
-                   <h3 className={`text-sm font-black mb-4 ${darkMode ? 'text-white' : 'text-emerald-800'} uppercase tracking-widest relative z-10 flex items-center gap-2`}><div className={`w-1.5 h-4 ${darkMode ? 'bg-emerald-500' : 'bg-emerald-600'} rounded-full`}/> Time Spent (Min)</h3>
+                   <h3 className={`text-sm font-black mb-4 ${darkMode ? 'text-white' : 'text-emerald-800'} uppercase tracking-widest relative z-10 flex items-center gap-2`}><div className={`w-1.5 h-4 ${darkMode ? 'bg-emerald-500' : 'bg-emerald-600'} rounded-full`}/> Time Spent (Hours)</h3>
                    <ResponsiveContainer width="100%" height="100%">
                      <ReBarChart data={yearHistory}>
                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={darkMode ? '#ffffff10' : '#f1f5f9'} />
                        <XAxis dataKey="name" fontSize={12} fontWeight="black" axisLine={false} tickLine={false} tick={{fill: darkMode ? '#f8fafc' : '#0f172a', fontSize: 12, fontWeight: 900}} />
-                       <YAxis fontSize={12} fontWeight="black" axisLine={false} tickLine={false} tick={{fill: darkMode ? '#f8fafc' : '#0f172a', fontSize: 12, fontWeight: 900}} />
+                       <YAxis tickFormatter={formatHourTick} fontSize={12} fontWeight="black" axisLine={false} tickLine={false} tick={{fill: darkMode ? '#f8fafc' : '#0f172a', fontSize: 12, fontWeight: 900}} />
                        <RechartsTooltip 
+                         formatter={(value: number | string, name: string) => [`${Number(value).toFixed(2)}h`, name]}
                          cursor={{fill: darkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)', radius: 10}} 
                          contentStyle={{
                            borderRadius: '20px', 
@@ -922,10 +1035,52 @@ const StatsBoard: React.FC<StatsBoardProps> = ({
                          itemStyle={{ color: darkMode ? '#ffffff' : '#000000', fontWeight: '900', fontSize: '12px', textTransform: 'uppercase' }}
                          labelStyle={{ color: darkMode ? '#34d399' : '#059669', marginBottom: '4px', fontWeight: '900', fontSize: '10px', letterSpacing: '0.05em' }}
                        />
-                       <Bar dataKey="minutes" fill={darkMode ? '#10b981' : '#10b981'} radius={[8, 8, 8, 8]} barSize={24} />
+                       <Bar dataKey="hours" fill={darkMode ? '#10b981' : '#10b981'} radius={[8, 8, 8, 8]} barSize={24} />
                      </ReBarChart>
                    </ResponsiveContainer>
                  </div>
+                   <div className={`${darkMode ? 'bg-zinc-900 border-white/10 backdrop-blur-xl' : 'bg-white border-emerald-50'} p-6 rounded-[2.5rem] border h-[360px] shadow-sm flex flex-col relative overflow-hidden group ring-1 ${darkMode ? 'ring-white/5' : 'ring-emerald-50/50'}`}>
+                     <h3 className={`text-sm font-black mb-4 ${darkMode ? 'text-white' : 'text-emerald-800'} uppercase tracking-widest relative z-10 flex items-center gap-2`}><div className={`w-1.5 h-4 ${darkMode ? 'bg-emerald-500' : 'bg-emerald-600'} rounded-full`}/> Monthly by Tag (Hours)</h3>
+                     {tagMonthlyLineData.length > 0 ? (
+                       <ResponsiveContainer width="100%" height="100%">
+                         <ReAreaChart data={tagMonthlyLineData}>
+                           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={darkMode ? '#ffffff10' : '#f1f5f9'} />
+                           <XAxis dataKey="name" fontSize={12} fontWeight="black" axisLine={false} tickLine={false} tick={{fill: darkMode ? '#f8fafc' : '#0f172a', fontSize: 12, fontWeight: 900}} />
+                           <YAxis tickFormatter={formatHourTick} fontSize={12} fontWeight="black" axisLine={false} tickLine={false} tick={{fill: darkMode ? '#f8fafc' : '#0f172a', fontSize: 12, fontWeight: 900}} />
+                           <RechartsTooltip
+                             formatter={(value: number | string, name: string) => [`${Number(value).toFixed(2)}h`, name]}
+                             contentStyle={{
+                               borderRadius: '20px',
+                               border: darkMode ? '1px solid rgba(255,255,255,0.1)' : 'none',
+                               boxShadow: darkMode ? '0 25px 50px -12px rgba(0, 0, 0, 0.8)' : '0 25px 50px -12px rgba(0, 0, 0, 0.15)',
+                               padding: '12px 20px',
+                               backgroundColor: darkMode ? '#18181b' : '#ffffff'
+                             }}
+                             itemStyle={{ color: darkMode ? '#ffffff' : '#000000', fontWeight: '900', fontSize: '12px', textTransform: 'uppercase' }}
+                             labelStyle={{ color: darkMode ? '#34d399' : '#059669', marginBottom: '4px', fontWeight: '900', fontSize: '10px', letterSpacing: '0.05em' }}
+                           />
+                           <Legend layout="horizontal" verticalAlign="bottom" wrapperStyle={{fontSize: '12px', fontWeight: 900, paddingTop: '12px', color: darkMode ? '#f8fafc' : '#065f46'}} />
+                           {tagLineCategories.map(cat => (
+                             <Area
+                               key={cat}
+                               type="monotone"
+                               dataKey={cat}
+                               stroke={getCategoryColor(cat as Category)}
+                               strokeWidth={2.2}
+                               fill={getCategoryColor(cat as Category)}
+                               fillOpacity={0.22}
+                               dot={false}
+                               activeDot={{ r: 4 }}
+                             />
+                           ))}
+                         </ReAreaChart>
+                       </ResponsiveContainer>
+                     ) : (
+                       <div className={`h-full flex items-center justify-center ${darkMode ? 'text-emerald-400/70' : 'text-emerald-500'} font-bold tracking-tight`}>
+                         No Activity
+                       </div>
+                     )}
+                   </div>
               </div>
             </div>
           )}
@@ -1052,7 +1207,7 @@ const StatsBoard: React.FC<StatsBoardProps> = ({
                 </>
               )}
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                  <div className={`${darkMode ? 'bg-zinc-900 border-white/10 backdrop-blur-xl' : 'bg-white border-emerald-50'} p-5 rounded-[2.5rem] border h-[340px] shadow-sm flex flex-col relative overflow-hidden group`}>
                    <h3 className={`text-sm font-black mb-4 ${darkMode ? 'text-white' : 'text-emerald-800'} uppercase tracking-widest relative z-10 flex items-center gap-2`}><div className={`w-1.5 h-4 ${darkMode ? 'bg-emerald-500' : 'bg-emerald-600'} rounded-full`}/> Category Breakdown</h3>
                    {statsData.length > 0 ? (
@@ -1078,7 +1233,7 @@ const StatsBoard: React.FC<StatsBoardProps> = ({
                    ) : <div className={`h-full flex items-center justify-center ${darkMode ? 'text-emerald-500/20' : 'text-emerald-200'} font-bold tracking-tight`}>No Activity</div>}
                  </div>
                  <div className={`${darkMode ? 'bg-zinc-900 border-white/10 backdrop-blur-xl' : 'bg-white border-emerald-50'} p-5 rounded-[2.5rem] border h-[340px] shadow-sm flex flex-col relative overflow-hidden group`}>
-                   <h3 className={`text-sm font-black mb-4 ${darkMode ? 'text-white' : 'text-emerald-800'} uppercase tracking-widest relative z-10 flex items-center gap-2`}><div className={`w-1.5 h-4 ${darkMode ? 'bg-emerald-500' : 'bg-emerald-600'} rounded-full`}/> Time Spent (Min)</h3>
+                   <h3 className={`text-sm font-black mb-4 ${darkMode ? 'text-white' : 'text-emerald-800'} uppercase tracking-widest relative z-10 flex items-center gap-2`}><div className={`w-1.5 h-4 ${darkMode ? 'bg-emerald-500' : 'bg-emerald-600'} rounded-full`}/> Time Spent (Hours)</h3>
                    <ResponsiveContainer width="100%" height="100%">
                      <ReBarChart 
                        data={statsView === 'week' ? weekHistory : monthHistory}
@@ -1094,8 +1249,9 @@ const StatsBoard: React.FC<StatsBoardProps> = ({
                      >
                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={darkMode ? '#ffffff10' : '#f1f5f9'} />
                        <XAxis dataKey="name" fontSize={12} fontWeight="black" axisLine={false} tickLine={false} tick={{fill: darkMode ? '#f8fafc' : '#0f172a', fontSize: 12, fontWeight: 900}} />
-                       <YAxis fontSize={12} fontWeight="black" axisLine={false} tickLine={false} tick={{fill: darkMode ? '#f8fafc' : '#0f172a', fontSize: 12, fontWeight: 900}} />
+                       <YAxis tickFormatter={formatHourTick} fontSize={12} fontWeight="black" axisLine={false} tickLine={false} tick={{fill: darkMode ? '#f8fafc' : '#0f172a', fontSize: 12, fontWeight: 900}} />
                        <RechartsTooltip 
+                         formatter={(value: number | string, name: string) => [`${Number(value).toFixed(2)}h`, name]}
                          cursor={{fill: darkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)', radius: 10}} 
                          contentStyle={{
                            borderRadius: '20px', 
@@ -1107,9 +1263,51 @@ const StatsBoard: React.FC<StatsBoardProps> = ({
                          itemStyle={{ color: darkMode ? '#ffffff' : '#000000', fontWeight: '900', fontSize: '12px', textTransform: 'uppercase' }}
                          labelStyle={{ color: darkMode ? '#34d399' : '#059669', marginBottom: '4px', fontWeight: '900', fontSize: '10px', letterSpacing: '0.05em' }}
                        />
-                       <Bar dataKey="minutes" fill={darkMode ? '#10b981' : '#10b981'} radius={[8, 8, 8, 8]} barSize={20} className="cursor-pointer" />
+                       <Bar dataKey="hours" fill={darkMode ? '#10b981' : '#10b981'} radius={[8, 8, 8, 8]} barSize={20} className="cursor-pointer" />
                      </ReBarChart>
                    </ResponsiveContainer>
+                 </div>
+                 <div className={`${darkMode ? 'bg-zinc-900 border-white/10 backdrop-blur-xl' : 'bg-white border-emerald-50'} p-5 rounded-[2.5rem] border h-[340px] shadow-sm flex flex-col relative overflow-hidden group`}>
+                   <h3 className={`text-sm font-black mb-4 ${darkMode ? 'text-white' : 'text-emerald-800'} uppercase tracking-widest relative z-10 flex items-center gap-2`}><div className={`w-1.5 h-4 ${darkMode ? 'bg-emerald-500' : 'bg-emerald-600'} rounded-full`}/>{statsView === 'month' ? 'Weekly by Tag (Hours)' : 'Daily by Tag (Hours)'}</h3>
+                   {(statsView === 'month' ? tagWeeklyLineData : tagDailyLineData).length > 0 ? (
+                     <ResponsiveContainer width="100%" height="100%">
+                       <ReAreaChart data={statsView === 'month' ? tagWeeklyLineData : tagDailyLineData}>
+                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={darkMode ? '#ffffff10' : '#f1f5f9'} />
+                         <XAxis dataKey="name" fontSize={12} fontWeight="black" axisLine={false} tickLine={false} tick={{fill: darkMode ? '#f8fafc' : '#0f172a', fontSize: 12, fontWeight: 900}} />
+                         <YAxis tickFormatter={formatHourTick} fontSize={12} fontWeight="black" axisLine={false} tickLine={false} tick={{fill: darkMode ? '#f8fafc' : '#0f172a', fontSize: 12, fontWeight: 900}} />
+                         <RechartsTooltip
+                           formatter={(value: number | string, name: string) => [`${Number(value).toFixed(2)}h`, name]}
+                           contentStyle={{
+                             borderRadius: '20px',
+                             border: darkMode ? '1px solid rgba(255,255,255,0.1)' : 'none',
+                             boxShadow: darkMode ? '0 25px 50px -12px rgba(0, 0, 0, 0.8)' : '0 25px 50px -12px rgba(0, 0, 0, 0.15)',
+                             padding: '12px 20px',
+                             backgroundColor: darkMode ? '#18181b' : '#ffffff'
+                           }}
+                           itemStyle={{ color: darkMode ? '#ffffff' : '#000000', fontWeight: '900', fontSize: '12px', textTransform: 'uppercase' }}
+                           labelStyle={{ color: darkMode ? '#34d399' : '#059669', marginBottom: '4px', fontWeight: '900', fontSize: '10px', letterSpacing: '0.05em' }}
+                         />
+                         <Legend layout="horizontal" verticalAlign="bottom" wrapperStyle={{fontSize: '12px', fontWeight: 900, paddingTop: '12px', color: darkMode ? '#f8fafc' : '#065f46'}} />
+                         {tagLineCategories.map(cat => (
+                           <Area
+                             key={cat}
+                             type="monotone"
+                             dataKey={cat}
+                             stroke={getCategoryColor(cat as Category)}
+                             strokeWidth={2.2}
+                             fill={getCategoryColor(cat as Category)}
+                             fillOpacity={0.22}
+                             dot={false}
+                             activeDot={{ r: 4 }}
+                           />
+                         ))}
+                       </ReAreaChart>
+                     </ResponsiveContainer>
+                   ) : (
+                     <div className={`h-full flex items-center justify-center ${darkMode ? 'text-emerald-500/20' : 'text-emerald-200'} font-bold tracking-tight`}>
+                       No Activity
+                     </div>
+                   )}
                  </div>
               </div>
             </div>

@@ -1,7 +1,7 @@
 import React from 'react';
 import { 
   Clock, Filter as FilterIcon, Plus, Search, 
-  Link as LinkIcon, ExternalLink, Image as ImageIcon 
+  Link as LinkIcon, ExternalLink, Image as ImageIcon, Target
 } from 'lucide-react';
 import { LogEntry, Category, CategoryData } from '../../types';
 import { formatTime, formatDisplayDate } from '../../utils/time';
@@ -180,6 +180,12 @@ const LogsBoard: React.FC<LogsBoardProps> = ({
                 <h4 className={`font-black ${darkMode ? 'text-white group-hover:text-emerald-500' : 'text-emerald-950 group-hover:text-emerald-700'} leading-tight tracking-tight text-[15px] transition-colors line-clamp-2`}>
                   {log.description || 'Focus Session'}
                 </h4>
+                {log.eventName && (
+                  <div className={`mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[9px] font-black tracking-tight border ${darkMode ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-300' : 'bg-emerald-50 border-emerald-100 text-emerald-700'}`}>
+                    <Target size={10} />
+                    {log.eventName}
+                  </div>
+                )}
               </div>
 
               {/* Bottom Row: Images and Link */}

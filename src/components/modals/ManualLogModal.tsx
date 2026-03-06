@@ -1,16 +1,18 @@
 ﻿import React from 'react';
-import { X, Plus, Calendar, Clock, Edit3, Link as LinkIcon, ExternalLink, Copy } from 'lucide-react';
-import { Category, CategoryData, CATEGORY_ICONS } from '../../types';
+import { X, Plus, Edit3, Link as LinkIcon, Search } from 'lucide-react';
+import { Category, CategoryData, CATEGORY_ICONS, EventProject } from '../../types';
 import TimePicker from '../TimePicker';
 import DatePicker from '../DatePicker';
 
 interface ManualLogModalProps {
   wasMiniModeBeforeModal: boolean;
   isMiniMode: boolean;
-  manualLog: { category: Category; description: string; date: string; startTime: string; endTime: string; images: string[]; link?: string };
+  manualLog: { category: Category; description: string; date: string; startTime: string; endTime: string; images: string[]; link?: string; eventId?: string; eventName?: string };
   setManualLog: (log: any) => void;
   manualLogError: string | null;
   categories: CategoryData[];
+  eventProjects: EventProject[];
+  setEventProjects: (projects: EventProject[] | ((prev: EventProject[]) => EventProject[])) => void;
   handleImageUpload: (e: React.ChangeEvent<HTMLInputElement>, target: 'current' | 'manual' | 'edit') => void;
   saveManualLog: () => void;
   setShowManualModal: (show: boolean) => void;
@@ -26,6 +28,8 @@ const ManualLogModal: React.FC<ManualLogModalProps> = ({
   setManualLog,
   manualLogError,
   categories,
+  eventProjects,
+  setEventProjects,
   handleImageUpload,
   saveManualLog,
   setShowManualModal,
@@ -33,6 +37,58 @@ const ManualLogModal: React.FC<ManualLogModalProps> = ({
   setPreviewImage,
   darkMode
 }) => {
+  const [eventQuery, setEventQuery] = React.useState(manualLog.eventName || '');
+
+  React.useEffect(() => {
+    setEventQuery(manualLog.eventName || '');
+  }, [manualLog.eventId, manualLog.eventName]);
+
+  const normalizedQuery = eventQuery.trim().toLowerCase();
+  const filteredEvents = eventProjects.filter(project => {
+    if (!normalizedQuery) return true;
+    const tagText = project.tags.join(' ').toLowerCase();
+    return project.name.toLowerCase().includes(normalizedQuery) || tagText.includes(normalizedQuery);
+  }).slice(0, 8);
+
+  const exactMatchedEvent = eventProjects.find(project => project.name.trim().toLowerCase() === normalizedQuery);
+
+  const selectEvent = (project: EventProject) => {
+    const boundTag = (project.tags || [])[0];
+    setManualLog({ 
+      ...manualLog, 
+      category: boundTag || manualLog.category,
+      eventId: project.id, 
+      eventName: project.name 
+    });
+    setEventQuery(project.name);
+  };
+
+  const createEventFromQuery = () => {
+    const name = eventQuery.trim();
+    if (!name) return;
+    const existing = eventProjects.find(project => project.name.trim().toLowerCase() === name.toLowerCase());
+    if (existing) {
+      selectEvent(existing);
+      return;
+    }
+    const newEvent: EventProject = {
+      id: `evt_${Math.random().toString(36).slice(2, 10)}`,
+      name,
+      startAt: Date.now(),
+      tags: manualLog.category ? [manualLog.category] : [],
+      createdAt: Date.now(),
+    };
+    setEventProjects(prev => [newEvent, ...prev]);
+    // 直接更新 manualLog，避免依赖组件重绘
+    setManualLog(prev => ({
+      ...prev,
+      category: manualLog.category,
+      eventId: newEvent.id,
+      eventName: newEvent.name
+    }));
+    setEventQuery(newEvent.name);
+  };
+
   const CategoryPicker = () => (
     <div className="grid grid-cols-6 sm:grid-cols-8 gap-2">
       {categories.map((cat, idx) => {
@@ -115,6 +171,53 @@ const ManualLogModal: React.FC<ManualLogModalProps> = ({
                   </div>
                 </section>
               </div>
+
+              <section>
+                <label className={`text-[11px] font-bold tracking-tight block mb-2 pl-1 ${darkMode ? 'text-emerald-500/60' : 'text-emerald-600'}`}>Event Project</label>
+                <div className={`rounded-2xl border p-3 space-y-2 ${darkMode ? 'bg-zinc-800 border-white/5' : 'bg-emerald-50/40 border-emerald-100'}`}>
+                  <div className="relative">
+                    <Search size={14} className={`absolute left-3 top-1/2 -translate-y-1/2 ${darkMode ? 'text-zinc-500' : 'text-emerald-400'}`} />
+                    <input
+                      type="text"
+                      placeholder="Search or create event..."
+                      value={eventQuery}
+                      onChange={(e) => {
+                        setEventQuery(e.target.value);
+                        if (!e.target.value.trim()) {
+                          setManualLog({ ...manualLog, eventId: undefined, eventName: undefined });
+                        }
+                      }}
+                      className={`w-full border rounded-xl py-2.5 pl-9 pr-3 text-sm outline-none font-bold ${darkMode ? 'bg-zinc-900 border-white/5 text-white placeholder:text-zinc-600' : 'bg-white border-emerald-100 text-emerald-900 placeholder:text-emerald-300'}`}
+                    />
+                  </div>
+                  {filteredEvents.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {filteredEvents.map(project => {
+                        const selected = manualLog.eventId === project.id;
+                        return (
+                          <button
+                            key={project.id}
+                            onClick={() => selectEvent(project)}
+                            className={`px-3 py-1.5 rounded-full text-[11px] font-black tracking-tight transition-all border ${selected ? 'bg-emerald-600 text-white border-emerald-600' : (darkMode ? 'bg-zinc-900 text-zinc-300 border-white/10 hover:border-emerald-500/40' : 'bg-white text-emerald-700 border-emerald-100 hover:border-emerald-400')}`}
+                            type="button"
+                          >
+                            {project.name}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                  {!!normalizedQuery && !exactMatchedEvent && (
+                    <button
+                      onClick={createEventFromQuery}
+                      className={`w-full py-2 rounded-xl text-xs font-black tracking-wider uppercase transition-all ${darkMode ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/30' : 'bg-emerald-600 text-white hover:bg-emerald-700'}`}
+                      type="button"
+                    >
+                      Create Event “{eventQuery.trim()}”
+                    </button>
+                  )}
+                </div>
+              </section>
 
               <section>
                 <label className={`text-[11px] font-bold tracking-tight block mb-2 pl-1 ${darkMode ? 'text-emerald-500/60' : 'text-emerald-600'}`}>Notes</label>

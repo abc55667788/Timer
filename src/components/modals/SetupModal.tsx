@@ -3,7 +3,7 @@ import {
   X, Settings, Clock, Palette, Timer as TimerIcon, 
   AlertCircle, CheckCircle2, Globe, Key, Database, RefreshCw, 
   Download, Upload, Cloud, Plus, Trash, Check, Maximize2, Minus,
-  Bell, BellOff, User, Moon, Sun, Monitor
+  Bell, User, Moon, Sun, Monitor
 } from 'lucide-react';
 import { CategoryData, CATEGORY_ICONS, NotificationStatus, IconKey, ThemePreference } from '../../types';
 

@@ -2,6 +2,9 @@ import { useMemo } from 'react';
 import { LogEntry, StatsView, CategoryData } from '../types';
 import { formatDate, formatDisplayDateString } from '../utils/time';
 
+const UNTAGGED_CATEGORY = 'Untagged';
+const toHours = (seconds: number) => Number((seconds / 3600).toFixed(2));
+
 const useStats = (logs: LogEntry[], selectedStatsDate: string, statsView: StatsView, categories: CategoryData[]) => {
   const relevantLogs = useMemo(() => {
     return statsView === 'day' 
@@ -29,6 +32,7 @@ const useStats = (logs: LogEntry[], selectedStatsDate: string, statsView: StatsV
 
   const statsData = useMemo(() => {
     const categoryTotals: Record<string, number> = {};
+    const validCategoryNames = new Set(categories.map(cat => cat.name));
     categories.forEach(cat => {
       categoryTotals[cat.name] = 0;
     });
@@ -40,7 +44,7 @@ const useStats = (logs: LogEntry[], selectedStatsDate: string, statsView: StatsV
       const restDuration = log.phaseDurations ? (log.phaseDurations.rest || 0) : (log.category === 'Rest' ? duration : 0);
       const focusDuration = log.category === 'Rest' ? 0 : Math.max(0, duration - restDuration);
       
-      if (log.category !== 'Rest') {
+      if (log.category !== 'Rest' && log.category !== UNTAGGED_CATEGORY && validCategoryNames.has(log.category)) {
         categoryTotals[log.category] = (categoryTotals[log.category] || 0) + focusDuration;
       }
       categoryTotals['Rest'] = (categoryTotals['Rest'] || 0) + restDuration;
@@ -48,7 +52,7 @@ const useStats = (logs: LogEntry[], selectedStatsDate: string, statsView: StatsV
     
     return Object.entries(categoryTotals).map(([name, value]) => ({ name, value: Math.round(value / 60) }))
       .sort((a,b) => b.value - a.value);
-  }, [relevantLogs]);
+  }, [relevantLogs, categories]);
 
   const restTimeTotal = useMemo(() => {
     return relevantLogs.reduce((acc, log) => {
@@ -78,7 +82,7 @@ const useStats = (logs: LogEntry[], selectedStatsDate: string, statsView: StatsV
     return Object.entries(history).map(([name, value]) => ({ 
       name: name.split('-').slice(1).join('/'), 
       fullDate: name,
-      minutes: Math.round(value / 60) 
+      hours: toHours(value)
     }));
   }, [logs, selectedStatsDate]);
 
@@ -99,7 +103,7 @@ const useStats = (logs: LogEntry[], selectedStatsDate: string, statsView: StatsV
         history[d] += duration;
       }
     });
-    return Object.entries(history).map(([name, value]) => ({ name: name.split('-')[2], minutes: Math.round(value / 60) }));
+    return Object.entries(history).map(([name, value]) => ({ name: name.split('-')[2], hours: toHours(value) }));
   }, [logs, selectedStatsDate]);
 
   const yearHistory = useMemo(() => {
@@ -119,13 +123,14 @@ const useStats = (logs: LogEntry[], selectedStatsDate: string, statsView: StatsV
     const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
     return Object.entries(history).map(([month, value]) => ({ 
       name: monthNames[parseInt(month)], 
-      minutes: Math.round(value / 60) 
+      hours: toHours(value)
     }));
   }, [logs, selectedStatsDate]);
 
   const yearMonthStats = useMemo(() => {
     const date = new Date(selectedStatsDate);
     const year = date.getFullYear();
+    const validCategoryNames = new Set(categories.map(cat => cat.name));
     const months = [...Array(12)].map((_, m) => {
       const monthStart = new Date(year, m, 1);
       const monthEnd = new Date(year, m + 1, 0, 23, 59, 59, 999);
@@ -137,7 +142,7 @@ const useStats = (logs: LogEntry[], selectedStatsDate: string, statsView: StatsV
         const restDuration = l.phaseDurations ? (l.phaseDurations.rest || 0) : (l.category === 'Rest' ? duration : 0);
         const focusDuration = l.category === 'Rest' ? 0 : Math.max(0, duration - restDuration);
 
-        if (l.category !== 'Rest') {
+        if (l.category !== 'Rest' && l.category !== UNTAGGED_CATEGORY && validCategoryNames.has(l.category)) {
           totals[l.category] = (totals[l.category] || 0) + focusDuration;
         }
         totals['Rest'] = (totals['Rest'] || 0) + restDuration;
@@ -156,7 +161,7 @@ const useStats = (logs: LogEntry[], selectedStatsDate: string, statsView: StatsV
       };
     });
     return months;
-  }, [logs, selectedStatsDate]);
+  }, [logs, selectedStatsDate, categories]);
 
   const calendarGridData = useMemo(() => {
     const date = new Date(selectedStatsDate);

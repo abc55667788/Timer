@@ -3,6 +3,8 @@ const { app, BrowserWindow, ipcMain, screen } = require('electron');
 const path = require('path');
 
 let mainWindow;
+const MINI_PEEK_SIZE = 24;
+const MINI_DOCK_EDGE = 8;
 
 function createWindow() {
   const isDev = !app.isPackaged;
@@ -54,6 +56,47 @@ function createWindow() {
   if (isDev || process.env.DEBUG === 'true') {
     mainWindow.webContents.openDevTools();
   }
+
+  mainWindow.on('move', () => {
+    if (!isCurrentlyMini || !mainWindow || isDockingInProgress) return;
+
+    const bounds = mainWindow.getBounds();
+    const display = screen.getDisplayMatching(bounds);
+    const workArea = display.workArea;
+
+    if (miniDockMode === 'expanded') {
+      miniExpandedBounds = bounds;
+      return;
+    }
+
+    if (miniDockMode === 'peek') {
+      return;
+    }
+
+    miniExpandedBounds = bounds;
+
+    const nearLeft = bounds.x <= workArea.x + MINI_DOCK_EDGE;
+    const nearRight = bounds.x + bounds.width >= workArea.x + workArea.width - MINI_DOCK_EDGE;
+
+    if (dockCheckTimer) {
+      clearTimeout(dockCheckTimer);
+      dockCheckTimer = null;
+    }
+
+    if (nearLeft || nearRight) {
+      dockCheckTimer = setTimeout(() => {
+        if (!isCurrentlyMini || miniDockMode !== 'none') return;
+        const latest = mainWindow.getBounds();
+        const latestDisplay = screen.getDisplayMatching(latest);
+        const latestWorkArea = latestDisplay.workArea;
+        const stillNearLeft = latest.x <= latestWorkArea.x + MINI_DOCK_EDGE;
+        const stillNearRight = latest.x + latest.width >= latestWorkArea.x + latestWorkArea.width - MINI_DOCK_EDGE;
+        if (stillNearLeft || stillNearRight) {
+          dockMiniToSide(stillNearLeft ? 'left' : 'right');
+        }
+      }, 160);
+    }
+  });
 }
 
 // Global shortcut for opening devtools in production for debugging
@@ -69,6 +112,132 @@ let originalPosition = null;
 let originalWasMaximized = false; // Add this to remember if it was maximized
 let lastMiniPos = null; // mini 模式记忆位置（仅当前进程内生效）
 let isCurrentlyMini = false;
+let miniDockMode = 'none'; // 'none' | 'peek' | 'expanded'
+let miniDockSide = null; // 'left' | 'right'
+let miniExpandedBounds = null;
+let dockCheckTimer = null;
+let isDockingInProgress = false;
+
+const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
+
+const sendMiniDockState = () => {
+  if (mainWindow) {
+    mainWindow.webContents.send('mini-dock-state', {
+      mode: miniDockMode,
+      side: miniDockSide,
+      peekSize: MINI_PEEK_SIZE,
+    });
+  }
+};
+
+const setMiniDockMode = (mode, side = null) => {
+  miniDockMode = mode;
+  if (side) miniDockSide = side;
+  if (mode === 'none') {
+    miniDockSide = null;
+  }
+  sendMiniDockState();
+};
+
+const dockMiniToSide = (side) => {
+  if (!mainWindow) return;
+
+  if (dockCheckTimer) {
+    clearTimeout(dockCheckTimer);
+    dockCheckTimer = null;
+  }
+
+  const bounds = mainWindow.getBounds();
+  miniExpandedBounds = bounds;
+  miniDockSide = side;
+  miniDockMode = 'peek';
+
+  const display = screen.getDisplayMatching(bounds);
+  const workArea = display.workArea;
+  const x = side === 'left'
+    ? workArea.x
+    : workArea.x + workArea.width - MINI_PEEK_SIZE;
+  const y = clamp(bounds.y, workArea.y, workArea.y + workArea.height - bounds.height);
+
+  isDockingInProgress = true;
+  mainWindow.setBounds({ x, y, width: MINI_PEEK_SIZE, height: bounds.height }, false);
+  setTimeout(() => {
+    isDockingInProgress = false;
+  }, 100);
+  sendMiniDockState();
+};
+
+const expandMiniDock = () => {
+  if (!mainWindow || miniDockMode !== 'peek') return;
+
+  const current = mainWindow.getBounds();
+  const display = screen.getDisplayMatching(current);
+  const workArea = display.workArea;
+  const fallbackBounds = {
+    width: 360,
+    height: 110,
+    x: current.x,
+    y: current.y,
+  };
+  const target = miniExpandedBounds || fallbackBounds;
+  let x = target.x;
+  if (miniDockSide === 'left') {
+    x = workArea.x;
+  } else if (miniDockSide === 'right') {
+    x = workArea.x + workArea.width - target.width;
+  }
+  const y = clamp(target.y, workArea.y, workArea.y + workArea.height - target.height);
+
+  miniDockMode = 'expanded';
+  mainWindow.setBounds({ x, y, width: target.width, height: target.height }, false);
+  sendMiniDockState();
+};
+
+const collapseMiniDock = () => {
+  if (!mainWindow || miniDockMode !== 'expanded' || !miniDockSide) return;
+
+  const bounds = mainWindow.getBounds();
+  miniExpandedBounds = bounds;
+
+  const display = screen.getDisplayMatching(bounds);
+  const workArea = display.workArea;
+  const x = miniDockSide === 'left'
+    ? workArea.x
+    : workArea.x + workArea.width - MINI_PEEK_SIZE;
+  const y = clamp(bounds.y, workArea.y, workArea.y + workArea.height - bounds.height);
+
+  miniDockMode = 'peek';
+  isDockingInProgress = true;
+  mainWindow.setBounds({ x, y, width: MINI_PEEK_SIZE, height: bounds.height }, false);
+  setTimeout(() => {
+    isDockingInProgress = false;
+  }, 100);
+  sendMiniDockState();
+};
+
+const undockMini = () => {
+  if (!mainWindow) return;
+
+  const current = mainWindow.getBounds();
+  const display = screen.getDisplayMatching(current);
+  const workArea = display.workArea;
+  const fallbackBounds = {
+    width: 360,
+    height: 110,
+    x: current.x,
+    y: current.y,
+  };
+  const target = miniExpandedBounds || fallbackBounds;
+  const x = clamp(target.x, workArea.x, workArea.x + workArea.width - target.width);
+  const y = clamp(target.y, workArea.y, workArea.y + workArea.height - target.height);
+
+  isDockingInProgress = true;
+  mainWindow.setBounds({ x, y, width: target.width, height: target.height }, false);
+  setTimeout(() => {
+    isDockingInProgress = false;
+  }, 100);
+  setMiniDockMode('none');
+};
 
 ipcMain.on('window-control', (event, action) => {
   if (!mainWindow) return;
@@ -136,7 +305,12 @@ ipcMain.on('toggle-mini-mode', (event, isMini) => {
     mainWindow.setAlwaysOnTop(true, 'screen-saver');
     mainWindow.setResizable(false);
     isCurrentlyMini = true;
+    setMiniDockMode('none');
   } else {
+    if (dockCheckTimer) {
+      clearTimeout(dockCheckTimer);
+      dockCheckTimer = null;
+    }
     // 退出 mini 模式
     if (isCurrentlyMini) {
       // 在离开 mini 前记录当前位置，作为下次 mini 的记忆值
@@ -166,7 +340,21 @@ ipcMain.on('toggle-mini-mode', (event, isMini) => {
     }
 
     mainWindow.setAlwaysOnTop(false);
+    setMiniDockMode('none');
+    miniExpandedBounds = null;
   }
+});
+
+ipcMain.on('mini-dock-expand', () => {
+  expandMiniDock();
+});
+
+ipcMain.on('mini-dock-collapse', () => {
+  collapseMiniDock();
+});
+
+ipcMain.on('mini-dock-undock', () => {
+  undockMini();
 });
 
 app.whenReady().then(() => {

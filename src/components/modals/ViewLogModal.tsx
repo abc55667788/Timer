@@ -1,9 +1,9 @@
 import React from 'react';
 import { 
   X, Edit2, ChevronRight, FileText, Image as ImageIcon, Plus, 
-  Trash2, Calendar, Clock, Link as LinkIcon, ExternalLink, Copy
+  Trash2, Calendar, Clock, Link as LinkIcon, ExternalLink, Copy, Search
 } from 'lucide-react';
-import { LogEntry, Category, CategoryData, CATEGORY_ICONS } from '../../types';
+import { LogEntry, Category, CategoryData, CATEGORY_ICONS, EventProject } from '../../types';
 import TimePicker from '../TimePicker';
 import DatePicker from '../DatePicker';
 
@@ -40,6 +40,8 @@ interface ViewLogModalProps {
   setPhaseEditTouched: (val: boolean) => void;
   viewingLogMetadata?: any;
   categories: CategoryData[];
+  eventProjects: EventProject[];
+  setEventProjects: (projects: EventProject[] | ((prev: EventProject[]) => EventProject[])) => void;
   darkMode?: boolean;
 }
 
@@ -76,8 +78,48 @@ const ViewLogModal: React.FC<ViewLogModalProps> = ({
   setPhaseEditTouched,
   viewingLogMetadata,
   categories,
+  eventProjects,
+  setEventProjects,
   darkMode
 }) => {
+  const [eventQuery, setEventQuery] = React.useState(viewingLog.eventName || '');
+
+  React.useEffect(() => {
+    setEventQuery(viewingLog.eventName || '');
+  }, [viewingLog.eventId, viewingLog.eventName, isEditMode]);
+
+  const normalizedQuery = eventQuery.trim().toLowerCase();
+  const filteredEvents = eventProjects.filter(project => {
+    if (!normalizedQuery) return true;
+    const tagText = project.tags.join(' ').toLowerCase();
+    return project.name.toLowerCase().includes(normalizedQuery) || tagText.includes(normalizedQuery);
+  }).slice(0, 8);
+
+  const exactMatchedEvent = eventProjects.find(project => project.name.trim().toLowerCase() === normalizedQuery);
+
+  const selectEvent = (project: EventProject) => {
+    setViewingLog({ ...viewingLog, eventId: project.id, eventName: project.name });
+    setEventQuery(project.name);
+  };
+
+  const createEventFromQuery = () => {
+    const name = eventQuery.trim();
+    if (!name) return;
+    const existing = eventProjects.find(project => project.name.trim().toLowerCase() === name.toLowerCase());
+    if (existing) {
+      selectEvent(existing);
+      return;
+    }
+    const newEvent: EventProject = {
+      id: `evt_${Math.random().toString(36).slice(2, 10)}`,
+      name,
+      tags: [],
+      createdAt: Date.now(),
+    };
+    setEventProjects(prev => [newEvent, ...prev]);
+    selectEvent(newEvent);
+  };
+
   const CategoryPicker = () => (
     <div className="grid grid-cols-5 sm:grid-cols-6 gap-3">
       {categories.map((cat, idx) => {
@@ -108,7 +150,7 @@ const ViewLogModal: React.FC<ViewLogModalProps> = ({
 
   return (
     <div className={`fixed inset-0 ${(wasMiniModeBeforeModal || isMiniMode) ? 'bg-transparent' : (darkMode ? 'bg-black/80 backdrop-blur-2xl' : 'bg-black/60 backdrop-blur-xl')} flex items-center justify-center p-6 z-[150] animate-in fade-in duration-300`}>
-      <div className={`${darkMode ? 'bg-zinc-900 border-white/5 shadow-[0_32px_128px_-20px_rgba(0,0,0,0.9)]' : 'bg-white border-white/40 shadow-2xl'} backdrop-blur-3xl rounded-[2.5rem] p-8 w-full relative max-h-[90vh] overflow-y-auto scrollbar-none border transition-all duration-300 max-w-lg`} style={{ WebkitAppRegion: 'drag' } as any}>
+      <div className={`${darkMode ? 'bg-zinc-900 border-white/5 shadow-[0_24px_96px_-20px_rgba(0,0,0,0.9)]' : 'bg-white border-white/40 shadow-2xl'} backdrop-blur-3xl rounded-[2rem] p-6 w-full relative max-h-[90vh] overflow-y-auto scrollbar-none border transition-all duration-300 max-w-lg`} style={{ WebkitAppRegion: 'drag' } as any}>
          <div style={{ WebkitAppRegion: 'no-drag' } as any} onPaste={handleClipboardImagePaste}>
            {!isEditMode ? (
              <div className="animate-in fade-in slide-in-from-bottom-4 relative">
@@ -210,8 +252,8 @@ const ViewLogModal: React.FC<ViewLogModalProps> = ({
                </div>
              </div>
            ) : (
-             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 pb-2">
-                <div className="flex items-center justify-between mb-4">
+             <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 pb-1">
+               <div className="flex items-center justify-between mb-2">
                     <h2 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-emerald-950'} tracking-tight`}>Edit Session</h2>
                     <button 
                       onClick={() => { setIsEditMode(false); setPhaseEditTouched(false); }} 
@@ -222,10 +264,57 @@ const ViewLogModal: React.FC<ViewLogModalProps> = ({
                     </button>
                 </div>
 
-                <div className="space-y-5">
+                <div className="space-y-3.5">
                   <section>
                     <label className={`text-[10px] font-bold ${darkMode ? 'text-zinc-500' : 'text-emerald-400'} block mb-3 tracking-tight pl-1 uppercase`}>Category</label>
                     <CategoryPicker />
+                  </section>
+
+                  <section>
+                    <label className={`text-[10px] font-bold ${darkMode ? 'text-zinc-500' : 'text-emerald-400'} block mb-3 tracking-tight pl-1 uppercase`}>Event Project</label>
+                    <div className={`rounded-xl border p-2.5 space-y-2 ${darkMode ? 'bg-zinc-800/80 border-white/10' : 'bg-emerald-50/70 border-emerald-100'}`}>
+                      <div className="relative">
+                        <Search size={14} className={`absolute left-3 top-1/2 -translate-y-1/2 ${darkMode ? 'text-zinc-500' : 'text-emerald-400'}`} />
+                        <input
+                          type="text"
+                          placeholder="Search or create event..."
+                          value={eventQuery}
+                          onChange={(e) => {
+                            setEventQuery(e.target.value);
+                            if (!e.target.value.trim()) {
+                              setViewingLog({ ...viewingLog, eventId: undefined, eventName: undefined });
+                            }
+                          }}
+                          className={`w-full border rounded-xl py-2.5 pl-9 pr-3 text-sm outline-none font-bold ${darkMode ? 'bg-zinc-900 border-white/5 text-white placeholder:text-zinc-600' : 'bg-white border-emerald-100 text-emerald-900 placeholder:text-emerald-300'}`}
+                        />
+                      </div>
+                      {filteredEvents.length > 0 && (
+                        <div className="flex flex-wrap gap-2">
+                          {filteredEvents.map(project => {
+                            const selected = viewingLog.eventId === project.id;
+                            return (
+                              <button
+                                key={project.id}
+                                onClick={() => selectEvent(project)}
+                                className={`px-3 py-1.5 rounded-full text-[11px] font-black tracking-tight transition-all border ${selected ? 'bg-emerald-600 text-white border-emerald-600' : (darkMode ? 'bg-zinc-900 text-zinc-300 border-white/10 hover:border-emerald-500/40' : 'bg-white text-emerald-700 border-emerald-100 hover:border-emerald-400')}`}
+                                type="button"
+                              >
+                                {project.name}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                      {!!normalizedQuery && !exactMatchedEvent && (
+                        <button
+                          onClick={createEventFromQuery}
+                          className={`w-full py-2 rounded-xl text-xs font-black tracking-wider uppercase transition-all ${darkMode ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/30' : 'bg-emerald-600 text-white hover:bg-emerald-700'}`}
+                          type="button"
+                        >
+                          Create Event “{eventQuery.trim()}”
+                        </button>
+                      )}
+                    </div>
                   </section>
                   
                   <section>
@@ -283,7 +372,7 @@ const ViewLogModal: React.FC<ViewLogModalProps> = ({
                     </div>
                   </section>
 
-                  <section className={`${darkMode ? 'bg-zinc-800/40 border-white/5 shadow-inner' : 'bg-emerald-50/20 border-emerald-50/80'} p-6 rounded-[2.5rem] border space-y-6`}>
+                  <section className={`${darkMode ? 'bg-zinc-800/45 border-white/10 shadow-inner' : 'bg-emerald-50/40 border-emerald-100'} p-4 rounded-[1.5rem] border space-y-4`}>
                     <div className="space-y-3">
                       <label className={`text-[10px] font-bold ${darkMode ? 'text-zinc-500' : 'text-emerald-400'} tracking-tight pl-2 uppercase`}>Session Date</label>
                       <DatePicker 
@@ -296,7 +385,7 @@ const ViewLogModal: React.FC<ViewLogModalProps> = ({
                       />
                     </div>
                     
-                    <div className="grid grid-cols-2 gap-5">
+                    <div className="grid grid-cols-2 gap-3">
                       <div className="space-y-3">
                         <label className={`text-[10px] font-bold ${darkMode ? 'text-zinc-500' : 'text-emerald-400'} tracking-tight pl-2 uppercase`}>Start</label>
                         <TimePicker 
@@ -319,7 +408,7 @@ const ViewLogModal: React.FC<ViewLogModalProps> = ({
                     {editTimeError && <div className={`text-[10px] font-bold text-center ${darkMode ? 'text-white bg-red-700/90 border-red-700/70 shadow-lg' : 'text-red-500 bg-red-50/50 border-red-50 shadow-sm'} py-2.5 rounded-xl border animate-shake`}>{editTimeError}</div>}
                   </section>
 
-                  <section className={`grid grid-cols-2 gap-5 ${darkMode ? 'bg-zinc-800/40 border-white/5 shadow-inner' : 'bg-white border-emerald-50 shadow-sm ring-1 ring-emerald-50/50'} p-6 rounded-[2.5rem] border`}>
+                  <section className={`grid grid-cols-2 gap-3 ${darkMode ? 'bg-zinc-800/45 border-white/10 shadow-inner' : 'bg-white border-emerald-100 shadow-sm'} p-4 rounded-[1.5rem] border`}>
                     <div className="space-y-3">
                       <label className={`text-[10px] font-bold ${darkMode ? 'text-zinc-500' : 'text-emerald-400'} tracking-tight pl-2 uppercase`}>Focus (Min)</label>
                       <input
@@ -344,11 +433,11 @@ const ViewLogModal: React.FC<ViewLogModalProps> = ({
                     </div>
                   </section>
 
-                  <div className="flex gap-4 pt-4">
+                  <div className="flex gap-3 pt-2">
                     <button 
                       disabled={!isEditValid} 
                       onClick={handleSaveEdit} 
-                      className={`flex-1 py-4.5 rounded-[1.5rem] text-xs font-bold tracking-tight transition-all active:scale-95 ${
+                      className={`flex-1 py-3.5 rounded-[1.2rem] text-xs font-bold tracking-tight transition-all active:scale-95 ${
                         isEditValid 
                           ? (darkMode ? 'bg-zinc-800 text-white hover:bg-emerald-500 shadow-xl shadow-black/40 border border-white/5' : 'bg-emerald-600 text-white shadow-emerald-100 hover:bg-emerald-500 shadow-lg') 
                           : (darkMode ? 'bg-zinc-900 text-zinc-700 cursor-not-allowed border border-white/5' : 'bg-emerald-100 text-emerald-300 cursor-not-allowed')
@@ -358,7 +447,7 @@ const ViewLogModal: React.FC<ViewLogModalProps> = ({
                     </button>
                     <button 
                       onClick={() => { setIsEditMode(false); setPhaseEditTouched(false); }} 
-                      className={`flex-1 py-4.5 ${darkMode ? 'bg-zinc-800 text-white hover:bg-emerald-500 shadow-xl shadow-black/40 border border-white/5' : 'bg-emerald-50 text-emerald-600 border-emerald-100 hover:bg-emerald-100 shadow-sm'} rounded-[1.5rem] text-xs font-bold tracking-tight border active:scale-95 transition-all`}
+                      className={`flex-1 py-3.5 ${darkMode ? 'bg-zinc-800 text-white hover:bg-emerald-500 shadow-xl shadow-black/40 border border-white/5' : 'bg-emerald-50 text-emerald-600 border-emerald-100 hover:bg-emerald-100 shadow-sm'} rounded-[1.2rem] text-xs font-bold tracking-tight border active:scale-95 transition-all`}
                     >
                       Cancel
                     </button>

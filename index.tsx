@@ -26,7 +26,8 @@ import {
   Goal,
   Inspiration,
   CategoryData,
-  ThemePreference
+  ThemePreference,
+  EventProject
 } from './src/types';
 import { formatTime, formatClock, formatDate, formatDisplayDate, formatDisplayDateString, resolvePhaseTotals, pad2 } from './src/utils/time';
 import { compressImage } from './src/utils/media';
@@ -36,6 +37,7 @@ import useStats from './src/hooks/useStats';
 import TimerBoard from './src/components/boards/TimerBoard';
 import StatsBoard from './src/components/boards/StatsBoard';
 import LogsBoard from './src/components/boards/LogsBoard';
+import EventsBoard from './src/components/boards/EventsBoard';
 import JournalBoard from './src/components/boards/JournalBoard';
 import SetupModal from './src/components/modals/SetupModal';
 import LoggingModal from './src/components/modals/LoggingModal';
@@ -82,11 +84,38 @@ const getInitialSystemPrefersDark = () => {
   return window.matchMedia('(prefers-color-scheme: dark)').matches;
 };
 
+const UNTAGGED_CATEGORY: Category = 'Untagged';
+
+const createDefaultTask = (phase: TimerPhase = 'work'): {
+  category: Category;
+  description: string;
+  images: string[];
+  link: string;
+  eventId?: string;
+  eventName?: string;
+  liveId: string | null;
+} => ({
+  category: phase === 'work' ? 'Work' : 'Rest',
+  description: '',
+  images: [],
+  link: '',
+  eventId: undefined,
+  eventName: undefined,
+  liveId: null,
+});
+
 // --- Main App Component ---
 function EmeraldTimer() {
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [isMiniMode, setIsMiniMode] = useState(false);
-  const [activeTab, setActiveTab] = useState<'timer' | 'stats' | 'logs' | 'settings'>('timer');
+  type MiniDockMode = 'none' | 'peek' | 'expanded';
+  type MiniDockState = { mode: MiniDockMode; side: 'left' | 'right' | null; peekSize: number };
+  const [miniDockState, setMiniDockState] = useState<MiniDockState>({
+    mode: 'none',
+    side: null,
+    peekSize: 24,
+  });
+  const [activeTab, setActiveTab] = useState<'timer' | 'stats' | 'events' | 'logs' | 'settings'>('timer');
   const [isJournalOpen, setIsJournalOpen] = useState(false);
   const [phase, setPhase] = useState<TimerPhase>('work');
   const [isActive, setIsActive] = useState(false);
@@ -247,12 +276,42 @@ function EmeraldTimer() {
     }
   };
 
+  const requestMiniDockExpand = () => {
+    if ((window as any).electron?.requestMiniDockExpand) {
+      (window as any).electron.requestMiniDockExpand();
+    }
+  };
+
+  const requestMiniDockCollapse = () => {
+    if ((window as any).electron?.requestMiniDockCollapse) {
+      (window as any).electron.requestMiniDockCollapse();
+    }
+  };
+
+  const requestMiniDockUndock = () => {
+    if ((window as any).electron?.requestMiniDockUndock) {
+      (window as any).electron.requestMiniDockUndock();
+    }
+  };
+
   // --- Window Resize for Mini Mode ---
   useEffect(() => {
     if ((window as any).electron) {
       (window as any).electron.toggleMiniMode(isMiniMode);
     }
   }, [isMiniMode]);
+
+  useEffect(() => {
+    if ((window as any).electron?.onMiniDockState) {
+      const unsubscribe = (window as any).electron.onMiniDockState((state: MiniDockState) => {
+        setMiniDockState(state);
+      });
+      return () => {
+        if (unsubscribe) unsubscribe();
+      };
+    }
+    return undefined;
+  }, []);
 
   // Zoom configuration
   const ZOOM_STEP = 0.05;
@@ -277,6 +336,52 @@ function EmeraldTimer() {
     const saved = localStorage.getItem('emerald-categories');
     if (saved) return JSON.parse(saved);
     return DEFAULT_CATEGORIES;
+  });
+
+  const [eventProjects, setEventProjects] = useState<EventProject[]>(() => {
+    const saved = localStorage.getItem('emerald-event-projects');
+    if (!saved) return [];
+    try {
+      const parsed = JSON.parse(saved);
+      if (!Array.isArray(parsed)) return [];
+      return parsed
+        .filter((item) => item && typeof item.id === 'string' && typeof item.name === 'string')
+        .map((item) => {
+          const normalizedTags = Array.isArray(item.tags)
+            ? item.tags.filter((tag: unknown) => typeof tag === 'string' && tag.trim()).slice(0, 1)
+            : [];
+
+          return {
+            id: item.id,
+            name: item.name,
+            startAt: typeof item.startAt === 'number'
+              ? item.startAt
+              : (typeof item.createdAt === 'number' ? item.createdAt : Date.now()),
+            description: typeof item.description === 'string' ? item.description : '',
+            images: Array.isArray(item.images) ? item.images.filter((img: unknown) => typeof img === 'string') : [],
+            expectedTotalHours: typeof item.expectedTotalHours === 'number'
+              ? item.expectedTotalHours
+              : (typeof item.expectedTotalMinutes === 'number'
+                ? Math.round((item.expectedTotalMinutes / 60) * 10) / 10
+                : (typeof item.expectedMinutes === 'number' ? Math.round((item.expectedMinutes / 60) * 10) / 10 : undefined)),
+            expectedTotalMinutes: typeof item.expectedTotalMinutes === 'number'
+              ? item.expectedTotalMinutes
+              : (typeof item.expectedMinutes === 'number' ? item.expectedMinutes : undefined),
+            expectedDays: typeof item.expectedDays === 'number' ? item.expectedDays : undefined,
+            expectedMinutes: typeof item.expectedMinutes === 'number' ? item.expectedMinutes : undefined,
+            tags: normalizedTags,
+            createdAt: typeof item.createdAt === 'number' ? item.createdAt : Date.now(),
+            isRecurring: typeof item.isRecurring === 'boolean' ? item.isRecurring : undefined,
+            recurringPeriod: item.recurringPeriod === 'daily' || item.recurringPeriod === 'weekly' || item.recurringPeriod === 'custom'
+              ? item.recurringPeriod
+              : undefined,
+            customPeriodDays: typeof item.customPeriodDays === 'number' ? item.customPeriodDays : undefined,
+            targetMinutesPerDay: typeof item.targetMinutesPerDay === 'number' ? item.targetMinutesPerDay : undefined,
+          };
+        });
+    } catch {
+      return [];
+    }
   });
 
   const getCategoryColor = (catName: Category) => {
@@ -311,13 +416,7 @@ function EmeraldTimer() {
     overtimeSecondsRef.current = overtimeSeconds;
   }, [overtimeSeconds]);
 
-  const [currentTask, setCurrentTask] = useState({
-    category: 'Work' as Category,
-    description: '',
-    images: [] as string[],
-    link: '',
-    liveId: null as string | null
-  });
+  const [currentTask, setCurrentTask] = useState(() => createDefaultTask('work'));
 
   const [manualLog, setManualLog] = useState({
     category: 'Work' as Category,
@@ -326,7 +425,9 @@ function EmeraldTimer() {
     startTime: '09:00',
     endTime: '10:00',
     images: [] as string[],
-    link: ''
+    link: '',
+    eventId: undefined as string | undefined,
+    eventName: undefined as string | undefined,
   });
 
   const [logs, setLogs] = useState<LogEntry[]>(() => {
@@ -335,6 +436,34 @@ function EmeraldTimer() {
     const existing = parsed.filter((l: LogEntry) => !l.isLive);
     return existing;
   });
+
+  useEffect(() => {
+    const validCategories = new Set(categories.map(cat => cat.name));
+    validCategories.add('Rest');
+
+    setLogs(prev => {
+      let changed = false;
+      const normalized = prev.map(log => {
+        if (validCategories.has(log.category) || log.category === UNTAGGED_CATEGORY) {
+          return log;
+        }
+        changed = true;
+        return { ...log, category: UNTAGGED_CATEGORY };
+      });
+      return changed ? normalized : prev;
+    });
+
+    setViewingLog(prev => {
+      if (!prev) return prev;
+      if (validCategories.has(prev.category) || prev.category === UNTAGGED_CATEGORY) return prev;
+      return { ...prev, category: UNTAGGED_CATEGORY };
+    });
+
+    setFilterCategories(prev => {
+      const next = prev.filter(cat => validCategories.has(cat));
+      return next.length === prev.length ? prev : next;
+    });
+  }, [categories]);
 
   const [goals, setGoals] = useState<{ id: string; text: string; completed: boolean }[]>(() => {
     const saved = localStorage.getItem('emerald-goals');
@@ -501,6 +630,7 @@ function EmeraldTimer() {
   useEffect(() => {
     const handleWheel = (e: WheelEvent) => {
       if (e.ctrlKey) {
+        if (isMiniMode) return;
         e.preventDefault();
         const delta = e.deltaY > 0 ? -0.05 : 0.05;
         setUiScale(prev => {
@@ -558,6 +688,10 @@ function EmeraldTimer() {
   useEffect(() => {
     localStorage.setItem('emerald-categories', JSON.stringify(categories));
   }, [categories]);
+
+  useEffect(() => {
+    localStorage.setItem('emerald-event-projects', JSON.stringify(eventProjects));
+  }, [eventProjects]);
 
   useEffect(() => {
     localStorage.setItem('emerald-goals', JSON.stringify(goals));
@@ -742,6 +876,8 @@ function EmeraldTimer() {
       id: currentTask.liveId || Math.random().toString(36).substr(2, 9),
       category: currentTask.category,
       description: currentTask.description || (phase === 'work' ? 'Focus Session' : 'Rest Break'),
+      eventId: currentTask.eventId,
+      eventName: currentTask.eventName,
       startTime: sessionStartTime || Date.now() - (duration * 1000),
       endTime: Date.now(),
       duration: duration,
@@ -751,7 +887,7 @@ function EmeraldTimer() {
     };
     setLogs(prev => [finalLog, ...prev.filter(l => l.id !== currentTask.liveId)]);
     const targetPhase = upcomingPhase ?? phase;
-    setCurrentTask({ category: targetPhase === 'work' ? 'Work' : 'Rest', description: '', images: [], liveId: null });
+    setCurrentTask(createDefaultTask(targetPhase));
     setSessionStartTime(null);
     resetSessionPhaseDurations();
     return true;
@@ -771,7 +907,7 @@ function EmeraldTimer() {
     setSessionStartTime(null);
     setShowConfirmModal(null);
     setIsPausedBySettings(false);
-    setCurrentTask({ category: 'Work', description: '', images: [], liveId: null });
+    setCurrentTask(createDefaultTask('work'));
     resetSessionPhaseDurations();
   };
 
@@ -850,7 +986,7 @@ function EmeraldTimer() {
     setPhaseEditTouched(false);
   };
 
-  const handleSetupClick = () => {
+  const openSettingsPanel = () => {
     setTempWorkMin((settings.workDuration / 60).toString());
     setTempRestMin((settings.restDuration / 60).toString());
     if (isActive) {
@@ -858,6 +994,10 @@ function EmeraldTimer() {
       setIsPausedBySettings(true);
     }
     setActiveTab('settings');
+  };
+
+  const handleSetupClick = () => {
+    openSettingsPanel();
   };
 
   const confirmAction = (save: boolean) => {
@@ -1016,7 +1156,7 @@ function EmeraldTimer() {
     
     if (activeTab === 'settings') {
       showNotice('Preferences Saved Successfully!', 1500);
-      setCurrentTask({ category: 'Work', description: '', images: [], liveId: null });
+      setCurrentTask(createDefaultTask('work'));
     } else {
       setActiveTab('timer');
     }
@@ -1465,10 +1605,23 @@ function EmeraldTimer() {
       duration: duration,
       phaseDurations: { work: duration, rest: 0 },
       images: manualLog.images,
+      link: manualLog.link || undefined,
+      eventId: manualLog.eventId,
+      eventName: manualLog.eventName,
     };
     setLogs(prev => [newLog, ...prev].sort((a,b) => b.startTime - a.startTime));
     setShowManualModal(false);
-    setManualLog({ category: 'Work', description: '', date: formatDate(Date.now()), startTime: '09:00', endTime: '10:00', images: [] });
+    setManualLog({
+      category: 'Work',
+      description: '',
+      date: formatDate(Date.now()),
+      startTime: '09:00',
+      endTime: '10:00',
+      images: [],
+      link: '',
+      eventId: undefined,
+      eventName: undefined,
+    });
     setManualLogError(null);
   };
 
@@ -2121,6 +2274,9 @@ function EmeraldTimer() {
             <button onClick={() => setIsMiniMode(true)} className={`p-1.5 ${isDarkMode ? 'bg-zinc-900 border-white/5 text-emerald-400 hover:bg-zinc-800' : 'bg-white border-emerald-100 text-emerald-600 hover:bg-emerald-600 hover:text-white'} rounded-lg border flex items-center gap-2 text-xs font-bold shadow-sm transition-all active:scale-95`}>
               <Minimize2 size={14} /> <span className="hidden lg:inline">Mini Mode</span>
             </button>
+            <button onClick={openSettingsPanel} className={`p-1.5 ${isDarkMode ? 'bg-zinc-900 border-white/5 text-emerald-400 hover:bg-zinc-800' : 'bg-white border-emerald-100 text-emerald-600 hover:bg-emerald-600 hover:text-white'} rounded-lg border flex items-center gap-2 text-xs font-bold shadow-sm transition-all active:scale-95`}>
+              <Settings size={14} /> <span className="hidden lg:inline">Settings</span>
+            </button>
 
             {/* Window Controls Group - Hide on Android */}
             {!isAndroid && (
@@ -2173,6 +2329,11 @@ function EmeraldTimer() {
           settings={settings}
           darkMode={isDarkMode}
           isAndroid={isAndroid}
+          miniDockState={miniDockState}
+          onDockExpand={requestMiniDockExpand}
+          onDockCollapse={requestMiniDockCollapse}
+          onDockUndock={requestMiniDockUndock}
+          onOpenSettings={openSettingsPanel}
         />
       )}
 
@@ -2305,6 +2466,19 @@ function EmeraldTimer() {
               </div>
             )}
 
+            {activeTab === 'events' && (
+              <div className="flex-1 p-4 md:p-6 scrollbar-none animate-in fade-in duration-200">
+                <EventsBoard
+                  eventProjects={eventProjects}
+                  setEventProjects={setEventProjects}
+                  categories={categories}
+                  logs={logs}
+                  currentEventId={currentTask.eventId}
+                  darkMode={isDarkMode}
+                />
+              </div>
+            )}
+
             {activeTab === 'settings' && (
               <div className="flex-1 overflow-y-visible animate-in fade-in duration-200">
                 <SetupModal 
@@ -2365,8 +2539,8 @@ function EmeraldTimer() {
               {[
                 { id: 'timer', icon: Play, label: 'Focus' },
                 { id: 'stats', icon: BarChart3, label: 'Analytics' },
-                { id: 'logs', icon: Clock, label: 'History' },
-                { id: 'settings', icon: Settings, label: 'Settings' }
+                { id: 'events', icon: BookOpen, label: 'Events' },
+                { id: 'logs', icon: Clock, label: 'History' }
               ].map(tab => (
                 <button 
                   key={tab.id} 
@@ -2479,6 +2653,8 @@ function EmeraldTimer() {
           setPhaseEditTouched={setPhaseEditTouched}
           viewingLogMetadata={viewingLogMetadata}
           categories={categories}
+          eventProjects={eventProjects}
+          setEventProjects={setEventProjects}
           darkMode={isDarkMode}
         />
       )}
@@ -2504,6 +2680,8 @@ function EmeraldTimer() {
           setManualLog={setManualLog}
           manualLogError={manualLogError}
           categories={categories}
+          eventProjects={eventProjects}
+          setEventProjects={setEventProjects}
           handleImageUpload={handleImageUpload}
           saveManualLog={saveManualLog}
           setShowManualModal={setShowManualModal}
@@ -2524,6 +2702,8 @@ function EmeraldTimer() {
           setTempWorkMin={setTempWorkMin}
           setTempRestMin={setTempRestMin}
           categories={categories}
+          eventProjects={eventProjects}
+          setEventProjects={setEventProjects}
           handleImageUpload={handleImageUpload}
           setShowLoggingModal={setShowLoggingModal}
           handleApplySettings={handleApplySettings}

@@ -60,6 +60,8 @@ export interface LogEntry {
   id: string;
   category: Category;
   description: string;
+  eventId?: string;
+  eventName?: string;
   startTime: number;
   endTime?: number;
   duration: number; // in seconds
@@ -99,7 +101,27 @@ export interface Task {
   description: string;
   images: string[];
   link?: string;
+  eventId?: string;
+  eventName?: string;
   liveId: string | null;
+}
+
+export interface EventProject {
+  id: string;
+  name: string;
+  startAt?: number;
+  description?: string;
+  images?: string[];
+  expectedTotalHours?: number;
+  expectedTotalMinutes?: number;
+  expectedDays?: number;
+  expectedMinutes?: number;
+  tags: string[];
+  createdAt: number;
+  isRecurring?: boolean;
+  recurringPeriod?: 'daily' | 'weekly' | 'custom';
+  customPeriodDays?: number; // 每 N 天
+  targetMinutesPerDay?: number; // 每次/每天需要完成的时间
 }
 
 export interface Goal {

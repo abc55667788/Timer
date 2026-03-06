@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Play, Pause, Square, Coffee, Briefcase, RotateCcw, Settings, Edit3, Library } from 'lucide-react';
 import { Category, TimerPhase, Task } from '../../types';
 import { formatTime } from '../../utils/time';
@@ -52,22 +52,48 @@ const TimerBoard: React.FC<TimerBoardProps> = ({
 }) => {
   const catColor = getCategoryColor(currentTask.category);
   const CatIcon = getCategoryIcon(currentTask.category);
-  const useLandscapeLayout = Boolean(isAndroid && isLandscape);
-  const containerPadding = isAndroid ? (useLandscapeLayout ? 'py-2 pb-4' : 'py-4 pb-12') : 'py-8';
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [isCompactHeight, setIsCompactHeight] = useState(false);  const compactHeightRef = useRef(false);  const useLandscapeLayout = Boolean(isAndroid && isLandscape);
+  const useCompactLayout = useLandscapeLayout || isCompactHeight;
+  const containerPadding = isAndroid
+    ? (useLandscapeLayout ? 'py-2 pb-4' : 'py-4 pb-12')
+    : (useCompactLayout ? 'py-4' : 'py-8');
   const layoutWrapperClasses = [
     'flex w-full',
-    useLandscapeLayout
-      ? 'flex-row items-center justify-center gap-4 px-4 lg:px-8 max-w-[1200px]'
+    useCompactLayout
+      ? 'flex-row items-center justify-center gap-0 px-2 lg:px-4 max-w-[1200px]'
       : 'flex-col items-center gap-6 md:gap-12 w-full max-w-lg',
-    isAndroid ? 'py-1' : 'py-4',
+    isAndroid ? 'py-1' : (useCompactLayout ? 'py-2' : 'py-4'),
   ].filter(Boolean).join(' ');
   const timerStackClasses = [
-    'flex flex-col items-center gap-4 md:gap-8',
-    useLandscapeLayout ? 'flex-1 min-w-0 px-2 sm:px-4' : (isAndroid ? 'mt-0' : 'mt-2 md:mt-0'),
+    'flex flex-col items-center',
+    useCompactLayout ? 'gap-3 md:gap-4 flex-shrink-0' : 'gap-4 md:gap-8',
+    useCompactLayout ? '' : (isAndroid ? 'mt-0' : 'mt-2 md:mt-0'),
   ].filter(Boolean).join(' ');
-  const controlsWrapperClasses = useLandscapeLayout
-    ? 'flex flex-col items-center justify-center gap-3 px-4 flex-shrink-0 min-w-[180px]'
+  const controlsWrapperClasses = useCompactLayout
+    ? 'flex flex-col items-center justify-center gap-2 flex-shrink-0 ml-12 mt-6'
     : `flex items-center gap-4 md:gap-6 ${isAndroid ? 'mb-4' : 'mb-8 md:mb-0'}`;
+
+  const ringSizeClass = isAndroid
+    ? 'w-64 h-64'
+    : 'w-56 h-56 sm:w-64 sm:h-64 md:w-80 md:h-80';
+  const timeTextClass = isAndroid ? 'text-4xl' : 'text-3xl md:text-6xl';
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const observer = new ResizeObserver(entries => {
+      const height = entries[0]?.contentRect?.height || 0;
+      const wasCompact = compactHeightRef.current;
+      const threshold = wasCompact ? 580 : 480;
+      const shouldBeCompact = height > 0 && height < threshold;
+      if (shouldBeCompact !== wasCompact) {
+        compactHeightRef.current = shouldBeCompact;
+        setIsCompactHeight(shouldBeCompact);
+      }
+    });
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, []);
 
   const startButton = (
     <button 
@@ -117,7 +143,7 @@ const TimerBoard: React.FC<TimerBoardProps> = ({
     ) : null);
 
   return (
-    <div className={`flex flex-col items-center justify-center w-full flex-1 min-h-full animate-in fade-in duration-500 relative scrollbar-none px-4 ${containerPadding}`}>
+    <div ref={containerRef} className={`flex flex-col items-center justify-center w-full flex-1 min-h-full animate-in fade-in duration-500 relative scrollbar-none px-4 ${containerPadding}`}>
       {!isJournalOpen && (
         <div className={`absolute ${isAndroid ? 'top-2 right-2' : 'top-4 right-4 md:top-10 md:right-10'} z-[60]`}>
           <button 
@@ -139,7 +165,7 @@ const TimerBoard: React.FC<TimerBoardProps> = ({
 
           <div onClick={() => setShowLoggingModal(true)} className="relative group cursor-pointer active:scale-[0.98] transition-all">
             <div className={`absolute inset-0 ${darkMode ? 'bg-emerald-400/5' : 'bg-emerald-100/30'} rounded-full blur-[24px] opacity-10 group-hover:opacity-20 transition-opacity`}></div>
-            <svg className={`${isAndroid ? 'w-64 h-64' : 'w-56 h-56 sm:w-64 sm:h-64 md:w-80 md:h-80'} -rotate-90`} viewBox="0 0 300 300">
+            <svg className={`${ringSizeClass} -rotate-90`} viewBox="0 0 300 300">
               <circle cx="150" cy="150" r={135} stroke="currentColor" strokeWidth="6" fill="transparent" className={darkMode ? 'text-white/5' : 'text-emerald-50'} />
               <circle cx="150" cy="150" r={135} stroke="currentColor" strokeWidth="10" fill="transparent" 
                 strokeDasharray={2 * Math.PI * 135} strokeDashoffset={(2 * Math.PI * 135) - ((timeLeft / (phase === 'work' ? settings.workDuration : settings.restDuration)) * 2 * Math.PI * 135)}
@@ -153,7 +179,7 @@ const TimerBoard: React.FC<TimerBoardProps> = ({
                 <span className={`text-[10px] md:text-[11px] font-black ${darkMode ? 'text-emerald-500 font-bold' : 'text-emerald-600'} uppercase tracking-[0.2em]`}>Edit Session</span>
               </div>
               
-              <span className={`font-mono font-bold tabular-nums z-10 tracking-tighter ${isAndroid ? 'text-4xl' : 'text-3xl md:text-6xl'} ${darkMode ? 'text-white drop-shadow-[0_0_12px_rgba(0,0,0,0.4)]' : ''}`}>{formatTime(displayTime)}</span>
+              <span className={`font-mono font-bold tabular-nums z-10 tracking-tighter ${timeTextClass} ${darkMode ? 'text-white drop-shadow-[0_0_12px_rgba(0,0,0,0.4)]' : ''}`}>{formatTime(displayTime)}</span>
               {isOvertime && <span className={`text-orange-400 font-bold ${isAndroid ? 'text-[11px]' : 'text-xs'} animate-pulse mt-0.5 font-mono z-10 drop-shadow-[0_0_12px_rgba(251,146,60,0.6)]`}>+{formatTime(overtimeSeconds)}</span>}
               <div 
                 className={`mt-3 px-3 py-1 flex items-center gap-1.5 ${darkMode ? 'bg-zinc-900 border border-white/5 shadow-inner' : 'bg-white border border-emerald-50 shadow-sm'} rounded-[0.85rem] z-10 ${isAndroid ? 'max-w-[140px]' : 'max-w-[110px] md:max-w-[160px]'}`}

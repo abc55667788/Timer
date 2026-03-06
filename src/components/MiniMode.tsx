@@ -1,6 +1,6 @@
 ﻿import React from 'react';
 import { 
-  Maximize2, Edit3, Square, Coffee, Briefcase, RotateCcw, Pause, Play, Library 
+  Maximize2, Edit3, Square, Coffee, Briefcase, RotateCcw, Pause, Play, Library, ChevronLeft, ChevronRight, Settings
 } from 'lucide-react';
 import { TimerPhase, Task } from '../types';
 
@@ -24,6 +24,11 @@ interface MiniModeProps {
   settings: { workDuration: number; restDuration: number };
   darkMode?: boolean;
   isAndroid?: boolean;
+  miniDockState: { mode: 'none' | 'peek' | 'expanded'; side: 'left' | 'right' | null; peekSize: number };
+  onDockExpand: () => void;
+  onDockCollapse: () => void;
+  onDockUndock: () => void;
+  onOpenSettings: () => void;
 }
 
 const MiniMode: React.FC<MiniModeProps> = ({
@@ -46,16 +51,45 @@ const MiniMode: React.FC<MiniModeProps> = ({
   settings,
   darkMode,
   isAndroid,
+  miniDockState,
+  onDockExpand,
+  onDockCollapse,
+  onDockUndock,
+  onOpenSettings,
 }) => {
   const bgClass = darkMode ? 'bg-zinc-950/95 border-white/10 shadow-black backdrop-blur-3xl' : 'bg-white/95 border-white/60 shadow-lg backdrop-blur-3xl';
   const textClass = darkMode ? 'text-white' : 'text-emerald-950';
   const accentTextClass = phase === 'work' ? (darkMode ? 'text-emerald-500' : 'text-emerald-800') : (darkMode ? 'text-orange-500' : 'text-emerald-700');
   const btnBgClass = darkMode ? 'bg-zinc-800 text-zinc-400 hover:bg-emerald-500 hover:text-white border-white/5 shadow-black' : 'bg-white/40 border-white/20 text-emerald-600 hover:bg-emerald-600 hover:text-white shadow-sm';
+  const isDockPeek = miniDockState.mode === 'peek';
+  const isDockExpanded = miniDockState.mode === 'expanded';
+  const dockArrow = miniDockState.side === 'left' ? ChevronRight : ChevronLeft;
+
+  if (isDockPeek) {
+    const DockIcon = dockArrow;
+    return (
+      <div
+        className={`w-full h-full max-w-full max-h-full ${bgClass} flex items-center justify-center z-40 overflow-hidden select-none rounded-[1rem] border`}
+        style={{ WebkitAppRegion: 'drag', transform: 'translateZ(0)' } as any}
+        onMouseEnter={onDockExpand}
+        onClick={onDockUndock}
+      >
+        <button
+          style={{ WebkitAppRegion: 'no-drag' } as any}
+          className={`p-1.5 rounded-full ${darkMode ? 'bg-zinc-800 text-emerald-400' : 'bg-white/70 text-emerald-600'} shadow-sm`}
+          title="Undock"
+        >
+          <DockIcon size={14} strokeWidth={3} />
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div 
       className={`w-full h-full max-w-full max-h-full ${bgClass} flex flex-col z-40 overflow-hidden select-none rounded-[1.5rem] border`} 
       style={{ WebkitAppRegion: 'drag', transform: 'translateZ(0)' } as any}
+      onMouseLeave={isDockExpanded ? onDockCollapse : undefined}
     >
       <div className="flex-1 flex items-center px-4 md:px-6">
         <div className="flex items-center justify-between w-full h-full">
@@ -86,6 +120,7 @@ const MiniMode: React.FC<MiniModeProps> = ({
           </div>
           <div className="flex gap-3 flex-shrink-0 ml-4" style={{ WebkitAppRegion: 'no-drag' } as any}>
              <button title="Journal Sidebar" onClick={() => { setIsMiniMode(false); setActiveTab('timer'); setIsJournalOpen(true); }} className={`p-2.5 rounded-2xl ${btnBgClass} backdrop-blur-md border shadow-sm transition-all duration-300`}><Library size={15} strokeWidth={2.5}/></button>
+             <button title="Settings" onClick={() => { setIsMiniMode(false); onOpenSettings(); }} className={`p-2.5 rounded-2xl ${btnBgClass} backdrop-blur-md border shadow-sm transition-all duration-300`}><Settings size={15} strokeWidth={2.5}/></button>
              <button onClick={() => setShowLoggingModal(true)} title="Quick Log" className={`p-2.5 rounded-2xl ${btnBgClass} backdrop-blur-md border shadow-sm transition-all duration-300`}><Edit3 size={15} strokeWidth={2.5}/></button>
              
              {isCurrentlyRecording && (

@@ -169,7 +169,7 @@ export const WeeklyTimelineView: React.FC<WeeklyTimelineViewProps> = ({
                     return (
                       <div
                         key={log.id}
-                        onClick={(e) => { e.stopPropagation(); onViewLog?.(log, true); }}
+                        onClick={(e) => { e.stopPropagation(); onViewLog?.(log); }}
                         className="absolute left-[3px] right-[3px] rounded-xl border border-white/20 shadow-lg cursor-pointer hover:scale-[1.02] hover:z-50 hover:brightness-110 transition-all group/log z-10 overflow-hidden ring-1 ring-black/5"
                         style={{
                           top: `${top}px`,

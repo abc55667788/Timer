@@ -7,9 +7,10 @@ interface DatePickerProps {
   className?: string;
   placeholder?: string;
   darkMode?: boolean;
+  popupSize?: 'default' | 'compact';
 }
 
-const DatePicker: React.FC<DatePickerProps> = ({ value, onChange, className, placeholder, darkMode }) => {
+const DatePicker: React.FC<DatePickerProps> = ({ value, onChange, className, placeholder, darkMode, popupSize = 'default' }) => {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   
@@ -68,7 +69,7 @@ const DatePicker: React.FC<DatePickerProps> = ({ value, onChange, className, pla
       </button>
 
       {isOpen && (
-        <div className={`absolute top-full left-1/2 -translate-x-1/2 mt-3 backdrop-blur-3xl rounded-[2.5rem] border p-5 z-[500] animate-in fade-in zoom-in-95 origin-top min-w-[280px] ${darkMode ? 'bg-zinc-900 border-white/10 shadow-[0_32px_128px_-20px_rgba(0,0,0,0.9)]' : 'bg-white/95 border-white/60 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.2)]'}`}>
+        <div className={`absolute top-full left-1/2 -translate-x-1/2 mt-3 backdrop-blur-3xl rounded-[2.5rem] border p-5 z-[500] animate-in fade-in zoom-in-95 origin-top ${popupSize === 'compact' ? 'min-w-[248px]' : 'min-w-[280px]'} ${darkMode ? 'bg-zinc-900 border-white/10 shadow-[0_32px_128px_-20px_rgba(0,0,0,0.9)]' : 'bg-white/95 border-white/60 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.2)]'}`}>
           <div className={`flex justify-between items-center mb-4 p-2 rounded-[1.5rem] border ${darkMode ? 'bg-zinc-800 border-white/5' : 'bg-emerald-50/80 border-emerald-100/50'}`}>
             <button 
               onClick={() => setViewDate(new Date(currentYear, currentMonth - 1, 1))}
