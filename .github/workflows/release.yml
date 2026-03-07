@@ -142,14 +142,20 @@ jobs:
           
           # 宽泛地查找所有已下载的 artifact 文件，不依赖特定的子目录名称
           # find ./dist -type f 会递归找到所有 apk, exe, AppImage, deb 等
+          # 对文件名中的空格进行处理
           FILES=$(find ./dist -type f \( -name "*.exe" -o -name "*.AppImage" -o -name "*.apk" -o -name "*.deb" -o -name "*.blockmap" \))
           
-          echo "Found files to upload: $FILES"
+          echo "Found files to upload:"
+          echo "$FILES"
 
           # 创建正式版（非草稿）并标记为 Latest
+          # 将 IFS 设置为换行符以正确处理带空格的文件路径
+          IFS=$'\n'
           gh release create "$TAG_NAME" \
             --title "Emerald Timer $TAG_NAME" \
             --generate-notes \
             --latest \
             $FILES \
+            || (gh release edit "$TAG_NAME" --latest --draft=false && gh release upload "$TAG_NAME" $FILES --clobber)
+          unset IFS
             || (gh release edit "$TAG_NAME" --latest --draft=false && gh release upload "$TAG_NAME" $FILES --clobber)
