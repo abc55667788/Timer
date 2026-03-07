@@ -71,11 +71,11 @@ const TimerBoard: React.FC<TimerBoardProps> = ({
     useCompactLayout ? '' : (isAndroid ? 'mt-0' : 'mt-2 md:mt-0'),
   ].filter(Boolean).join(' ');
   const controlsWrapperClasses = useCompactLayout
-    ? 'flex flex-col items-center justify-center gap-2 flex-shrink-0 ml-12 mt-6'
+    ? 'flex flex-col items-center justify-center gap-2 flex-shrink-0 ml-8 mt-2'
     : `flex items-center gap-4 md:gap-6 ${isAndroid ? 'mb-4' : 'mb-8 md:mb-0'}`;
 
   const ringSizeClass = isAndroid
-    ? 'w-64 h-64'
+    ? (useLandscapeLayout ? 'w-52 h-52' : 'w-64 h-64')
     : 'w-56 h-56 sm:w-64 sm:h-64 md:w-80 md:h-80';
   const timeTextClass = isAndroid ? 'text-4xl' : 'text-3xl md:text-6xl';
 

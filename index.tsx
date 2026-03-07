@@ -345,11 +345,43 @@ function EmeraldTimer() {
   });
 
   const [eventProjects, setEventProjects] = useState<EventProject[]>(() => {
+    const createSeedEvents = (): EventProject[] => {
+      const now = Date.now();
+      const dayMs = 24 * 60 * 60 * 1000;
+      return [
+        {
+          id: `evt_seed_recurring_${now}`,
+          name: '健身打卡计划',
+          startAt: now - (7 * dayMs),
+          description: '每天完成至少 30 分钟训练',
+          tags: ['Exercise'],
+          images: [],
+          createdAt: now,
+          isRecurring: true,
+          recurringPeriod: 'daily',
+          customPeriodDays: 1,
+          targetMinutesPerDay: 30,
+        },
+        {
+          id: `evt_seed_normal_${now}`,
+          name: '课程项目冲刺',
+          startAt: now - (3 * dayMs),
+          description: '两周内完成课程作品并整理提交',
+          tags: ['Study'],
+          images: [],
+          createdAt: now,
+          expectedTotalHours: 12,
+          expectedTotalMinutes: 12 * 60,
+          expectedDays: 14,
+        },
+      ];
+    };
+
     const saved = localStorage.getItem('emerald-event-projects');
-    if (!saved) return [];
+    if (!saved) return createSeedEvents();
     try {
       const parsed = JSON.parse(saved);
-      if (!Array.isArray(parsed)) return [];
+      if (!Array.isArray(parsed)) return createSeedEvents();
       return parsed
         .filter((item) => item && typeof item.id === 'string' && typeof item.name === 'string')
         .map((item) => {
@@ -386,7 +418,7 @@ function EmeraldTimer() {
           };
         });
     } catch {
-      return [];
+      return createSeedEvents();
     }
   });
 
@@ -2405,11 +2437,11 @@ function EmeraldTimer() {
           
           <div 
             ref={mainScrollRef}
-            className={`flex-1 overflow-y-auto scrollbar-none relative flex flex-col ${isAndroid ? 'pb-24' : 'pb-12'}`}
+            className={`flex-1 overflow-y-auto scrollbar-none relative flex flex-col ${isAndroid ? (isLandscape ? 'pb-18' : 'pb-24') : 'pb-12'}`}
             style={{ zoom: (isMiniMode || isAndroid) ? 1.0 : uiScale } as any}
           >
             {activeTab === 'timer' && (
-              <div className="flex flex-1 w-full overflow-hidden relative animate-in fade-in duration-200">
+              <div className={`flex flex-1 w-full relative animate-in fade-in duration-200 ${isAndroid && isLandscape ? 'overflow-visible' : 'overflow-hidden'}`}>
                 <div className={`flex-1 flex flex-col items-center justify-center transition-all duration-500 ease-in-out ${isJournalOpen ? 'md:mr-[400px]' : 'mr-0'}`}>
                   <TimerBoard 
                     phase={phase}
@@ -2538,6 +2570,8 @@ function EmeraldTimer() {
                   logs={logs}
                   currentEventId={currentTask.eventId}
                   darkMode={isDarkMode}
+                  isAndroid={isAndroid}
+                  onOpenHistory={() => setActiveTab('logs')}
                 />
               </div>
             )}
@@ -2603,13 +2637,18 @@ function EmeraldTimer() {
                 { id: 'timer', icon: Play, label: 'Focus' },
                 { id: 'stats', icon: BarChart3, label: 'Analytics' },
                 { id: 'events', icon: BookOpen, label: 'Events' },
-                { id: 'logs', icon: Clock, label: 'History' }
+                ...(!isAndroid ? [{ id: 'logs', icon: Clock, label: 'History' }] : []),
+                ...(isAndroid ? [{ id: 'settings', icon: Settings, label: 'Settings' }] : [])
               ].map(tab => (
                 <button 
                   key={tab.id} 
                   aria-label={tab.label}
                   onClick={() => {
                     if (activeTab === tab.id) return;
+                    if (tab.id === 'settings') {
+                      openSettingsPanel();
+                      return;
+                    }
                     setActiveTab(tab.id as any);
                     if (!isAndroid) {
                       triggerHaptic(ImpactStyle.Light);

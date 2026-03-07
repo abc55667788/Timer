@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Plus, Target, Sparkles, TrendingUp, CalendarDays, Mountain, Tags, Hourglass, Image as ImageIcon, X, Save, Trash2, Settings, ChevronDown, ChevronUp, Eye, EyeOff, Clock } from 'lucide-react';
+import { Plus, Target, Sparkles, TrendingUp, CalendarDays, Mountain, Tags, Hourglass, Image as ImageIcon, X, Save, Trash2, Settings, ChevronDown, ChevronUp, Eye, EyeOff, Clock, MoreHorizontal } from 'lucide-react';
 import {
   AreaChart,
   Area,
@@ -22,6 +22,8 @@ interface EventsBoardProps {
   logs: LogEntry[];
   currentEventId?: string;
   darkMode: boolean;
+  isAndroid?: boolean;
+  onOpenHistory?: () => void;
 }
 
 type EventFormState = {
@@ -45,6 +47,8 @@ const EventsBoard: React.FC<EventsBoardProps> = ({
   logs,
   currentEventId,
   darkMode,
+  isAndroid = false,
+  onOpenHistory,
 }) => {
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
   const [showPeriodDropdown, setShowPeriodDropdown] = useState(false);
@@ -91,8 +95,9 @@ const EventsBoard: React.FC<EventsBoardProps> = ({
   const getTodayDateInput = () => formatDate(Date.now());
   const [showNewEventModal, setShowNewEventModal] = useState(false);
   const [editingEventId, setEditingEventId] = useState<string | null>(null);
-  const [isChartCollapsed, setIsChartCollapsed] = useState(false);
+  const [isChartCollapsed, setIsChartCollapsed] = useState(() => isAndroid);
   const [chartView, setChartView] = useState<'trend' | 'recurring30'>('trend');
+  const [showQuickFiltersMenu, setShowQuickFiltersMenu] = useState(false);
   const [showRecurringTasks, setShowRecurringTasks] = useState(() => {
     try {
       const saved = localStorage.getItem('emerald-events-show-recurring-tasks');
@@ -440,6 +445,18 @@ const EventsBoard: React.FC<EventsBoardProps> = ({
     [recurring30Data, hideNotDueRecurringCards],
   );
 
+  const mobileSummary = useMemo(() => {
+    const totalFocusSeconds = displayProjects.reduce((sum, project) => sum + project.totalFocusSeconds, 0);
+    const todayFocusSeconds = displayProjects.reduce((sum, project) => sum + project.todayFocusSeconds, 0);
+    const dueRecurringCount = displayProjects.filter(project => project.isRecurring && project.recurringStatus?.isToday).length;
+    return {
+      projectCount: displayProjects.length,
+      totalFocusSeconds,
+      todayFocusSeconds,
+      dueRecurringCount,
+    };
+  }, [displayProjects]);
+
   const toggleEventVisibility = (eventId: string) => {
     setHiddenEventIds(prev => prev.includes(eventId)
       ? prev.filter(id => id !== eventId)
@@ -606,51 +623,112 @@ const EventsBoard: React.FC<EventsBoardProps> = ({
       <div className={`relative overflow-hidden rounded-[2rem] border px-5 py-5 md:px-7 md:py-6 ${darkMode ? 'bg-zinc-900 border-white/5' : 'bg-white border-emerald-100 shadow-sm'}`}>
         <div className={`absolute -top-8 -right-10 w-44 h-44 rounded-full blur-3xl ${darkMode ? 'bg-emerald-500/20' : 'bg-emerald-200/70'}`} />
         <div className={`absolute -bottom-10 -left-8 w-40 h-40 rounded-full blur-3xl ${darkMode ? 'bg-blue-500/10' : 'bg-blue-100/80'}`} />
-        <div className="relative flex flex-col md:flex-row md:items-center gap-4 md:gap-6">
-          <img src={APP_LOGO} alt="Events" className={`w-14 h-14 rounded-2xl object-cover border ${darkMode ? 'border-white/10 bg-black/40' : 'border-emerald-100 bg-white'} p-1`} />
+        <div className={`relative ${isAndroid ? 'flex flex-col gap-2' : 'flex flex-col md:flex-row md:items-center gap-4 md:gap-6'}`}>
+          {!isAndroid && (
+            <img src={APP_LOGO} alt="Events" className={`w-14 h-14 rounded-2xl object-cover border ${darkMode ? 'border-white/10 bg-black/40' : 'border-emerald-100 bg-white'} p-1`} />
+          )}
           <div className="flex-1">
-            <h2 className={`text-base md:text-lg font-black tracking-tight flex items-center gap-2 ${darkMode ? 'text-emerald-200' : 'text-emerald-800'}`}>
-              <Sparkles size={16} /> Event Analytics
-            </h2>
-            <p className={`text-xs mt-1 font-bold ${darkMode ? 'text-zinc-400' : 'text-emerald-500'}`}>
-              Track long-term projects with daily focus accumulation and cumulative trend.
-            </p>
+            {!isAndroid && (
+              <h2 className={`text-base md:text-lg font-black tracking-tight flex items-center gap-2 ${darkMode ? 'text-emerald-200' : 'text-emerald-800'}`}>
+                <Sparkles size={16} /> Event Analytics
+              </h2>
+            )}
+            {!isAndroid && (
+              <p className={`text-xs mt-1 font-bold ${darkMode ? 'text-zinc-400' : 'text-emerald-500'}`}>
+                Track long-term projects with daily focus accumulation and cumulative trend.
+              </p>
+            )}
           </div>
-          <div className="flex items-center gap-2 flex-wrap justify-end">
+          <div className={isAndroid ? 'flex items-center gap-2 w-full' : 'flex items-center gap-2 flex-wrap justify-end'}>
             <button
               onClick={openNewEventModal}
-              className={`px-3 py-1.5 rounded-xl text-[11px] font-black tracking-wide uppercase transition-all ${darkMode ? 'bg-emerald-500/20 text-emerald-200 border border-emerald-500/40 hover:bg-emerald-500/30' : 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm'}`}
+              className={`${isAndroid ? 'flex-1 px-3 py-2 text-[11px] tracking-normal' : 'px-3 py-1.5 text-[11px] tracking-wide uppercase'} rounded-xl font-black transition-all ${darkMode ? 'bg-emerald-500/20 text-emerald-200 border border-emerald-500/40 hover:bg-emerald-500/30' : 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm'}`}
             >
-              + New Event
+              {isAndroid ? '+ 新建' : '+ New Event'}
             </button>
 
-            <button
-              type="button"
-              onClick={() => setShowRecurringTasks(prev => !prev)}
-              className={`px-3 py-1.5 rounded-xl text-[11px] font-black border transition-all ${showRecurringTasks
-                ? (darkMode ? 'bg-emerald-500/20 text-emerald-200 border-emerald-500/40' : 'bg-emerald-50 text-emerald-700 border-emerald-200')
-                : (darkMode ? 'bg-zinc-800 text-zinc-300 border-white/10' : 'bg-white text-emerald-700 border-emerald-100')
-              }`}
-            >
-              显示 Recurring 任务
-            </button>
-
-            {hasRecurringProjects && (
+            {isAndroid && (
               <button
                 type="button"
-                onClick={() => setHideNotDueRecurringCards(prev => !prev)}
-                className={`px-3 py-1.5 rounded-xl text-[11px] font-black border transition-all ${hideNotDueRecurringCards
-                  ? (darkMode ? 'bg-zinc-800 text-emerald-300 border-emerald-500/40' : 'bg-emerald-50 text-emerald-700 border-emerald-200')
-                  : (darkMode ? 'bg-zinc-800 text-zinc-300 border-white/10' : 'bg-white text-emerald-700 border-emerald-100')
-                }`}
+                onClick={() => onOpenHistory?.()}
+                className={`px-2.5 py-2 rounded-xl border transition-all flex items-center gap-1.5 ${darkMode ? 'bg-zinc-800 text-zinc-300 border-white/10 hover:text-emerald-200' : 'bg-white text-emerald-700 border-emerald-100 hover:border-emerald-300'}`}
+                title="查看历史"
               >
-                隐藏非今日打卡任务
+                <Clock size={14} />
+                <span className="text-[10px] font-black">历史</span>
               </button>
             )}
 
-            {publicPreviewImages.slice(0, 3).map((img, idx) => (
-              <img key={idx} src={img} alt={`preview-${idx}`} className={`w-10 h-10 rounded-xl object-cover border ${darkMode ? 'border-white/10' : 'border-emerald-100'}`} />
-            ))}
+            {isAndroid ? (
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setShowQuickFiltersMenu(prev => !prev)}
+                  className={`px-2.5 py-2 rounded-xl border transition-all ${darkMode ? 'bg-zinc-800 text-zinc-300 border-white/10 hover:text-emerald-200' : 'bg-white text-emerald-700 border-emerald-100 hover:border-emerald-300'}`}
+                  title="更多操作"
+                >
+                  <MoreHorizontal size={16} />
+                </button>
+                {showQuickFiltersMenu && (
+                  <div className={`absolute right-0 mt-2 w-44 rounded-xl border p-1.5 z-20 ${darkMode ? 'bg-zinc-900 border-white/10 shadow-[0_10px_30px_rgba(0,0,0,0.5)]' : 'bg-white border-emerald-100 shadow-lg'}`}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowRecurringTasks(prev => !prev);
+                        setShowQuickFiltersMenu(false);
+                      }}
+                      className={`w-full text-left px-2 py-1.5 rounded-lg text-[11px] font-bold transition-all ${showRecurringTasks
+                        ? (darkMode ? 'bg-emerald-500/20 text-emerald-200' : 'bg-emerald-50 text-emerald-700')
+                        : (darkMode ? 'text-zinc-300 hover:bg-zinc-800' : 'text-emerald-700 hover:bg-emerald-50')
+                      }`}
+                    >
+                      {showRecurringTasks ? '隐藏周期任务' : '显示周期任务'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setHideNotDueRecurringCards(prev => !prev);
+                        setShowQuickFiltersMenu(false);
+                      }}
+                      className={`w-full text-left px-2 py-1.5 rounded-lg text-[11px] font-bold transition-all ${hideNotDueRecurringCards
+                        ? (darkMode ? 'bg-emerald-500/20 text-emerald-200' : 'bg-emerald-50 text-emerald-700')
+                        : (darkMode ? 'text-zinc-300 hover:bg-zinc-800' : 'text-emerald-700 hover:bg-emerald-50')
+                      }`}
+                    >
+                      {hideNotDueRecurringCards ? '显示非今日任务' : '隐藏非今日任务'}
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setShowRecurringTasks(prev => !prev)}
+                  className={`px-3 py-1.5 rounded-xl text-[11px] font-black border transition-all ${showRecurringTasks
+                    ? (darkMode ? 'bg-emerald-500/20 text-emerald-200 border-emerald-500/40' : 'bg-emerald-50 text-emerald-700 border-emerald-200')
+                    : (darkMode ? 'bg-zinc-800 text-zinc-300 border-white/10' : 'bg-white text-emerald-700 border-emerald-100')
+                  }`}
+                >
+                  显示 Recurring 任务
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setHideNotDueRecurringCards(prev => !prev)}
+                  className={`px-3 py-1.5 rounded-xl text-[11px] font-black border transition-all ${hideNotDueRecurringCards
+                    ? (darkMode ? 'bg-zinc-800 text-emerald-300 border-emerald-500/40' : 'bg-emerald-50 text-emerald-700 border-emerald-200')
+                    : (darkMode ? 'bg-zinc-800 text-zinc-300 border-white/10' : 'bg-white text-emerald-700 border-emerald-100')
+                  }`}
+                >
+                  隐藏非今日打卡任务
+                </button>
+
+                {publicPreviewImages.slice(0, 3).map((img, idx) => (
+                  <img key={idx} src={img} alt={`preview-${idx}`} className={`w-10 h-10 rounded-xl object-cover border ${darkMode ? 'border-white/10' : 'border-emerald-100'}`} />
+                ))}
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -658,13 +736,18 @@ const EventsBoard: React.FC<EventsBoardProps> = ({
       <div className={`rounded-[2rem] border p-4 ${darkMode ? 'bg-zinc-900 border-white/5' : 'bg-white border-emerald-100 shadow-sm'}`}>
         <div className="flex items-center justify-between gap-3 mb-3">
           <div className="flex items-center gap-3 min-w-0">
-            <img src="./timer-play.png" alt="chart" className={`w-10 h-10 rounded-xl object-cover border ${darkMode ? 'border-white/10' : 'border-emerald-100'}`} />
+            {!isAndroid && (
+              <img src="./timer-play.png" alt="chart" className={`w-10 h-10 rounded-xl object-cover border ${darkMode ? 'border-white/10' : 'border-emerald-100'}`} />
+            )}
             <Target size={16} className={darkMode ? 'text-emerald-400' : 'text-emerald-600'} />
             <h4 className={`text-sm font-black tracking-wide truncate ${darkMode ? 'text-emerald-200' : 'text-emerald-800'}`}>
-              {chartView === 'trend' ? 'Centered 30-Day Window · Completed vs Expected' : 'Recurring Check-ins · Last 30 Days'}
+              {chartView === 'trend'
+                ? (isAndroid ? 'Completed vs Expected' : 'Centered 30-Day Window · Completed vs Expected')
+                : (isAndroid ? 'Recurring · 30 Days' : 'Recurring Check-ins · Last 30 Days')}
             </h4>
           </div>
           <div className="flex items-center gap-2">
+            {(!isAndroid || !isChartCollapsed) && (
             <div className={`p-1 rounded-lg border flex items-center gap-1 ${darkMode ? 'bg-zinc-800 border-white/10' : 'bg-emerald-50 border-emerald-100'}`}>
               <button
                 type="button"
@@ -681,6 +764,7 @@ const EventsBoard: React.FC<EventsBoardProps> = ({
                 Daily 30D
               </button>
             </div>
+            )}
             <button
               onClick={() => setIsChartCollapsed(prev => !prev)}
               className={`px-2.5 py-1.5 rounded-lg text-[11px] font-bold border flex items-center gap-1 ${darkMode ? 'bg-zinc-800 border-white/10 text-zinc-300 hover:text-emerald-200' : 'bg-white border-emerald-100 text-emerald-700 hover:border-emerald-300'}`}
@@ -692,6 +776,22 @@ const EventsBoard: React.FC<EventsBoardProps> = ({
             </button>
           </div>
         </div>
+        {isAndroid && isChartCollapsed && (
+          <div className="grid grid-cols-3 gap-2 mb-1">
+            <div className={`rounded-lg border px-2 py-1.5 ${darkMode ? 'bg-zinc-800/70 border-white/10 text-zinc-300' : 'bg-emerald-50/80 border-emerald-100 text-emerald-700'}`}>
+              <div className="text-[9px] font-bold opacity-80">任务</div>
+              <div className="text-[11px] font-black">{mobileSummary.projectCount}</div>
+            </div>
+            <div className={`rounded-lg border px-2 py-1.5 ${darkMode ? 'bg-zinc-800/70 border-white/10 text-zinc-300' : 'bg-emerald-50/80 border-emerald-100 text-emerald-700'}`}>
+              <div className="text-[9px] font-bold opacity-80">今日</div>
+              <div className="text-[11px] font-black">{formatTime(mobileSummary.todayFocusSeconds)}</div>
+            </div>
+            <div className={`rounded-lg border px-2 py-1.5 ${darkMode ? 'bg-zinc-800/70 border-white/10 text-zinc-300' : 'bg-emerald-50/80 border-emerald-100 text-emerald-700'}`}>
+              <div className="text-[9px] font-bold opacity-80">周期今日</div>
+              <div className="text-[11px] font-black">{mobileSummary.dueRecurringCount}</div>
+            </div>
+          </div>
+        )}
         {!isChartCollapsed && chartView === 'trend' && (
           <>
             <div className="flex flex-wrap gap-2 mb-3">
@@ -733,12 +833,14 @@ const EventsBoard: React.FC<EventsBoardProps> = ({
                     tick={{ fill: darkMode ? '#a7f3d0' : '#065f46', fontSize: 11 }}
                     padding={{ left: 0, right: 0 }}
                   />
-                  <YAxis tick={{ fill: darkMode ? '#a7f3d0' : '#065f46', fontSize: 11 }} unit="h" />
-                  <Tooltip
-                    allowEscapeViewBox={{ x: false, y: true }}
-                    offset={6}
-                    formatter={(value) => `${Number(value).toFixed(1)}h`}
-                  />
+                  <YAxis width={isAndroid ? 36 : undefined} tick={{ fill: darkMode ? '#a7f3d0' : '#065f46', fontSize: 11 }} unit="h" />
+                  {!isAndroid && (
+                    <Tooltip
+                      allowEscapeViewBox={{ x: false, y: true }}
+                      offset={6}
+                      formatter={(value) => `${Number(value).toFixed(1)}h`}
+                    />
+                  )}
                   {trendVisibleProjects.flatMap((project) => {
                     const colors = projectColorMap[project.id];
                     const expectedKey = `expected_${project.id}`;
@@ -824,7 +926,7 @@ const EventsBoard: React.FC<EventsBoardProps> = ({
         )}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+      <div className={isAndroid ? 'grid grid-cols-2 gap-3' : 'grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4'}>
         {displayProjects.length === 0 ? (
           <div className={`col-span-full rounded-[2rem] border p-10 text-center ${darkMode ? 'bg-zinc-900 border-white/5 text-zinc-500' : 'bg-white border-emerald-100 text-emerald-400'}`}>
             No event projects to display.
@@ -844,38 +946,38 @@ const EventsBoard: React.FC<EventsBoardProps> = ({
             <button
               key={project.id}
               type="button"
-              className={`w-full text-left rounded-[1.4rem] border p-4 transition-all relative overflow-hidden ${
+              className={`w-full text-left ${isAndroid ? 'rounded-[1.1rem] p-3' : 'rounded-[1.4rem] p-4'} border transition-all relative overflow-hidden ${
                 isRecurringInactive 
                   ? (darkMode ? 'bg-zinc-900/50 border-white/5 opacity-50 grayscale' : 'bg-gray-50 border-gray-100 opacity-60 grayscale')
                   : (darkMode ? 'bg-zinc-900 border-white/5 hover:border-emerald-500/30' : 'bg-white border-emerald-100 hover:border-emerald-300')
               } ${isRecurringToday ? (darkMode ? 'ring-1 ring-emerald-500/40' : 'ring-2 ring-emerald-500/20 shadow-emerald-500/10 shadow-lg') : ''}`}
             >
-              <div className="flex items-center justify-between gap-3 mb-3">
-                <div className="flex items-center gap-3 min-w-0 flex-1">
+              <div className={`flex items-center justify-between ${isAndroid ? 'gap-2 mb-2' : 'gap-3 mb-3'}`}>
+                <div className={`flex items-center min-w-0 flex-1 ${isAndroid ? 'gap-2' : 'gap-3'}`}>
                   <div className="relative">
-                    <img src={preview} alt={project.name} className={`w-11 h-11 rounded-xl object-cover border ${darkMode ? 'border-white/10' : 'border-emerald-100'}`} />
+                    <img src={preview} alt={project.name} className={`${isAndroid ? 'w-9 h-9 rounded-lg' : 'w-11 h-11 rounded-xl'} object-cover border ${darkMode ? 'border-white/10' : 'border-emerald-100'}`} />
                     {project.isRecurring && (
-                      <div className={`absolute -top-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center border-2 border-white dark:border-zinc-900 ${isRecurringToday ? 'bg-emerald-500 text-white' : 'bg-gray-400 text-white'}`}>
+                      <div className={`absolute -top-1 -right-1 ${isAndroid ? 'w-3.5 h-3.5' : 'w-4 h-4'} rounded-full flex items-center justify-center border-2 border-white dark:border-zinc-900 ${isRecurringToday ? 'bg-emerald-500 text-white' : 'bg-gray-400 text-white'}`}>
                         <Clock size={10} />
                       </div>
                     )}
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-col">
-                      <div className={`w-full text-sm font-black truncate ${darkMode ? 'text-zinc-50' : 'text-emerald-950'}`}>{project.name}</div>
+                      <div className={`w-full ${isAndroid ? 'text-[12px]' : 'text-sm'} font-black truncate ${darkMode ? 'text-zinc-50' : 'text-emerald-950'}`}>{project.name}</div>
                       {project.isRecurring && (
                         <span className={`text-[9px] font-black uppercase tracking-wider ${isRecurringToday ? 'text-emerald-500' : 'text-gray-500'}`}>
                           {project.recurringPeriod === 'custom' ? `Every ${project.customPeriodDays}d` : project.recurringPeriod}
                         </span>
                       )}
                     </div>
-                    <div className={`text-[10px] mt-0.5 flex items-center gap-1 ${darkMode ? 'text-zinc-500' : 'text-emerald-500'}`}>
+                    <div className={`${isAndroid ? 'text-[9px]' : 'text-[10px]'} mt-0.5 flex items-center gap-1 ${darkMode ? 'text-zinc-500' : 'text-emerald-500'}`}>
                       <Tags size={11} /> {(project.tags && project.tags.length > 0) ? project.tags.slice(0, 3).join(' · ') : 'No tags'}
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className={`text-xs font-bold px-2 py-1 rounded-lg ${
+                <div className={`flex items-center ${isAndroid ? 'gap-1.5' : 'gap-2'}`}>
+                  <span className={`${isAndroid ? 'text-[10px] px-1.5 py-0.5' : 'text-xs px-2 py-1'} font-bold rounded-lg ${
                     isRecurringToday && project.recurringStatus?.reached ? (darkMode ? 'bg-emerald-500/20 text-emerald-300' : 'bg-emerald-100 text-emerald-700') : (darkMode ? 'bg-black/30 text-zinc-400' : 'bg-gray-100 text-gray-600')
                   }`}>
                     Today {formatTime(project.todayFocusSeconds)}
@@ -885,20 +987,20 @@ const EventsBoard: React.FC<EventsBoardProps> = ({
                       e.stopPropagation();
                       openEditEventModal(project);
                     }}
-                    className={`p-2 rounded-lg border transition-all ${darkMode ? 'bg-zinc-800 border-white/10 text-zinc-400 hover:text-emerald-300 hover:border-emerald-500/40' : 'bg-white border-emerald-100 text-emerald-500 hover:text-emerald-700 hover:border-emerald-300'}`}
+                    className={`${isAndroid ? 'p-1.5' : 'p-2'} rounded-lg border transition-all ${darkMode ? 'bg-zinc-800 border-white/10 text-zinc-400 hover:text-emerald-300 hover:border-emerald-500/40' : 'bg-white border-emerald-100 text-emerald-500 hover:text-emerald-700 hover:border-emerald-300'}`}
                     title="Edit Event"
                   >
-                    <Settings size={13} />
+                    <Settings size={isAndroid ? 12 : 13} />
                   </button>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-2 text-[10px] font-bold">
+              <div className={`grid grid-cols-2 ${isAndroid ? 'gap-1.5 text-[9px]' : 'gap-2 text-[10px]'} font-bold`}>
                 {project.isRecurring ? (
                   <>
-                    <div className={`${darkMode ? 'bg-black/30 border-white/5' : 'bg-emerald-50/60 border-emerald-100'} rounded-lg p-2 border`}><div className="flex items-center gap-1 mb-0.5"><CalendarDays size={11} />累计打卡天数</div>{project.recurringCompletedDays}/{project.recurringDueDays}</div>
-                    <div className={`${darkMode ? 'bg-black/30 border-white/5' : 'bg-emerald-50/60 border-emerald-100'} rounded-lg p-2 border`}><div className="flex items-center gap-1 mb-0.5"><TrendingUp size={11} />累计投入时间</div>{formatTime(project.totalFocusSeconds)}</div>
-                   <div className={`${isRecurringToday ? (darkMode ? 'bg-emerald-500/10 border-emerald-500/20' : 'bg-emerald-50 border-emerald-200 shadow-inner') : (darkMode ? 'bg-black/30 border-white/5' : 'bg-gray-100 border-gray-200')} col-span-2 rounded-lg p-2 border`}>
+                    <div className={`${darkMode ? 'bg-black/30 border-white/5' : 'bg-emerald-50/60 border-emerald-100'} rounded-lg ${isAndroid ? 'p-1.5' : 'p-2'} border`}><div className="flex items-center gap-1 mb-0.5"><CalendarDays size={11} />累计打卡天数</div>{project.recurringCompletedDays}/{project.recurringDueDays}</div>
+                    <div className={`${darkMode ? 'bg-black/30 border-white/5' : 'bg-emerald-50/60 border-emerald-100'} rounded-lg ${isAndroid ? 'p-1.5' : 'p-2'} border`}><div className="flex items-center gap-1 mb-0.5"><TrendingUp size={11} />累计投入时间</div>{formatTime(project.totalFocusSeconds)}</div>
+                   <div className={`${isRecurringToday ? (darkMode ? 'bg-emerald-500/10 border-emerald-500/20' : 'bg-emerald-50 border-emerald-200 shadow-inner') : (darkMode ? 'bg-black/30 border-white/5' : 'bg-gray-100 border-gray-200')} col-span-2 rounded-lg ${isAndroid ? 'p-1.5' : 'p-2'} border`}>
                       <div className="flex items-center justify-between mb-1.5">
                         <div className={`flex items-center gap-1.5 ${isRecurringToday ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-500'}`}>
                           <Target size={11} /> 
@@ -925,10 +1027,10 @@ const EventsBoard: React.FC<EventsBoardProps> = ({
                   </>
                 ) : (
                   <>
-                    <div className={`${darkMode ? 'bg-black/30 border-white/5' : 'bg-emerald-50/60 border-emerald-100'} rounded-lg p-2 border`}><div className="flex items-center gap-1 mb-0.5"><TrendingUp size={11} />累计投入</div>{formatTime(project.totalFocusSeconds)}</div>
-                    <div className={`${darkMode ? 'bg-black/30 border-white/5' : 'bg-emerald-50/60 border-emerald-100'} rounded-lg p-2 border`}><div className="flex items-center gap-1 mb-0.5"><Hourglass size={11} />预期投入</div>{expectedLabel}</div>
-                    <div className={`${darkMode ? 'bg-black/30 border-white/5' : 'bg-emerald-50/60 border-emerald-100'} rounded-lg p-2 border`}><div className="flex items-center gap-1 mb-0.5"><Mountain size={11} />最大日投入</div>{formatTime(project.maxDailySeconds)}</div>
-                    <div className={`${darkMode ? 'bg-black/30 border-white/5' : 'bg-emerald-50/60 border-emerald-100'} rounded-lg p-2 border`}><div className="flex items-center gap-1 mb-0.5"><CalendarDays size={11} />平均日投入</div>{formatTime(project.avgDailySeconds)}</div>
+                    <div className={`${darkMode ? 'bg-black/30 border-white/5' : 'bg-emerald-50/60 border-emerald-100'} rounded-lg ${isAndroid ? 'p-1.5' : 'p-2'} border`}><div className="flex items-center gap-1 mb-0.5"><TrendingUp size={11} />累计投入</div>{formatTime(project.totalFocusSeconds)}</div>
+                    <div className={`${darkMode ? 'bg-black/30 border-white/5' : 'bg-emerald-50/60 border-emerald-100'} rounded-lg ${isAndroid ? 'p-1.5' : 'p-2'} border`}><div className="flex items-center gap-1 mb-0.5"><Hourglass size={11} />预期投入</div>{expectedLabel}</div>
+                    <div className={`${darkMode ? 'bg-black/30 border-white/5' : 'bg-emerald-50/60 border-emerald-100'} rounded-lg ${isAndroid ? 'p-1.5' : 'p-2'} border`}><div className="flex items-center gap-1 mb-0.5"><Mountain size={11} />最大日投入</div>{formatTime(project.maxDailySeconds)}</div>
+                    <div className={`${darkMode ? 'bg-black/30 border-white/5' : 'bg-emerald-50/60 border-emerald-100'} rounded-lg ${isAndroid ? 'p-1.5' : 'p-2'} border`}><div className="flex items-center gap-1 mb-0.5"><CalendarDays size={11} />平均日投入</div>{formatTime(project.avgDailySeconds)}</div>
                   </>
                 )}
               </div>
