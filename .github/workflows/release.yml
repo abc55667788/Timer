@@ -127,7 +127,10 @@ jobs:
       - name: Create or Update GitHub Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
         run: |
+          set -euo pipefail
+
           TAG_NAME=${{ github.ref_name }}
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             TAG_NAME=$(node -p "require('./package.json').version")
@@ -140,22 +143,28 @@ jobs:
             gh release delete "$TAG_NAME" -y
           fi
           
-          # 宽泛地查找所有已下载的 artifact 文件，不依赖特定的子目录名称
-          # find ./dist -type f 会递归找到所有 apk, exe, AppImage, deb 等
-          # 对文件名中的空格进行处理
-          FILES=$(find ./dist -type f \( -name "*.exe" -o -name "*.AppImage" -o -name "*.apk" -o -name "*.deb" -o -name "*.blockmap" \))
-          
-          echo "Found files to upload:"
-          echo "$FILES"
+          # 宽泛查找构建产物，并通过 -print0 + bash 数组安全处理带空格路径
+          mapfile -d '' -t FILES < <(find ./dist -type f \( -name "*.exe" -o -name "*.AppImage" -o -name "*.apk" -o -name "*.deb" -o -name "*.blockmap" \) -print0)
 
-          # 创建正式版（非草稿）并标记为 Latest
-          # 将 IFS 设置为换行符以正确处理带空格的文件路径
-          IFS=$'\n'
-          gh release create "$TAG_NAME" \
-            --title "Emerald Timer $TAG_NAME" \
-            --generate-notes \
-            --latest \
-            $FILES \
-            || (gh release edit "$TAG_NAME" --latest --draft=false && gh release upload "$TAG_NAME" $FILES --clobber)
-          unset IFS
-            || (gh release edit "$TAG_NAME" --latest --draft=false && gh release upload "$TAG_NAME" $FILES --clobber)
+          if [[ ${#FILES[@]} -eq 0 ]]; then
+            echo "No release assets found under ./dist"
+            exit 1
+          fi
+
+          echo "Found files to upload:"
+          printf '%s\n' "${FILES[@]}"
+
+          # 创建或更新 Release，并上传产物
+          if gh release view "$TAG_NAME" >/dev/null 2>&1; then
+            gh release upload "$TAG_NAME" "${FILES[@]}" --clobber
+          else
+            gh release create "$TAG_NAME" \
+              --title "Emerald Timer $TAG_NAME" \
+              --generate-notes \
+              --latest \
+              "${FILES[@]}"
+          fi
+
+          # 强制设置为正式版并标记 Latest
+          RELEASE_ID=$(gh api repos/${{ github.repository }}/releases/tags/$TAG_NAME --jq '.id')
+          gh api -X PATCH repos/${{ github.repository }}/releases/$RELEASE_ID -f draft=false -f prerelease=false -f make_latest=true >/dev/null
