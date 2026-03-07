@@ -134,17 +134,22 @@ jobs:
             TAG_NAME="v$TAG_NAME"
           fi
           
-          # 检查是否存在同名的 Draft 并删除
-          gh release list --exclude-drafts=false | grep "$TAG_NAME" | grep "Draft" && gh release delete "$TAG_NAME" -y || true
+          # 检查是否存在同名的 Draft 并删除，确保不阻塞正式版发布
+          EXISTING_DRAFT=$(gh release list --exclude-drafts=false | grep "$TAG_NAME" | grep "Draft" | cut -f1) || true
+          if [ ! -z "$EXISTING_DRAFT" ]; then
+            gh release delete "$TAG_NAME" -y
+          fi
           
-          # 创建或更新 Release
-          # 注意：dist/ 目录下可能因为 upload-artifact 的结构存在子目录，这里使用 find 找到所有文件
-          FILES=$(find ./dist -type f)
+          # 宽泛地查找所有已下载的 artifact 文件，不依赖特定的子目录名称
+          # find ./dist -type f 会递归找到所有 apk, exe, AppImage, deb 等
+          FILES=$(find ./dist -type f \( -name "*.exe" -o -name "*.AppImage" -o -name "*.apk" -o -name "*.deb" -o -name "*.blockmap" \))
           
+          echo "Found files to upload: $FILES"
+
+          # 创建正式版（非草稿）并标记为 Latest
           gh release create "$TAG_NAME" \
             --title "Emerald Timer $TAG_NAME" \
             --generate-notes \
             --latest \
-            || gh release edit "$TAG_NAME" --latest
-            
-          gh release upload "$TAG_NAME" $FILES --clobber
+            $FILES \
+            || (gh release edit "$TAG_NAME" --latest --draft=false && gh release upload "$TAG_NAME" $FILES --clobber)
