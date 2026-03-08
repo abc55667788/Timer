@@ -6,8 +6,8 @@
 2. 触发 GitHub Release Action。
 3. 监控构建与发布工作流结果，失败时持续修复并重试。
 4. 生成清晰简洁的 Release 说明（含用户痛点与新功能价值）。
-5. 将发布版本标记为 Latest、非 Draft，并清理同 Tag 的 Draft。
-6. 可选：使用 Playwright 生成并附带功能截图。
+5. **引用效果截图**：在 Release 说明中，必须引用之前生成的 Playwright 效果截图（如 `assets/screenshots/` 下的文件）。如果当前 session 无法自动上传，请以图片 Markdown 链接形式在描述中展示（如 `![Android Portrait](https://github.com/abc55667788/Timer/blob/main/assets/screenshots/android-portrait-timer.png?raw=true)`）。
+6. 将发布版本标记为 Latest、非 Draft，并清理同 Tag 的 Draft。
 
 ---
 
