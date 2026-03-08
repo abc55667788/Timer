@@ -8,7 +8,7 @@ import { Haptics, ImpactStyle } from '@capacitor/haptics';
 import { StatusBar, StatusBarStyle } from '@capacitor/status-bar';
 import './index.css';
 import { 
-  Play, BarChart3, Clock, BookOpen, 
+  Play, BarChart3, Clock, BookOpen, Sparkles,
   X, Maximize2, Minimize2, Minus, Settings, Square, Copy
 } from 'lucide-react';
 // Recharts moved to StatsBoard.tsx
@@ -27,7 +27,9 @@ import {
   Inspiration,
   CategoryData,
   ThemePreference,
-  EventProject
+  EventProject,
+  DailyFeedConfig,
+  DailyDigest
 } from './src/types';
 import { formatTime, formatClock, formatDate, formatDisplayDate, formatDisplayDateString, resolvePhaseTotals, pad2 } from './src/utils/time';
 import { compressImage } from './src/utils/media';
@@ -35,6 +37,7 @@ import { playBeep, triggerSystemNotification } from './src/utils/notifications';
 import MiniCalendar from './src/components/MiniCalendar';
 import useStats from './src/hooks/useStats';
 import TimerBoard from './src/components/boards/TimerBoard';
+import DailyBoard from './src/components/boards/DailyBoard';
 import StatsBoard from './src/components/boards/StatsBoard';
 import LogsBoard from './src/components/boards/LogsBoard';
 import EventsBoard from './src/components/boards/EventsBoard';
@@ -49,6 +52,7 @@ import PhasePromptModal from './src/components/modals/PhasePromptModal';
 import PendingSettingsModal from './src/components/modals/PendingSettingsModal';
 import LogContinuationModal from './src/components/modals/LogContinuationModal';
 import MiniMode from './src/components/MiniMode';
+import { buildDailyDigest } from './src/utils/dailyFeed';
 
 const triggerHaptic = async (style: ImpactStyle = ImpactStyle.Light) => {
   if (Capacitor.isNativePlatform()) {
@@ -115,7 +119,7 @@ function EmeraldTimer() {
     side: null,
     peekSize: 24,
   });
-  const [activeTab, setActiveTab] = useState<'timer' | 'stats' | 'events' | 'logs' | 'settings'>('timer');
+  const [activeTab, setActiveTab] = useState<'timer' | 'daily' | 'stats' | 'events' | 'logs' | 'settings'>('timer');
   const [isJournalOpen, setIsJournalOpen] = useState(false);
   const [phase, setPhase] = useState<TimerPhase>('work');
   const [isActive, setIsActive] = useState(false);
@@ -481,6 +485,34 @@ function EmeraldTimer() {
     return saved ? JSON.parse(saved) : [];
   });
 
+  const [dailyConfig, setDailyConfig] = useState<DailyFeedConfig>(() => {
+    const saved = localStorage.getItem('emerald-daily-config');
+    const defaults: DailyFeedConfig = {
+      enabled: true,
+      notify: true,
+      interestTopics: '',
+      knowledgeUrl: '',
+      newsUrl: ''
+    };
+    if (!saved) return defaults;
+    try {
+      return { ...defaults, ...JSON.parse(saved) };
+    } catch (e) {
+      return defaults;
+    }
+  });
+
+  const [dailyDigest, setDailyDigest] = useState<DailyDigest | null>(() => {
+    const saved = localStorage.getItem('emerald-daily-digest');
+    if (!saved) return null;
+    try {
+      return JSON.parse(saved);
+    } catch (e) {
+      return null;
+    }
+  });
+  const [isDailyRefreshing, setIsDailyRefreshing] = useState(false);
+
   const [selectedInspiration, setSelectedInspiration] = useState<Inspiration | null>(null);
   const [showInspirationModal, setShowInspirationModal] = useState(false);
   const [newGoalText, setNewGoalText] = useState('');
@@ -729,6 +761,16 @@ function EmeraldTimer() {
   useEffect(() => {
     localStorage.setItem('emerald-inspirations', JSON.stringify(inspirations));
   }, [inspirations]);
+
+  useEffect(() => {
+    localStorage.setItem('emerald-daily-config', JSON.stringify(dailyConfig));
+  }, [dailyConfig]);
+
+  useEffect(() => {
+    if (dailyDigest) {
+      localStorage.setItem('emerald-daily-digest', JSON.stringify(dailyDigest));
+    }
+  }, [dailyDigest]);
 
   useEffect(() => {
     localStorage.setItem('emerald-gitlab-config', JSON.stringify(gitlabConfig));
@@ -1689,7 +1731,7 @@ function EmeraldTimer() {
   };
 
   const exportData = () => {
-    const data = JSON.stringify({ logs, settings, categories, goals, inspirations });
+    const data = JSON.stringify({ logs, settings, categories, goals, inspirations, dailyConfig, dailyDigest });
     const blob = new Blob([data], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -1717,6 +1759,8 @@ function EmeraldTimer() {
         }
         if (parsed.goals) setGoals(parsed.goals);
         if (parsed.inspirations) setInspirations(parsed.inspirations);
+        if (parsed.dailyConfig) setDailyConfig(parsed.dailyConfig);
+        if (parsed.dailyDigest) setDailyDigest(parsed.dailyDigest);
         return true;
       } catch (err) {
         return false;
@@ -1758,6 +1802,8 @@ function EmeraldTimer() {
         categories, 
         goals, 
         inspirations,
+        dailyConfig,
+        dailyDigest,
         lastSynced: new Date().toISOString()
       }, null, 2);
       
@@ -1835,6 +1881,8 @@ function EmeraldTimer() {
       }
       if (parsed.goals) setGoals(parsed.goals);
       if (parsed.inspirations) setInspirations(parsed.inspirations);
+      if (parsed.dailyConfig) setDailyConfig(parsed.dailyConfig);
+      if (parsed.dailyDigest) setDailyDigest(parsed.dailyDigest);
       
       const now = new Date().toLocaleString();
       setLastSyncedAt(now);
@@ -1860,6 +1908,8 @@ function EmeraldTimer() {
         categories, 
         goals, 
         inspirations,
+        dailyConfig,
+        dailyDigest,
         lastSynced: new Date().toISOString()
       }, null, 2);
       
@@ -1943,6 +1993,8 @@ function EmeraldTimer() {
       }
       if (parsed.goals) setGoals(parsed.goals);
       if (parsed.inspirations) setInspirations(parsed.inspirations);
+      if (parsed.dailyConfig) setDailyConfig(parsed.dailyConfig);
+      if (parsed.dailyDigest) setDailyDigest(parsed.dailyDigest);
       
       const now = new Date().toLocaleString();
       setLastSyncedAt(now);
@@ -1983,6 +2035,47 @@ function EmeraldTimer() {
       setIsSyncing(false);
     }
   };
+
+  const refreshDailyFeed = useCallback(async (manual = true) => {
+    if (!dailyConfig.enabled) return;
+    setIsDailyRefreshing(true);
+    try {
+      const digest = await buildDailyDigest({
+        date: formatDate(Date.now()),
+        logs,
+        inspirations,
+        config: dailyConfig,
+      });
+      setDailyDigest(digest);
+
+      if (!manual && dailyConfig.notify && digest.items.length) {
+        const notifiedDate = localStorage.getItem('emerald-daily-notified-date');
+        if (notifiedDate !== digest.date) {
+          const highlight = digest.items.find(i => i.kind !== 'stats') || digest.items[0];
+          await triggerSystemNotification(
+            `Daily Update · ${digest.date}`,
+            `${highlight.title}：${highlight.content.slice(0, 70)}`
+          );
+          localStorage.setItem('emerald-daily-notified-date', digest.date);
+        }
+      }
+
+      if (manual) {
+        showNotice('Daily content refreshed');
+      }
+    } catch (err: any) {
+      showNotice(`Daily refresh failed: ${err?.message || 'unknown error'}`);
+    } finally {
+      setIsDailyRefreshing(false);
+    }
+  }, [dailyConfig, logs, inspirations]);
+
+  useEffect(() => {
+    if (!dailyConfig.enabled) return;
+    const today = formatDate(Date.now());
+    if (dailyDigest?.date === today) return;
+    refreshDailyFeed(false);
+  }, [dailyConfig.enabled, dailyConfig.knowledgeUrl, dailyConfig.newsUrl, dailyConfig.interestTopics, dailyDigest?.date, refreshDailyFeed]);
 
   const {
     relevantLogs,
@@ -2506,6 +2599,20 @@ function EmeraldTimer() {
               </div>
             )}
 
+            {activeTab === 'daily' && (
+              <div className="flex-1 scrollbar-none animate-in fade-in duration-200">
+                <DailyBoard
+                  digest={dailyDigest}
+                  isRefreshing={isDailyRefreshing}
+                  onRefresh={() => refreshDailyFeed(true)}
+                  darkMode={isDarkMode}
+                  selectedStatsDate={selectedStatsDate}
+                  onJumpStats={() => setActiveTab('stats')}
+                  notifyEnabled={dailyConfig.notify}
+                />
+              </div>
+            )}
+
             {activeTab === 'logs' && (
               <div className="flex-1 p-4 md:p-6 scrollbar-none animate-in fade-in duration-200">
                 <LogsBoard 
@@ -2579,6 +2686,10 @@ function EmeraldTimer() {
                   setThemePreference={setThemePreference}
                   autoContinueLog={autoContinueLog}
                   setAutoContinueLog={setAutoContinueLog}
+                  dailyConfig={dailyConfig}
+                  setDailyConfig={setDailyConfig}
+                  refreshDailyDigest={() => refreshDailyFeed(true)}
+                  isDailyRefreshing={isDailyRefreshing}
                   isPage={true}
                   isAndroid={isAndroid}
                 />
@@ -2601,6 +2712,7 @@ function EmeraldTimer() {
             <div className={`flex w-full max-w-5xl items-center justify-between gap-1.5 ${navInnerPadding}`}>
               {[
                 { id: 'timer', icon: Play, label: 'Focus' },
+                { id: 'daily', icon: Sparkles, label: 'Daily' },
                 { id: 'stats', icon: BarChart3, label: 'Analytics' },
                 { id: 'events', icon: BookOpen, label: 'Events' },
                 { id: 'logs', icon: Clock, label: 'History' }

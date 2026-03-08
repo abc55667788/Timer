@@ -139,6 +139,30 @@ export interface Inspiration {
   images?: string[];
 }
 
+export interface DailyFeedConfig {
+  enabled: boolean;
+  notify: boolean;
+  interestTopics: string;
+  knowledgeUrl: string;
+  newsUrl: string;
+}
+
+export interface DailyFeedItem {
+  id: string;
+  kind: 'knowledge' | 'stats' | 'news';
+  title: string;
+  content: string;
+  source?: string;
+  url?: string;
+}
+
+export interface DailyDigest {
+  date: string;
+  items: DailyFeedItem[];
+  generatedAt: number;
+  note?: string;
+}
+
 export const DEFAULT_CATEGORIES: CategoryData[] = [
   { name: 'Work', icon: 'Briefcase', color: '#3b82f6' },
   { name: 'Study', icon: 'GraduationCap', color: '#10b981' },

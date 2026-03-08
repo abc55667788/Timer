@@ -3,9 +3,9 @@ import {
   X, Settings, Clock, Palette, Timer as TimerIcon, 
   AlertCircle, CheckCircle2, Globe, Key, Database, RefreshCw, 
   Download, Upload, Cloud, Plus, Trash, Check, Maximize2, Minus,
-  Bell, User, Moon, Sun, Monitor
+  Bell, BellOff, User, Moon, Sun, Monitor, Sparkles, Newspaper, BookOpen
 } from 'lucide-react';
-import { CategoryData, CATEGORY_ICONS, NotificationStatus, IconKey, ThemePreference } from '../../types';
+import { CategoryData, CATEGORY_ICONS, NotificationStatus, IconKey, ThemePreference, DailyFeedConfig } from '../../types';
 
 interface SetupModalProps {
   wasMiniModeBeforeModal: boolean;
@@ -42,6 +42,14 @@ interface SetupModalProps {
   setThemePreference: (val: ThemePreference) => void;
   autoContinueLog: boolean;
   setAutoContinueLog: (val: boolean | ((prev: boolean) => boolean)) => void;
+  dailyConfig: DailyFeedConfig;
+  setDailyConfig: (config: DailyFeedConfig) => void;
+  refreshDailyDigest: () => void;
+  isDailyRefreshing: boolean;
+  testDailyAiConnection: () => void;
+  isDailyTesting: boolean;
+  dailyAiTestStatus?: 'idle' | 'success' | 'error';
+  dailyAiTestMessage?: string;
   isPage?: boolean;
   isAndroid?: boolean;
 }
@@ -81,6 +89,14 @@ const SetupModal: React.FC<SetupModalProps> = ({
   setThemePreference,
   autoContinueLog,
   setAutoContinueLog,
+  dailyConfig,
+  setDailyConfig,
+  refreshDailyDigest,
+  isDailyRefreshing,
+  testDailyAiConnection,
+  isDailyTesting,
+  dailyAiTestStatus = 'idle',
+  dailyAiTestMessage = '',
   isPage = false,
   isAndroid = false,
 }) => {
@@ -362,6 +378,140 @@ const SetupModal: React.FC<SetupModalProps> = ({
                         <div className={`w-6 h-6 bg-white rounded-full shadow-md transition-all duration-300 transform ${autoContinueLog ? 'translate-x-6' : 'translate-x-0'}`} />
                       </button>
                     </div>
+                  </div>
+                </section>
+
+                <section>
+                  <h3 className={`text-sm font-bold tracking-tight ${darkMode ? 'text-emerald-400' : 'text-emerald-800'} mb-4 flex items-center gap-2`}><Sparkles size={14}/> Daily Enrichment</h3>
+                  <div className={`${darkMode ? 'bg-emerald-950/20' : 'bg-emerald-50/30'} p-5 rounded-[1.8rem] border ${darkMode ? 'border-white/5' : 'border-emerald-50'} space-y-4`}>
+                    <div className={`p-4 rounded-2xl border flex items-center justify-between ${darkMode ? 'bg-zinc-950 border-white/5' : 'bg-white border-emerald-100 shadow-sm'}`}>
+                      <div className="flex items-center gap-3">
+                        <div className={`p-2 rounded-xl ${dailyConfig.enabled ? (darkMode ? 'bg-emerald-500/15 text-emerald-400' : 'bg-emerald-50 text-emerald-600') : (darkMode ? 'bg-zinc-900 text-zinc-500' : 'bg-zinc-100 text-zinc-500')}`}>
+                          <Sparkles size={16} />
+                        </div>
+                        <div>
+                          <p className={`text-[12px] font-black ${darkMode ? 'text-zinc-50' : 'text-emerald-950'} leading-none mb-1`}>启用每日内容</p>
+                          <p className={`text-[10px] font-bold ${darkMode ? 'text-zinc-500' : 'text-emerald-400'} uppercase tracking-widest`}>知识库 + 统计 + news</p>
+                        </div>
+                      </div>
+                      <button 
+                        onClick={() => setDailyConfig({ ...dailyConfig, enabled: !dailyConfig.enabled })}
+                        className={`w-14 h-8 rounded-full p-1 transition-all duration-300 relative ${dailyConfig.enabled ? 'bg-emerald-600' : 'bg-emerald-200'}`}
+                      >
+                        <div className={`w-6 h-6 bg-white rounded-full shadow-md transition-all duration-300 transform ${dailyConfig.enabled ? 'translate-x-6' : 'translate-x-0'}`} />
+                      </button>
+                    </div>
+
+                    <div className={`p-4 rounded-2xl border flex items-center justify-between ${darkMode ? 'bg-zinc-950 border-white/5' : 'bg-white border-emerald-100 shadow-sm'}`}>
+                      <div className="flex items-center gap-3">
+                        <div className={`p-2 rounded-xl ${dailyConfig.notify ? (darkMode ? 'bg-emerald-500/15 text-emerald-400' : 'bg-emerald-50 text-emerald-600') : (darkMode ? 'bg-zinc-900 text-zinc-500' : 'bg-zinc-100 text-zinc-500')}`}>
+                          <Bell size={16} />
+                        </div>
+                        <div>
+                          <p className={`text-[12px] font-black ${darkMode ? 'text-zinc-50' : 'text-emerald-950'} leading-none mb-1`}>每日通知推送</p>
+                          <p className={`text-[10px] font-bold ${darkMode ? 'text-zinc-500' : 'text-emerald-400'} uppercase tracking-widest`}>仅在开启通知权限时生效</p>
+                        </div>
+                      </div>
+                      <button 
+                        onClick={() => setDailyConfig({ ...dailyConfig, notify: !dailyConfig.notify })}
+                        className={`w-14 h-8 rounded-full p-1 transition-all duration-300 relative ${dailyConfig.notify ? 'bg-emerald-600' : 'bg-emerald-200'}`}
+                      >
+                        <div className={`w-6 h-6 bg-white rounded-full shadow-md transition-all duration-300 transform ${dailyConfig.notify ? 'translate-x-6' : 'translate-x-0'}`} />
+                      </button>
+                    </div>
+
+                    <input
+                      type="text"
+                      value={dailyConfig.interestTopics}
+                      onChange={(e) => setDailyConfig({ ...dailyConfig, interestTopics: e.target.value })}
+                      placeholder="兴趣关键词（逗号分隔，例如：AI, 效率, 创业）"
+                      className={`w-full rounded-xl py-3 px-4 text-[11px] font-bold outline-none focus:ring-2 focus:ring-emerald-500/10 ${darkMode ? 'bg-white/5 border border-white/5 text-emerald-100 placeholder:text-emerald-900' : 'bg-white border border-emerald-100 text-emerald-900 placeholder:text-emerald-300'}`}
+                    />
+
+                    <div className="relative">
+                      <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-emerald-400"><BookOpen size={13} /></div>
+                      <input
+                        type="text"
+                        value={dailyConfig.knowledgeUrl}
+                        onChange={(e) => setDailyConfig({ ...dailyConfig, knowledgeUrl: e.target.value })}
+                        placeholder="知识库 JSON 地址（可用 GitHub Raw URL）"
+                        className={`w-full rounded-xl py-3 pl-10 pr-4 text-[11px] font-bold outline-none focus:ring-2 focus:ring-emerald-500/10 ${darkMode ? 'bg-white/5 border border-white/5 text-emerald-100 placeholder:text-emerald-900' : 'bg-white border border-emerald-100 text-emerald-900 placeholder:text-emerald-300'}`}
+                      />
+                    </div>
+
+                    <div className="relative">
+                      <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-emerald-400"><Newspaper size={13} /></div>
+                      <input
+                        type="text"
+                        value={dailyConfig.newsUrl}
+                        onChange={(e) => setDailyConfig({ ...dailyConfig, newsUrl: e.target.value })}
+                        placeholder="AI 生成 News JSON 地址（GitHub Raw）"
+                        className={`w-full rounded-xl py-3 pl-10 pr-4 text-[11px] font-bold outline-none focus:ring-2 focus:ring-emerald-500/10 ${darkMode ? 'bg-white/5 border border-white/5 text-emerald-100 placeholder:text-emerald-900' : 'bg-white border border-emerald-100 text-emerald-900 placeholder:text-emerald-300'}`}
+                      />
+                    </div>
+
+                    <div className="relative">
+                      <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-emerald-400"><Key size={13} /></div>
+                      <input
+                        type="password"
+                        value={dailyConfig.aiApiKey}
+                        onChange={(e) => setDailyConfig({ ...dailyConfig, aiApiKey: e.target.value })}
+                        placeholder="AI API Key（本地保存）"
+                        className={`w-full rounded-xl py-3 pl-10 pr-4 text-[11px] font-bold outline-none focus:ring-2 focus:ring-emerald-500/10 ${darkMode ? 'bg-white/5 border border-white/5 text-emerald-100 placeholder:text-emerald-900' : 'bg-white border border-emerald-100 text-emerald-900 placeholder:text-emerald-300'}`}
+                      />
+                    </div>
+
+                    <input
+                      type="text"
+                      value={dailyConfig.aiBaseUrl}
+                      onChange={(e) => setDailyConfig({ ...dailyConfig, aiBaseUrl: e.target.value })}
+                      placeholder="AI Endpoint（OpenAI compatible）"
+                      className={`w-full rounded-xl py-3 px-4 text-[11px] font-bold outline-none focus:ring-2 focus:ring-emerald-500/10 ${darkMode ? 'bg-white/5 border border-white/5 text-emerald-100 placeholder:text-emerald-900' : 'bg-white border border-emerald-100 text-emerald-900 placeholder:text-emerald-300'}`}
+                    />
+
+                    <input
+                      type="text"
+                      value={dailyConfig.aiModel}
+                      onChange={(e) => setDailyConfig({ ...dailyConfig, aiModel: e.target.value })}
+                      placeholder="AI Model（例如 gpt-4o-mini）"
+                      className={`w-full rounded-xl py-3 px-4 text-[11px] font-bold outline-none focus:ring-2 focus:ring-emerald-500/10 ${darkMode ? 'bg-white/5 border border-white/5 text-emerald-100 placeholder:text-emerald-900' : 'bg-white border border-emerald-100 text-emerald-900 placeholder:text-emerald-300'}`}
+                    />
+
+                    <p className={`text-[10px] font-bold ${darkMode ? 'text-zinc-500' : 'text-emerald-400'} uppercase tracking-widest px-1`}>
+                      配置 API Key 后，刷新 Daily 时会尝试自动生成 AI News。
+                    </p>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <button
+                        disabled={isDailyTesting}
+                        onClick={testDailyAiConnection}
+                        className={`${darkMode ? 'bg-white/5 border-white/5 hover:bg-white/10 text-emerald-100' : 'bg-white border-emerald-50 hover:bg-emerald-50 text-emerald-900 shadow-sm'} w-full p-3 rounded-xl border flex items-center justify-center gap-2 text-[11px] font-black tracking-widest uppercase transition-all active:scale-95 disabled:opacity-60`}
+                      >
+                        <Check size={14} className={isDailyTesting ? 'animate-pulse' : ''} />
+                        测试AI连接
+                      </button>
+
+                      <button
+                        disabled={isDailyRefreshing}
+                        onClick={refreshDailyDigest}
+                        className={`${darkMode ? 'bg-white/5 border-white/5 hover:bg-white/10 text-emerald-100' : 'bg-white border-emerald-50 hover:bg-emerald-50 text-emerald-900 shadow-sm'} w-full p-3 rounded-xl border flex items-center justify-center gap-2 text-[11px] font-black tracking-widest uppercase transition-all active:scale-95 disabled:opacity-60`}
+                      >
+                        <RefreshCw size={14} className={isDailyRefreshing ? 'animate-spin' : ''} />
+                        立即刷新今日内容
+                      </button>
+                    </div>
+
+                    {!!dailyAiTestMessage && (
+                      <p
+                        className={`text-[11px] font-bold px-1 ${dailyAiTestStatus === 'success'
+                          ? (darkMode ? 'text-emerald-300' : 'text-emerald-700')
+                          : dailyAiTestStatus === 'error'
+                            ? (darkMode ? 'text-red-300' : 'text-red-600')
+                            : (darkMode ? 'text-zinc-400' : 'text-emerald-500')}`}
+                      >
+                        {dailyAiTestMessage}
+                      </p>
+                    )}
                   </div>
                 </section>
                 
