@@ -964,52 +964,55 @@ const EventsBoard: React.FC<EventsBoardProps> = ({
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-col">
-                      <div className={`w-full ${isAndroid ? 'text-[12px]' : 'text-sm'} font-black truncate ${darkMode ? 'text-zinc-50' : 'text-emerald-950'}`}>{project.name}</div>
+                      <div className={`w-full ${isAndroid ? 'text-[11px] leading-tight' : 'text-sm'} font-black truncate ${darkMode ? 'text-zinc-50' : 'text-emerald-950'}`}>{project.name}</div>
                       {project.isRecurring && (
-                        <span className={`text-[9px] font-black uppercase tracking-wider ${isRecurringToday ? 'text-emerald-500' : 'text-gray-500'}`}>
+                        <span className={`text-[8px] font-black uppercase tracking-wider ${isRecurringToday ? 'text-emerald-500' : 'text-gray-500'}`}>
                           {project.recurringPeriod === 'custom' ? `Every ${project.customPeriodDays}d` : project.recurringPeriod}
                         </span>
                       )}
                     </div>
-                    <div className={`${isAndroid ? 'text-[9px]' : 'text-[10px]'} mt-0.5 flex items-center gap-1 ${darkMode ? 'text-zinc-500' : 'text-emerald-500'}`}>
-                      <Tags size={11} /> {(project.tags && project.tags.length > 0) ? project.tags.slice(0, 3).join(' · ') : 'No tags'}
+                    <div className={`${isAndroid ? 'text-[8px]' : 'text-[10px]'} mt-0.5 flex items-center gap-1 ${darkMode ? 'text-zinc-500' : 'text-emerald-500'}`}>
+                      <Tags size={10} /> {(project.tags && project.tags.length > 0) ? project.tags.slice(0, 2).join(' · ') : 'No tags'}
                     </div>
                   </div>
                 </div>
-                <div className={`flex items-center ${isAndroid ? 'gap-1.5' : 'gap-2'}`}>
-                  <span className={`${isAndroid ? 'text-[10px] px-1.5 py-0.5' : 'text-xs px-2 py-1'} font-bold rounded-lg ${
+                <div className={`flex items-center ${isAndroid ? 'gap-1' : 'gap-2'}`}>
+                  <span className={`${isAndroid ? 'text-[9px] px-1 py-0.5' : 'text-xs px-2 py-1'} font-bold rounded-lg ${
                     isRecurringToday && project.recurringStatus?.reached ? (darkMode ? 'bg-emerald-500/20 text-emerald-300' : 'bg-emerald-100 text-emerald-700') : (darkMode ? 'bg-black/30 text-zinc-400' : 'bg-gray-100 text-gray-600')
                   }`}>
-                    Today {formatTime(project.todayFocusSeconds)}
+                    {isAndroid ? formatTime(project.todayFocusSeconds) : `Today ${formatTime(project.todayFocusSeconds)}`}
                   </span>
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       openEditEventModal(project);
                     }}
-                    className={`${isAndroid ? 'p-1.5' : 'p-2'} rounded-lg border transition-all ${darkMode ? 'bg-zinc-800 border-white/10 text-zinc-400 hover:text-emerald-300 hover:border-emerald-500/40' : 'bg-white border-emerald-100 text-emerald-500 hover:text-emerald-700 hover:border-emerald-300'}`}
+                    className={`${isAndroid ? 'p-1' : 'p-2'} rounded-lg border transition-all ${darkMode ? 'bg-zinc-800 border-white/10 text-zinc-400 hover:text-emerald-300 hover:border-emerald-500/40' : 'bg-white border-emerald-100 text-emerald-500 hover:text-emerald-700 hover:border-emerald-300'}`}
                     title="Edit Event"
                   >
-                    <Settings size={isAndroid ? 12 : 13} />
+                    <Settings size={isAndroid ? 11 : 13} />
                   </button>
                 </div>
               </div>
 
-              <div className={`grid grid-cols-2 ${isAndroid ? 'gap-1.5 text-[9px]' : 'gap-2 text-[10px]'} font-bold`}>
+              <div className={`grid grid-cols-2 ${isAndroid ? 'gap-1.5 text-[8.5px]' : 'gap-2 text-[10px]'} font-bold`}>
                 {project.isRecurring ? (
                   <>
-                    <div className={`${darkMode ? 'bg-black/30 border-white/5' : 'bg-emerald-50/60 border-emerald-100'} rounded-lg ${isAndroid ? 'p-1.5' : 'p-2'} border`}><div className="flex items-center gap-1 mb-0.5"><CalendarDays size={11} />累计打卡天数</div>{project.recurringCompletedDays}/{project.recurringDueDays}</div>
-                    <div className={`${darkMode ? 'bg-black/30 border-white/5' : 'bg-emerald-50/60 border-emerald-100'} rounded-lg ${isAndroid ? 'p-1.5' : 'p-2'} border`}><div className="flex items-center gap-1 mb-0.5"><TrendingUp size={11} />累计投入时间</div>{formatTime(project.totalFocusSeconds)}</div>
+                    <div className={`${darkMode ? 'bg-black/30 border-white/5' : 'bg-emerald-50/60 border-emerald-100'} rounded-lg ${isAndroid ? 'p-1.5' : 'p-2'} border`}><div className="flex items-center gap-1 mb-0.5"><CalendarDays size={10} />打卡天数</div>{project.recurringCompletedDays}/{project.recurringDueDays}</div>
+                    <div className={`${darkMode ? 'bg-black/30 border-white/5' : 'bg-emerald-50/60 border-emerald-100'} rounded-lg ${isAndroid ? 'p-1.5' : 'p-2'} border`}><div className="flex items-center gap-1 mb-0.5"><TrendingUp size={10} />投入时间</div>{formatTime(project.totalFocusSeconds)}</div>
                    <div className={`${isRecurringToday ? (darkMode ? 'bg-emerald-500/10 border-emerald-500/20' : 'bg-emerald-50 border-emerald-200 shadow-inner') : (darkMode ? 'bg-black/30 border-white/5' : 'bg-gray-100 border-gray-200')} col-span-2 rounded-lg ${isAndroid ? 'p-1.5' : 'p-2'} border`}>
                       <div className="flex items-center justify-between mb-1.5">
                         <div className={`flex items-center gap-1.5 ${isRecurringToday ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-500'}`}>
-                          <Target size={11} /> 
+                          <Target size={10} /> 
                           {isRecurringToday ? '今日目标' : '今日休息'}
-                          {isRecurringToday && (
-                            <span className="opacity-70 font-black">
-                              (目标: {project.targetMinutesPerDay} Min)
-                            </span>
-                          )}
+                          {isRecurringToday && isAndroid ? 
+                            null : 
+                            (isRecurringToday && (
+                              <span className="opacity-70 font-black">
+                                (目标: {project.targetMinutesPerDay} Min)
+                              </span>
+                            ))
+                          }
                         </div>
                         {isRecurringToday && (
                            <span className={`${project.recurringStatus?.reached ? 'text-emerald-600' : 'text-orange-500'}`}>
@@ -1027,10 +1030,10 @@ const EventsBoard: React.FC<EventsBoardProps> = ({
                   </>
                 ) : (
                   <>
-                    <div className={`${darkMode ? 'bg-black/30 border-white/5' : 'bg-emerald-50/60 border-emerald-100'} rounded-lg ${isAndroid ? 'p-1.5' : 'p-2'} border`}><div className="flex items-center gap-1 mb-0.5"><TrendingUp size={11} />累计投入</div>{formatTime(project.totalFocusSeconds)}</div>
-                    <div className={`${darkMode ? 'bg-black/30 border-white/5' : 'bg-emerald-50/60 border-emerald-100'} rounded-lg ${isAndroid ? 'p-1.5' : 'p-2'} border`}><div className="flex items-center gap-1 mb-0.5"><Hourglass size={11} />预期投入</div>{expectedLabel}</div>
-                    <div className={`${darkMode ? 'bg-black/30 border-white/5' : 'bg-emerald-50/60 border-emerald-100'} rounded-lg ${isAndroid ? 'p-1.5' : 'p-2'} border`}><div className="flex items-center gap-1 mb-0.5"><Mountain size={11} />最大日投入</div>{formatTime(project.maxDailySeconds)}</div>
-                    <div className={`${darkMode ? 'bg-black/30 border-white/5' : 'bg-emerald-50/60 border-emerald-100'} rounded-lg ${isAndroid ? 'p-1.5' : 'p-2'} border`}><div className="flex items-center gap-1 mb-0.5"><CalendarDays size={11} />平均日投入</div>{formatTime(project.avgDailySeconds)}</div>
+                    <div className={`${darkMode ? 'bg-black/30 border-white/5' : 'bg-emerald-50/60 border-emerald-100'} rounded-lg ${isAndroid ? 'p-1.5' : 'p-2'} border`}><div className="flex items-center gap-1 mb-0.5"><TrendingUp size={10} />投入</div>{formatTime(project.totalFocusSeconds)}</div>
+                    <div className={`${darkMode ? 'bg-black/30 border-white/5' : 'bg-emerald-50/60 border-emerald-100'} rounded-lg ${isAndroid ? 'p-1.5' : 'p-2'} border`}><div className="flex items-center gap-1 mb-0.5"><Hourglass size={10} />预期</div>{expectedLabel}</div>
+                    <div className={`${darkMode ? 'bg-black/30 border-white/5' : 'bg-emerald-50/60 border-emerald-100'} rounded-lg ${isAndroid ? 'p-1.5' : 'p-2'} border`}><div className="flex items-center gap-1 mb-0.5"><Mountain size={10} />最大</div>{formatTime(project.maxDailySeconds)}</div>
+                    <div className={`${darkMode ? 'bg-black/30 border-white/5' : 'bg-emerald-50/60 border-emerald-100'} rounded-lg ${isAndroid ? 'p-1.5' : 'p-2'} border`}><div className="flex items-center gap-1 mb-0.5"><CalendarDays size={10} />平均</div>{formatTime(project.avgDailySeconds)}</div>
                   </>
                 )}
               </div>
