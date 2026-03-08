@@ -1999,14 +1999,42 @@ function EmeraldTimer() {
         alert('GitLab connection verified successfully!');
       } else {
         if (!webdavConfig.url || !webdavConfig.username) throw new Error('WebDAV config incomplete.');
-        const baseUrl = webdavConfig.url.endsWith('/') ? webdavConfig.url : `${webdavConfig.url}/`;
+        
+        let targetUrl = webdavConfig.url.endsWith('/') ? webdavConfig.url : `${webdavConfig.url}/`;
         const authHeader = `Basic ${btoa(`${webdavConfig.username}:${webdavConfig.password || ''}`)}`;
-        // Try to PROPFIND the base URL to check credentials
-        const res = await fetch(baseUrl, {
-          method: 'PROPFIND',
-          headers: { 'Authorization': authHeader, 'Depth': '0' }
-        });
-        if (!res.ok) throw new Error(`WebDAV validation failed: ${res.statusText} (${res.status})`);
+        
+        // Android/Capacitor CORS workaround: Native platforms sometimes struggle with PROPFIND on standard fetch.
+        // We'll try a flexible approach: HEAD or GET if PROPFIND fails or isn't supported by the user/server combination.
+        try {
+          const res = await fetch(targetUrl, {
+            method: 'PROPFIND',
+            headers: { 
+              'Authorization': authHeader, 
+              'Depth': '0',
+              'Content-Type': 'application/xml'
+            }
+          });
+          
+          // If PROPFIND is forbidden or method not allowed, try a simple HEAD on the parent directory
+          if (!res.ok && (res.status === 405 || res.status === 403 || res.status === 501)) {
+            const headRes = await fetch(targetUrl, {
+              method: 'HEAD',
+              headers: { 'Authorization': authHeader }
+            });
+            if (!headRes.ok) throw new Error(`Server returned ${headRes.status}`);
+          } else if (!res.ok) {
+            throw new Error(`WebDAV validation failed: ${res.statusText} (${res.status})`);
+          }
+        } catch (fetchErr: any) {
+          // Final fallback: Try to just check the URL accessibility via simple GET if everything else fails
+          // Some WebDAV providers (like Infomaniak/Koofr) might be sensitive to specific headers from mobile agents.
+          const finalRes = await fetch(targetUrl, {
+            method: 'GET',
+            headers: { 'Authorization': authHeader }
+          });
+          if (!finalRes.ok) throw new Error(`Connection failed: ${fetchErr.message || finalRes.statusText}`);
+        }
+        
         alert('WebDAV connection verified successfully!');
       }
     } catch (err: any) {
